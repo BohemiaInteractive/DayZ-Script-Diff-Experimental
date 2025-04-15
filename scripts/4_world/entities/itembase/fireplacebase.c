@@ -237,7 +237,7 @@ class FireplaceBase : ItemBase
 		//STATIC: define kindling types
 		if (!m_FireConsumableTypes)
 		{
-			m_FireConsumableTypes = new ref map<typename, ref FireConsumableType>();
+			m_FireConsumableTypes = new map<typename, ref FireConsumableType>();
 			m_FireConsumableTypes.Insert(ATTACHMENT_RAGS, 				new FireConsumableType(ATTACHMENT_RAGS, 				8, 	true,	"Rags"));
 			m_FireConsumableTypes.Insert(ATTACHMENT_BANDAGE, 			new FireConsumableType(ATTACHMENT_BANDAGE, 				8, 	true,	"MedicalBandage"));
 			m_FireConsumableTypes.Insert(ATTACHMENT_BOOK, 				new FireConsumableType(ATTACHMENT_BOOK, 				20, 	true,	"Book"));
@@ -567,7 +567,7 @@ class FireplaceBase : ItemBase
 	
 	override bool IsSelfAdjustingTemperature()
 	{
-		return m_IsBurning || (m_CoolingTimer && m_CoolingTimer.IsRunning())); //FireplaceFireState.NO_FIRE?
+		return m_IsBurning || (m_CoolingTimer && m_CoolingTimer.IsRunning()); //FireplaceFireState.NO_FIRE?
 	}
 	
 	protected void InitializeTemperatureSources()
@@ -2783,7 +2783,7 @@ class FireplaceBase : ItemBase
 	{
 		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.ACTIVATE_ENTITY, "Ignite", FadeColors.LIGHT_GREY));
 		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.DEACTIVATE_ENTITY, "Extinguish", FadeColors.LIGHT_GREY));
-		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.SEPARATOR, "___________________________", FadeColors.LIGHT_GREY));
+		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.SEPARATOR, "___________________________", FadeColors.RED));
 		
 		super.GetDebugActions(outputList);
 	}

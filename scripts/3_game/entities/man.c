@@ -934,4 +934,15 @@ class Man extends EntityAI
 	void SetProcessUIWarning(bool state);
 	void OnGameplayDataHandlerSync(); //depricated, sync now happens before the player is created, calling of this event still happens for legacy reasons
 	bool CanPlaceItem(EntityAI item);
+	
+	/*!
+		Called when 2D optics are about to be drawn.
+		\return Collection of optics to be drawn. 
+		        Draws the provided optics when of `ItemOptics` type.
+		        Draws optic of current muzzle when of `Weapon_Base` type.
+	*/
+	protected array<InventoryItem> OnDrawOptics2D()
+	{
+		return null;
+	}
 };

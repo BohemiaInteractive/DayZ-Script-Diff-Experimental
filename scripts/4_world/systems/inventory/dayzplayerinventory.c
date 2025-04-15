@@ -1531,7 +1531,7 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 			return false;
 		}
 
-		InventoryValidation validation();
+		InventoryValidation validation = new InventoryValidation();
 		validation.m_IsJuncture = isJuncture;
 		validation.m_IsRemote = isRemote;
 
@@ -1631,7 +1631,7 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 	
 	bool IsServerOrLocalPlayer()
 	{
-		return GetDayZPlayerOwner().GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_SERVER || GetDayZPlayerOwner() == GetGame().GetPlayer());
+		return (GetDayZPlayerOwner().GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_SERVER) || (GetDayZPlayerOwner() == GetGame().GetPlayer());
 	}
 	
 	bool StoreInputForRemotes (bool handling_juncture, bool remote, ParamsReadContext ctx)
@@ -2293,10 +2293,10 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 		{
 			EntityAI itemInHands = GetEntityInHands();
 			
-			InventoryLocation handInventoryLocation();
-			handInventoryLocation.SetHands(GetInventoryOwner(), itemInHands);
+			InventoryLocation il = new InventoryLocation();
+			il.SetHands(GetInventoryOwner(), itemInHands);
 			
-			InventoryValidation validation();
+			InventoryValidation validation = new InventoryValidation();
 			if (e.CanPerformEventEx(validation))
 			{
 				m_DeferredEvent = new DeferredHandEvent(mode, e);
@@ -2332,7 +2332,7 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 	void HandleHandEvent(DeferredEvent deferred_event)
 	{
 		//! Default structure suffices
-		InventoryValidation validation();
+		InventoryValidation validation = new InventoryValidation();
 		
 		DeferredHandEvent deferred_hand_event = DeferredHandEvent.Cast(deferred_event);
 		if (deferred_hand_event)

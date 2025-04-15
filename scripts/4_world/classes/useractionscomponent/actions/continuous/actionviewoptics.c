@@ -10,7 +10,7 @@ class ActionViewOptics : ActionContinuousBase
 	
 	override void CreateConditionComponents()  
 	{	
-		m_ConditionItem = new CCINonRuined;
+		m_ConditionItem = new CCINone;
 		m_ConditionTarget = new CCTNone;
 	}
 	
@@ -20,6 +20,11 @@ class ActionViewOptics : ActionContinuousBase
 	}
 	
 	override bool IsCameraLockOnPerform()
+	{
+		return false;
+	}
+	
+	override bool CanBeUsedLeaning()
 	{
 		return false;
 	}

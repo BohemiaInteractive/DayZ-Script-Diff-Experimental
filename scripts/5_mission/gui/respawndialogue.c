@@ -135,7 +135,7 @@ class RespawnDialogue extends UIScriptedMenu
 	{
 		if (w)
 		{
-			if (w.GetUserID() == IDC_CANCEL || w.GetUserID() == ID_RESPAWN_CUSTOM || w.GetUserID() == ID_RESPAWN_RANDOM);
+			if (w.GetUserID() == IDC_CANCEL || w.GetUserID() == ID_RESPAWN_CUSTOM || w.GetUserID() == ID_RESPAWN_RANDOM)
 				return true;
 		}
 

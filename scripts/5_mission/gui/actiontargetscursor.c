@@ -1146,7 +1146,7 @@ class ActionTargetsCursor : ScriptedWidgetEventHandler
 				
 				int x, y;
 				actionName.GetTextSize(x, y);
-				if (x > m_MaxWidthChild);
+				if (x > m_MaxWidthChild)
 					m_MaxWidthChild = x;
 			}
 			else

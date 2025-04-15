@@ -228,7 +228,7 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 		SpawnItems();
 		// We create the trigger on server
 		if ( m_TriggerType != "" )
-			CreateTrigger( m_Position, m_Radius );
+			CreateTrigger(m_PositionTrigger, m_Radius);
 	}
 	
 	void SpawnItems()
@@ -261,7 +261,7 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 			m_ToxicClouds = new array<Particle>;
 		
 		// We spawn VFX on client
-		PlaceParticles( GetWorldPosition(), m_Radius, m_InnerRings, m_InnerSpacing, m_OuterRingToggle, m_OuterSpacing, m_OuterRingOffset, m_ParticleID );		
+		PlaceParticles(m_Position, m_Radius, m_InnerRings, m_InnerSpacing, m_OuterRingToggle, m_OuterSpacing, m_OuterRingOffset, m_ParticleID);		
 	}
 	
 	override void OnParticleAllocation(ParticleManager pm, array<ParticleSource> particles)

@@ -10,6 +10,7 @@ class M4_T3NRDSOptic : ItemOptics {};
 class FNP45_MRDSOptic : ItemOptics {};
 class ReflexOptic : ItemOptics {};
 class KobraOptic : ItemOptics {};
+class SportingOptic : ItemOptics {};
 
 class KazuarOptic: ItemOptics
 {
@@ -156,3 +157,7 @@ class StarlightOptic: ItemOptics
 		AddAction(ActionToggleNVMode);
 	}
 };
+class MK4Optic_ColorBase : ItemOptics {};
+class MK4Optic_Tan : MK4Optic_ColorBase {};
+class MK4Optic_Black : MK4Optic_ColorBase {};
+class MK4Optic_Green : MK4Optic_ColorBase {};

@@ -22,9 +22,9 @@ class SawWoodenLog extends RecipeBase
 		//ingredient 1
 		InsertIngredient(0,"Hacksaw");
 		InsertIngredient(0,"HandSaw");
-		InsertIngredient(0,"WoodAxe",DayZPlayerConstants.CMD_ACTIONFB_SPLITTING_FIREWOOD);
-		InsertIngredient(0,"Hatchet",DayZPlayerConstants.CMD_ACTIONFB_SPLITTING_FIREWOOD);
-		InsertIngredient(0,"FirefighterAxe",DayZPlayerConstants.CMD_ACTIONFB_SPLITTING_FIREWOOD);
+		InsertIngredient(0,"WoodAxe",DayZPlayerConstants.CMD_ACTIONFB_SPLITTING_FIREWOOD, true);
+		InsertIngredient(0,"Hatchet",DayZPlayerConstants.CMD_ACTIONFB_SPLITTING_FIREWOOD, true);
+		InsertIngredient(0,"FirefighterAxe",DayZPlayerConstants.CMD_ACTIONFB_SPLITTING_FIREWOOD, true);
 
 		m_IngredientAddHealth[0]		= -10;
 		m_IngredientSetHealth[0]		= -1;

@@ -103,7 +103,7 @@ class ActionManagerClient: ActionManagerBase
 		}
 		
 #ifdef DEVELOPER
-		if (DeveloperFreeCamera.IsFreeCameraEnabled())
+		if (DeveloperFreeCamera.IsFreeCameraEnabledNoPlayerMovement())
 		{
 			m_ActionPossible = false;
 			ResetInputsActions();

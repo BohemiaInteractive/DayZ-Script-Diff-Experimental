@@ -111,7 +111,7 @@ class EmoteManager
 	EmoteCB					m_Callback;
 	HumanInputController 	m_HIC;
 	ref array<string> 		m_InterruptInputs;
-	ref array<UAInput> 		m_InterruptInputDirect;
+	ref array<UAIDWrapper> 	m_InterruptInputDirect;
 	ref InventoryLocation 	m_HandInventoryLocation;
 	ref EmoteLauncher 		m_MenuEmote;
 	bool					m_bEmoteIsRequestPending;
@@ -1094,12 +1094,12 @@ class EmoteManager
 		//init pass
 		if (!m_InterruptInputDirect)
 		{
-			m_InterruptInputDirect = new array<UAInput>;
+			m_InterruptInputDirect = new array<UAIDWrapper>;
 			m_InterruptInputsCount = m_InterruptInputs.Count();
 			
 			for (int i = 0; i < m_InterruptInputsCount; i++)
 			{
-				m_InterruptInputDirect.Insert(GetUApi().GetInputByName(m_InterruptInputs[i]));
+				m_InterruptInputDirect.Insert(GetUApi().GetInputByName(m_InterruptInputs[i]).GetPersistentWrapper());
 			}
 		}
 		
@@ -1109,7 +1109,7 @@ class EmoteManager
 		
 		for (int idx = 0; idx < m_InterruptInputsCount; idx++)
 		{
-			if (m_InterruptInputDirect[idx].LocalPress())
+			if (m_InterruptInputDirect[idx].InputP().LocalPress())
 			{
 				return true;
 			}
