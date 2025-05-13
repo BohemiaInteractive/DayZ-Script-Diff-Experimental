@@ -401,14 +401,6 @@ class DayZPlayerImplement extends DayZPlayer
 	
 	void SetOptics(bool value)
 	{
-		//! TODO: transitional change - will be cleaned in near future
-		NVGoggles nvGoggles;
-		if (NVGoggles.CastTo(nvGoggles, GetNVEntityAttached()))
-		{
-			nvGoggles.m_Strap.UpdateNVGStatus(PlayerBase.Cast(this), false, true);
-			nvGoggles.RotateGoggles(true);
-		}
-
 		m_CameraOptics = value;
 		
 		if (value)
@@ -454,12 +446,13 @@ class DayZPlayerImplement extends DayZPlayer
 	
 	void SwitchOptics(ItemOptics optic, bool state)
 	{
-		if (optic)
+		if (optic && !optic.IsSightOnly())
 		{
 			if (state)
 			{
 				if (optic.HasEnergyManager())
 					optic.GetCompEM().SwitchOn();
+
 				optic.EnterOptics();
 				optic.OnOpticEnter();
 			}

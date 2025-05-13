@@ -310,6 +310,12 @@ class ActionBase : ActionBase_Basic
 		return false;
 	}
 	
+	//! Condition used in PlayerBase::CanChangeStance to check if stance can be changed while action is performed/executed
+	bool CanBePerformedWhileChangingStance()
+	{
+		return true;
+	}
+	
 	bool CanBeSetFromInventory()
 	{
 		return !CanBePerformedFromInventory();
@@ -1057,7 +1063,7 @@ class ActionBase : ActionBase_Basic
 	bool AddActionJuncture(ActionData action_data)
 	{
 		bool accepted = true;
-		if (action_data.m_Player.GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_CLIENT)
+		if (action_data.m_Player.GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_SERVER)
 		{
 			if (HasTarget())
 			{

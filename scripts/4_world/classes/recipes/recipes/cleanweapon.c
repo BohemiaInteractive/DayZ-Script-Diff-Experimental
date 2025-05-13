@@ -24,7 +24,7 @@ class CleanWeapon : RecipeBase
 		
 		//INGREDIENTS
 		//ingredient 1
-		InsertIngredient(0,"WeaponCleaningKit",DayZPlayerConstants.CMD_ACTIONFB_CLEANING_WEAPON, true);//you can insert multiple ingredients this way
+		InsertIngredient(0,"WeaponCleaningKit");//you can insert multiple ingredients this way
 		
 		m_IngredientAddHealth[0] = 0;// 0 = do nothing
 		m_IngredientSetHealth[0] = -1; // -1 = do nothing
@@ -33,7 +33,7 @@ class CleanWeapon : RecipeBase
 		m_IngredientUseSoftSkills[0] = true;// set 'true' to allow modification of the values by softskills on this ingredient
 		
 		//ingredient 2
-		InsertIngredient(1,"DefaultWeapon");
+		InsertIngredient(1,"DefaultWeapon",DayZPlayerConstants.CMD_ACTIONFB_CLEANING_WEAPON, true);
 		InsertIngredient(1,"DefaultMagazine");
 		InsertIngredient(1,"ItemSuppressor");
 		

@@ -8,7 +8,7 @@ enum eAreaDecayStage
 }
 
 // The parameters for the explosion light when creating dynamic area
-class ShellLight extends PointLightBase
+class ShellLight : PointLightBase
 {
 	protected float m_DefaultBrightness = 10;
 	protected float m_DefaultRadius = 100;
@@ -60,66 +60,61 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 	
 	void ContaminatedArea_Dynamic()
 	{
+		m_Type = eZoneType.DYNAMIC;
+
 		RegisterNetSyncVariableInt("m_DecayState");
 	}
 	
 	override void EEOnCECreate()
 	{
 		// We get the PPE index for future usage and synchronization ( we must do it here for dynamic as it is not read through file )
-		if ( GetGame().IsServer() )
-			m_PPERequesterIdx = GetRequesterIndex(m_PPERequesterType);
-		
-		SetSynchDirty();
+		m_PPERequesterIdx = GetRequesterIndex(m_PPERequesterType);
 		
 		// If this is the first initialization, we delay it in order to play cool effects
-		if ( m_DecayState == eAreaDecayStage.INIT )
+		if (m_DecayState == eAreaDecayStage.INIT)
 		{
 			vector areaPos = GetPosition();
 			m_OffsetPos = areaPos;
 			m_OffsetPos[1] = m_OffsetPos[1] + AIRBORNE_FX_OFFSET;
+			vector closestPoint = areaPos;
 			
 			// play artillery sound, sent to be played for everyone on server
 			array<vector> artilleryPoints = GetGame().GetMission().GetWorldData().GetArtyFiringPos();
-			vector closestPoint = areaPos;
-			int dist = 0;
-			int temp;
 			int index = 0;
-			for ( int i = 0; i < artilleryPoints.Count(); i++ )
+			foreach (int i, vector artilleryPoint : artilleryPoints)
 			{
-				temp = vector.DistanceSq( artilleryPoints.Get( i ), areaPos );
-				if ( temp < dist || dist == 0 )
+				int dist = 0;
+				int temp = vector.DistanceSq(artilleryPoint, areaPos);
+				if (temp < dist || dist == 0)
 				{
 					dist = temp;
 					index = i;
 				}
 			}
 			
-			closestPoint = artilleryPoints.Get( index );
+			closestPoint = artilleryPoints.Get(index);
 			
 			// We calculate the delay depending on distance from firing position to simulate shell travel time
-			float delay = vector.Distance( closestPoint, areaPos );
+			float delay = vector.Distance(closestPoint, areaPos);
 			delay = delay / ARTILLERY_SHELL_SPEED;
 			delay += AIRBORNE_EXPLOSION_DELAY; // We add the base, minimum time ( no area can start before this delay )
 			
-			Param3<vector, vector, float> pos; // The value to be sent through RPC
-			array<ref Param> params; // The RPC params
-			
-			// We prepare to send the message
-			pos = new Param3<vector, vector, float>( closestPoint, areaPos, delay );
-			params = new array<ref Param>;
-			
+			Param3<vector, vector, float> pos = new Param3<vector, vector, float>(closestPoint, areaPos, delay);
+			array<ref Param> params = new array<ref Param>();
 			// We send the message with this set of coords
-			params.Insert( pos );
-			GetGame().RPC( null, ERPCs.RPC_SOUND_ARTILLERY_SINGLE, params, true );
+			params.Insert(pos);
+			GetGame().RPC(null, ERPCs.RPC_SOUND_ARTILLERY_SINGLE, params, true);
 			
-			m_FXTimer = new Timer( CALL_CATEGORY_GAMEPLAY );
-			m_FXTimer.Run( delay, this, "PlayFX" );	
+			m_FXTimer = new Timer(CALL_CATEGORY_GAMEPLAY);
+			m_FXTimer.Run(delay, this, "PlayFX");	
 			
 			delay += AREA_SETUP_DELAY; // We have an additional delay between shell detonation and finalization of area creation
 			// setup zone
-			m_StartupTimer = new Timer( CALL_CATEGORY_GAMEPLAY );
-			m_StartupTimer.Run( delay, this, "InitZone" );
+			m_StartupTimer = new Timer(CALL_CATEGORY_GAMEPLAY);
+			m_StartupTimer.Run(delay, this, "InitZone");
 		}
+		
+		SetSynchDirty();
 	}
 	
 	float GetRemainingTime()
@@ -167,56 +162,52 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 		}
 	}
 	
-	override void EEInit()
+	override void SetupZoneData(EffectAreaParams params)
 	{
+		params.m_ParamName			= string.Format("Dynamic area (%1)", m_Position.ToString());
+		params.m_ParamPartId 		= ParticleList.CONTAMINATED_AREA_GAS_BIGASS;
+		params.m_ParamAroundPartId 	= ParticleList.CONTAMINATED_AREA_GAS_AROUND;
+		params.m_ParamTinyPartId 	= ParticleList.CONTAMINATED_AREA_GAS_TINY;
+		params.m_ParamPosHeight 	= 7;
+		params.m_ParamNegHeight 	= 10;
+		params.m_ParamRadius 		= 120;
+		params.m_ParamInnerRings 	= 1;
+		params.m_ParamInnerSpace 	= 40;
+		params.m_ParamOuterSpace 	= 30;
+		params.m_ParamOuterOffset 	= 0;
+		params.m_ParamTriggerType 	= "ContaminatedTrigger_Dynamic";
+		
+		super.SetupZoneData(params);
+	}
+	
+	override void DeferredInit()
+	{
+		super.DeferredInit();
+
 		// We make sure we have the particle array
-		if ( !m_ToxicClouds )
-			m_ToxicClouds = new array<Particle>;
+		if (!m_ToxicClouds)
+			m_ToxicClouds = new array<Particle>();
 		
-		// We set the values for dynamic area as these are not set through JSON and are standardized
-		m_Name = "Default Dynamic";
-		m_Radius = 120;
-		m_PositiveHeight = 7;
-		m_NegativeHeight = 10;
-		m_InnerRings = 1;
-		m_InnerSpacing = 40;
-		m_OuterSpacing = 30;
-		m_OuterRingOffset = 0;
-		m_Type = eZoneType.DYNAMIC;
-		m_TriggerType = "ContaminatedTrigger_Dynamic";
-		
-		SetSynchDirty();
-		
-		#ifdef DEVELOPER
-		// Debugs when placing entity by hand using internal tools
-		/*if ( GetGame().IsServer() && !GetGame().IsMultiplayer() )
-		{
-			Debug.Log("YOU CAN IGNORE THE FOLLOWING DUMP");
-			InitZone();
-			Debug.Log("YOU CAN USE FOLLOWING DATA PROPERLY");
-		}*/
-		#endif
-		
-		m_OffsetPos = GetPosition();
+		m_Position = GetPosition();
+		m_OffsetPos = m_Position;
 		m_OffsetPos[1] = m_OffsetPos[1] + AIRBORNE_FX_OFFSET;
 		
+		SetupZoneData(new EffectAreaParams);
+		
 		// If a player arrives slightly later during the creation process we check if playing the flare FX is relevant
-		if ( m_DecayState == eAreaDecayStage.INIT )
+		if (m_DecayState == eAreaDecayStage.INIT)
 			PlayFlareVFX();
 		
 		if ( m_DecayState == eAreaDecayStage.LIVE )
 			InitZone(); // If it has already been created, we simply do the normal setup, no cool effects, force the LIVE state
-		else if ( GetGame().IsClient() && m_DecayState > eAreaDecayStage.LIVE )
-			InitZoneClient(); // Same as before but without state forcing
 		
-		super.EEInit();
+		super.DeferredInit();
 	}
 	
 	// We spawn particles and setup trigger
 	override void InitZone()
-	{
-		m_DecayState = eAreaDecayStage.LIVE;
-		SetSynchDirty();
+	{		
+		SetDecayState(eAreaDecayStage.LIVE);
 		
 		super.InitZone();
 	}
@@ -231,6 +222,14 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 			CreateTrigger(m_PositionTrigger, m_Radius);
 	}
 	
+	override void InitZoneClient()
+	{
+		super.InitZoneClient();
+		
+		// We spawn VFX on client
+		PlaceParticles(m_Position, m_Radius, m_InnerRings, m_InnerSpacing, m_OuterRingToggle, m_OuterSpacing, m_OuterRingOffset, m_ParticleID);		
+	}
+	
 	void SpawnItems()
 	{
 		//Print("---------============ Spawning items at pos:"+m_Position);
@@ -242,7 +241,7 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 				vector randomDir2d = vector.RandomDir2D();
 				float randomDist = Math.RandomFloatInclusive(SPAWN_ITEM_RAD_MIN[j],SPAWN_ITEM_RAD_MAX[j]);
 				vector spawnPos = m_Position + (randomDir2d * randomDist);
-				InventoryLocation il = new InventoryLocation;
+				InventoryLocation il = new InventoryLocation();
 				vector mat[4];
 				Math3D.MatrixIdentity4(mat);
 				mat[3] = spawnPos;
@@ -251,17 +250,6 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 				GetGame().CreateObjectEx(type, il.GetPos(), ECE_PLACE_ON_SURFACE);
 			}
 		}
-	}
-	
-	override void InitZoneClient()
-	{
-		super.InitZoneClient();
-		
-		if ( !m_ToxicClouds )
-			m_ToxicClouds = new array<Particle>;
-		
-		// We spawn VFX on client
-		PlaceParticles(m_Position, m_Radius, m_InnerRings, m_InnerSpacing, m_OuterRingToggle, m_OuterSpacing, m_OuterRingOffset, m_ParticleID);		
 	}
 	
 	override void OnParticleAllocation(ParticleManager pm, array<ParticleSource> particles)
@@ -301,22 +289,18 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 	
 	void PlayFX()
 	{
-		if ( GetGame().IsServer() )
+		if (GetGame().IsServer())
 		{
-			Param1<vector> pos; // The value to be sent through RPC
-			array<ref Param> params; // The RPC params
-			
-			// We prepare to send the message
-			pos = new Param1<vector>( vector.Zero );
-			params = new array<ref Param>;
+			Param1<vector> pos = new Param1<vector>(vector.Zero); 	// The value to be sent through RPC
+			array<ref Param> params = new array<ref Param>(); 		// The RPC params
 			
 			// We send the message with this set of coords
 			pos.param1 = m_OffsetPos;
-			params.Insert( pos );
-			GetGame().RPC( null, ERPCs.RPC_SOUND_CONTAMINATION, params, true );
+			params.Insert(pos);
+			GetGame().RPC(null, ERPCs.RPC_SOUND_CONTAMINATION, params, true);
 			
 			// We go to the next stage
-			m_DecayState = eAreaDecayStage.START;
+			SetDecayState(eAreaDecayStage.START);
 			SetSynchDirty();
 		}
 	}
@@ -338,17 +322,12 @@ class ContaminatedArea_Dynamic : ContaminatedArea_Base
 		}
 	}
 	
-	override void EEDelete( EntityAI parent )
-	{
-		super.EEDelete( parent );
-	}
-	
 	override void OnVariablesSynchronized()
 	{
 		super.OnVariablesSynchronized();
 		
-		if ( !m_ToxicClouds )
-			m_ToxicClouds = new array<Particle>;
+		if (!m_ToxicClouds)
+			m_ToxicClouds = new array<Particle>();
 		
 		switch ( m_DecayState )
 		{

@@ -2,7 +2,7 @@
  *  Game Class provide most "world" or global engine API functions.
  */
 
-static int GAME_STORAGE_VERSION = 141;
+static int GAME_STORAGE_VERSION = 142;
 
 class CGame
 {

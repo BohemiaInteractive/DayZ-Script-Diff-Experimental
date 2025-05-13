@@ -168,7 +168,9 @@ class EffectArea : House
 		// If you cannot register a new requester, add your own indexation and lookup methods to get an index and synchronize it
 		// EXAMPLE : m_PPERequesterIdx = MyLookupMethod()
 		
+		#ifdef ENABLE_LOGGING
 		Debug.Log(">>>> SetupZoneData: Finished: " + m_Name);
+		#endif
 		
 		// We sync our data
 		SetSynchDirty();
@@ -193,8 +195,8 @@ class EffectArea : House
 	
 	void InitZone()
 	{
-		Debug.Log("------------------------------------------");
-		Debug.Log("InitZone: " + m_Name);
+	//	Debug.Log("------------------------------------------");
+	//	Debug.Log("InitZone: " + m_Name);
 		
 		m_Position 				= GetPosition();
 		m_PositionTrigger		= m_Position;
@@ -206,11 +208,10 @@ class EffectArea : House
 		if (GetGame().IsServer())
 			InitZoneServer();
 		
-		Debug.Log("------------------------------------------");
+	//	Debug.Log("------------------------------------------");
 	}
 	
 	// The following methods are to be overriden to execute specifc logic
-	// Each method is executed where it says it will so no need to check for server or client ;) 
 	void InitZoneServer();
 	void InitZoneClient();
 	

@@ -33,6 +33,14 @@ class RespawnDialogue extends UIScriptedMenu
 	{
 		super.Update(timeslice);
 		
+		Man player = GetGame().GetPlayer();
+		bool playerAlive = player && player.GetPlayerState() == EPlayerStates.ALIVE;
+		if (playerAlive && !player.IsUnconscious())
+		{
+			Close();
+			return;
+		}
+		
 		if (GetUApi().GetInputByID(UAUIBack).LocalPress() || GetUApi().GetInputByID(UAUIMenu).LocalPress())
 			Close();
 	}

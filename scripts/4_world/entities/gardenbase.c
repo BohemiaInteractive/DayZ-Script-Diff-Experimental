@@ -19,8 +19,8 @@ class GardenBase extends ItemBase //BuildingSuper
 	private static const string SLOT_MEMORY_POINT_PREFIX 		= "slot_";
 	private static const string SLOT_SEEDBASE_PREFIX 			= "seedbase_";
 	
-	
 	private static const int 	CHECK_RAIN_INTERVAL 			= 15;
+	private static const float	CREATE_PLANT_DELAY				= 1000.0;
 	
 	protected ref array<ref Slot> m_Slots;
 	protected int 	m_SlotFertilityState = 0; 	//Used to store fertility state of all slots
@@ -78,7 +78,23 @@ class GardenBase extends ItemBase //BuildingSuper
 	{
 		super.OnVariablesSynchronized();
 		
-		SyncSlots();
+		UpdateSlots();
+	}
+	
+	void UpdateSlots()
+	{
+		//! Set relevant slot values from synced bitmaps
+		int slotsCount = GetGardenSlotsCount();
+		for (int i = 0; i < slotsCount; i++)
+		{
+			Slot slot = m_Slots.Get(i);
+			// Read relevant bits
+			int fertilityState = (m_SlotFertilityState >> i) & 1;
+			slot.SetFertilityState(fertilityState);
+			
+			int wateredState = (m_SlotWateredState >> i) & 1;
+			slot.SetWateredState(wateredState);
+		}
 	}
 	
 	override bool HasProxyParts()
@@ -104,7 +120,6 @@ class GardenBase extends ItemBase //BuildingSuper
 	override void EOnInit(IEntity other, int extra)
 	{
 		CheckRainTick();
-		UpdateTexturesOnAllSlots();
 	}
 
 	void InitializeSlots()
@@ -123,9 +138,12 @@ class GardenBase extends ItemBase //BuildingSuper
 			slot.SetGarden(this);
 			slot.m_State = Slot.STATE_DIGGED;
 			slot.SetWateredState(eWateredState.DRY);
+			slot.SetFertilityState(eFertlityState.NONE);
 			slot.SetWater(0.0);
 			m_Slots.Insert( slot );
 		}
+		
+		UpdateSlots();
 	}
 	
 	void SetMaxWaterStateVal()
@@ -145,16 +163,6 @@ class GardenBase extends ItemBase //BuildingSuper
 		return m_MaxWateredStateVal;
 	}
 	
-	void UpdateTexturesOnAllSlots()
-	{
-		int slots_count = GetGardenSlotsCount();
-		
-		for ( int i = 0; i < slots_count; i++ )
-		{
-			UpdateSlotTexture(i);
-		}
-	}
-
 	override bool OnStoreLoad( ParamsReadContext ctx, int version )
 	{
 		if ( version <= 118 )
@@ -180,35 +188,39 @@ class GardenBase extends ItemBase //BuildingSuper
 		}
 		
 		if ( version >= 119 )
-			ctx.Read( m_SlotFertilityState );
+		{
+			if(!ctx.Read( m_SlotFertilityState ))
+				return false;
+		}
 		
 		if ( version >= 120 )
-			ctx.Read( m_SlotWateredState );
+		{
+			if (!ctx.Read( m_SlotWateredState ))
+				return false;
+		}			
 		
 		return true;
 	}
 	
-	override void AfterStoreLoad()
-	{
-		super.AfterStoreLoad();
-	}
-	
 	override void EEOnAfterLoad()
 	{
-		GetGame().GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( SyncSlots, 500, false, this );
 		super.EEOnAfterLoad();
+
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(SyncSlots, 500, false, this);
 	}
 	
 	void SyncSlots()
 	{
-		for ( int i = 0; i < GetGardenSlotsCount(); i++ )
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
-			UpdateSlotTexture( i );
-		}
-		
-		if ( GetGame().IsServer() )
-		{
-			SetSynchDirty();
+			int slotsCount = GetGardenSlotsCount();
+			for (int i = 0; i < slotsCount; ++i)
+			{
+				UpdateSlotTexture(i);
+			}
+			
+			if (g_Game.IsDedicatedServer())
+				SetSynchDirty();
 		}
 	}
 
@@ -352,7 +364,8 @@ class GardenBase extends ItemBase //BuildingSuper
 				converted_slot_name = SLOT_MEMORY_POINT_PREFIX + index.ToString();
 			}
 			
-			PlantSeed( ItemBase.Cast( item ), converted_slot_name);
+			if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+				PlantSeed( ItemBase.Cast( item ), converted_slot_name);
 		}
 		else if (g_Game.IsClient())
 		{
@@ -403,126 +416,76 @@ class GardenBase extends ItemBase //BuildingSuper
 			slot.m_PlantType = plant_type;
 			slot.SetSeed(seed);
 			
-			if ( !slot.NeedsWater() )
+			if ( !slot.NeedsWater() || slot.GetWateredState() == eWateredState.WET)
 			{
+				//! Adjust slot water
+				if (slot.GetWateredState() == eWateredState.WET && slot.NeedsWater())
+				{
+					int waterMax = slot.GetWaterMax();
+					slot.SetWater(waterMax);
+				}
+				
 				seed.LockToParent();
 				//Take some small amount of time before making a plant out of seeds
-				Timer growthTimer = new Timer(CALL_CATEGORY_SYSTEM);
-				Param createPlantParam = new Param1<Slot>(slot);
-				growthTimer.Run( 0.1, this, "CreatePlant", createPlantParam, false ); //Use a const for timer delay
+				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(CreatePlant, CREATE_PLANT_DELAY, false, slot);
 			}
 		}
 	}
 	
 	// Creates a plant
-	void CreatePlant(Slot slot )
+	void CreatePlant(Slot slot)
 	{
-		if (g_Game.IsServer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			ItemBase seed = slot.GetSeed();
-			seed.UnlockFromParent();
-			GetGame().ObjectDelete(seed);
-
-			PlantBase plant = PlantBase.Cast( GetInventory().CreateAttachmentEx( slot.m_PlantType, slot.GetSlotId()) );
-		
-			int slot_index = slot.GetSlotIndex();
-			slot.SetPlant(plant);						
-			plant.Init( this, slot.GetFertility(), slot.m_HarvestingEfficiency, slot.GetWater() );
-			//ShowSelection(SLOT_SELECTION_COVERED_PREFIX + (slot_index + 1).ToStringLen(2));
-				
-			plant.LockToParent();
-		}
-	}
-		
-	void Fertilize( PlayerBase player, ItemBase item, float consumed_quantity, string selection_component )
-	{
-		Slot slot = GetSlotBySelection( selection_component );
-		
-		if ( slot != NULL )
-		{
-			string item_type = item.GetType();
-			
-			if ( slot.GetFertilityType() == ""  ||  slot.GetFertilityType() == item_type )
+			if (seed)
 			{
-				slot.SetFertilityType(item_type);
-				
-				float add_energy_to_slot = GetGame().ConfigGetFloat( string.Format("cfgVehicles %1 Horticulture AddEnergyToSlot", item_type) );
-				slot.m_FertilizerUsage = GetGame().ConfigGetFloat( string.Format("cfgVehicles %1 Horticulture ConsumedQuantity", item_type) );
-				
-				float coef = Math.Clamp( consumed_quantity / slot.m_FertilizerUsage, 0.0, 1.0 );
-				add_energy_to_slot = coef * add_energy_to_slot;
-				
-				slot.m_FertilizerQuantity += consumed_quantity;
-				slot.m_Fertility += add_energy_to_slot;
-				
-				if ( slot.GetFertilizerQuantity() >= slot.GetFertilizerQuantityMax() )
-				{
-					int slot_index = slot.GetSlotIndex();
-					
-					if (slot_index > -1)
-					{
-						UpdateSlotTexture( slot_index );
-						slot.SetFertilityState(eFertlityState.FERTILIZED);
-						// Set relevant bit
-						m_SlotFertilityState |= slot.GetFertilityState() << slot.GetSlotIndex();
-					}
-				}
-			}
-			else
-			{
-				slot.SetFertilizerQuantity(0);
-				slot.SetFertilityType("");
-				slot.SetFertilityState(eFertlityState.NONE);
-			}
-			SetSynchDirty();
-		}
-	}
-
-	bool IsCorrectFertilizer( ItemBase item, string selection_component )
-	{
-		Slot slot = GetSlotBySelection( selection_component );
-		
-		if ( slot != NULL )
-		{
-			string item_type = item.GetType();
-			
-			if ( slot.GetFertilityType() == "" || slot.GetFertilityType() == item_type )
-			{
-				return true;
+				seed.UnlockFromParent();
+				GetGame().ObjectDelete(seed);
+	
+				PlantBase plant = PlantBase.Cast( GetInventory().CreateAttachmentEx(slot.m_PlantType, slot.GetSlotId()));
+				int slot_index = slot.GetSlotIndex();
+				slot.SetPlant(plant);
+				plant.Init(this, slot.GetFertility(), slot.m_HarvestingEfficiency, slot.GetWater());
+				plant.LockToParent();
 			}
 		}
-		
-		return false;
-	}
-
-	bool NeedsFertilization( string selection_component )
-	{
-		Slot slot = GetSlotBySelection( selection_component );
-		
-		if ( slot )
-		{
-			if ( slot.GetFertilityState() == eFertlityState.NONE )
-			{
-				return true;
-			}
-		}
-		
-		return false;
 	}
 	
 	void SlotWaterStateUpdate( Slot slot )
 	{
 		// Set relevant bit
 		m_SlotWateredState |= slot.GetWateredState() << slot.GetSlotIndex();
-		SetSynchDirty();
+		
+		if (g_Game.IsServer())
+			SetSynchDirty();
+	
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		{
+			UpdateSlotTexture(slot.GetSlotIndex());
+		}
 	}
-
+	
+	void SlotFertilityStateUpdate(Slot slot)
+	{
+		// Set relevant bit
+		m_SlotFertilityState |= slot.GetFertilityState() << slot.GetSlotIndex();
+		
+		if (g_Game.IsServer())
+			SetSynchDirty();
+	
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		{
+			UpdateSlotTexture(slot.GetSlotIndex());
+		}
+	}
+	
+	//! This should be only called on server as the selections are synced to clients in C++
 	void UpdateSlotTexture( int slot_index )
 	{
 		Slot slot = m_Slots.Get( slot_index );
 		
 		// Show / Hide selections according to DIGGED or COVERED states.
-		
 		if ( slot.IsDigged()  ||  slot.IsPlanted() )
 		{
 			string str_hide = SLOT_SELECTION_COVERED_PREFIX + (slot_index + 1).ToStringLen(2);
@@ -608,22 +571,21 @@ class GardenBase extends ItemBase //BuildingSuper
 		}
 	}
 	
-	void RemoveSlot( int index )
+	void RemoveSlot(int index)
 	{
-		if ( m_Slots != NULL )
+		if (m_Slots != NULL)
 		{	
-			Slot slot = m_Slots.Get( index );
+			Slot slot = m_Slots.Get(index);
 			PlantBase plant = slot.GetPlant();
 			
-			if ( plant )
+			if (plant)
 			{
 				plant.UnlockFromParent();
 				plant.m_MarkForDeletion = true;
-				GetGame().ObjectDelete( plant );
+				GetGame().ObjectDelete(plant);
 			}
 			
-			slot.Init( GetBaseFertility() );
-			
+			slot.Init(GetBaseFertility());
 			// Clear relevant bit
 			slot.SetFertilityState(eFertlityState.NONE);
 			m_SlotFertilityState &= ~(1 << slot.GetSlotIndex());
@@ -631,15 +593,16 @@ class GardenBase extends ItemBase //BuildingSuper
 			slot.SetFertilityType(string.Empty);
 			slot.SetFertilizerQuantity(0);
 			
-			slot.SetWateredState( eWateredState.DRY );
+			slot.SetWateredState(eWateredState.DRY);
 			m_SlotWateredState &= ~(1 << slot.GetSlotIndex());
 			
 			slot.SetWater(0);
+			slot.m_State = Slot.STATE_DIGGED;
 			
 			SetSynchDirty();
 			
-			HideSelection( SLOT_SELECTION_COVERED_PREFIX + (index + 1).ToStringLen(2) );
-			UpdateSlotTexture( index );
+			HideSelection(SLOT_SELECTION_COVERED_PREFIX + (index + 1).ToStringLen(2));
+			UpdateSlotTexture(index);
 		}
 	}
 
@@ -807,17 +770,19 @@ class GardenBase extends ItemBase //BuildingSuper
 		}
 	}
 	
-	//Used to update
+	// Used to update all slots when watered by rain
 	void WaterAllSlots()
 	{
-		int state = 0;
-		
-		for ( int i = 0; i < m_Slots.Count(); i++ )
+		for (int i = 0; i < m_Slots.Count(); i++)
 		{
-			state += 1 * Math.Pow( 2, i );
+			Slot slot = m_Slots[i];
+			if (!slot)
+				continue;
+
+			slot.SetWateredState(eWateredState.WET);
+			UpdateSlotTexture(slot.GetSlotIndex());
+			m_SlotWateredState |= eWateredState.WET << slot.GetSlotIndex();
 		}
-		
-		SetSlotWateredState( state );
 	}
 	
 	array<ref Slot> GetSlots()
@@ -829,15 +794,15 @@ class GardenBase extends ItemBase //BuildingSuper
 	{
 		return m_Slots.Get(index);
 	}
-	
-	int GetSlotWateredState()
+
+	int GetSlotFertilityState()
 	{
-		return m_SlotWateredState;
+		return m_SlotFertilityState;
 	}
 	
-	void SetSlotWateredState( int newState )
+	void SetSlotFertilityState(int newState)
 	{
-		m_SlotWateredState = newState;
+		m_SlotFertilityState = newState;
 	}
 	
 	override void SetActions()
@@ -845,5 +810,94 @@ class GardenBase extends ItemBase //BuildingSuper
 		AddAction(ActionHarvestCrops);
 		AddAction(ActionRemovePlant);
 		AddAction(ActionRemoveSeed);
+	}
+	
+	//! DEPRECATED
+	[Obsolete("No replacement")]	
+	bool IsCorrectFertilizer( ItemBase item, string selection_component )
+	{
+		Slot slot = GetSlotBySelection( selection_component );
+		
+		if ( slot != NULL )
+		{
+			string item_type = item.GetType();
+			
+			if ( slot.GetFertilityType() == "" || slot.GetFertilityType() == item_type )
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	[Obsolete("No replacement")]
+	void UpdateTexturesOnAllSlots()
+	{
+		int slots_count = GetGardenSlotsCount();
+		for (int i = 0; i < slots_count; ++i)
+		{
+			UpdateSlotTexture(i);
+		}
+	}
+	
+	[Obsolete("No replacement")]
+	bool NeedsFertilization(string selection_component)
+	{
+		Slot slot = GetSlotBySelection(selection_component);
+		if (slot)
+		{
+			if (slot.GetFertilityState() == eFertlityState.NONE)
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	[Obsolete("CAContinuousFertilizeGardenSlot::FertilizeSlot is used now instead.")]
+	void Fertilize( PlayerBase player, ItemBase item, float consumed_quantity, string selection_component )
+	{
+		Slot slot = GetSlotBySelection( selection_component );
+		
+		if ( slot != NULL )
+		{
+			string item_type = item.GetType();
+			
+			if ( slot.GetFertilityType() == ""  ||  slot.GetFertilityType() == item_type )
+			{
+				slot.SetFertilityType(item_type);
+				
+				float add_energy_to_slot = GetGame().ConfigGetFloat( string.Format("cfgVehicles %1 Horticulture AddEnergyToSlot", item_type) );
+				slot.m_FertilizerUsage = GetGame().ConfigGetFloat( string.Format("cfgVehicles %1 Horticulture ConsumedQuantity", item_type) );
+				
+				float coef = Math.Clamp( consumed_quantity / slot.m_FertilizerUsage, 0.0, 1.0 );
+				add_energy_to_slot = coef * add_energy_to_slot;
+				
+				slot.m_FertilizerQuantity += consumed_quantity;
+				slot.m_Fertility += add_energy_to_slot;
+				
+				if ( slot.GetFertilizerQuantity() >= slot.GetFertilizerQuantityMax() )
+				{
+					int slot_index = slot.GetSlotIndex();
+					
+					if (slot_index > -1)
+					{
+						UpdateSlotTexture( slot_index );
+						slot.SetFertilityState(eFertlityState.FERTILIZED);
+						// Set relevant bit
+						m_SlotFertilityState |= slot.GetFertilityState() << slot.GetSlotIndex();
+					}
+				}
+			}
+			else
+			{
+				slot.SetFertilizerQuantity(0);
+				slot.SetFertilityType("");
+				slot.SetFertilityState(eFertlityState.NONE);
+			}
+			SetSynchDirty();
+		}
 	}
 }

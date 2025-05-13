@@ -518,13 +518,11 @@ class Inventory: LayoutHolder
 
 	void DraggingOverLeftPanel(Widget w, int x, int y, Widget receiver)
 	{
-		ErrorEx("Widget=" + w.GetName(), ErrorExSeverity.INFO);
 		m_LeftArea.DraggingOverHeader(w, x, y, receiver);
 	}
 
 	void DraggingOverRightPanel(Widget w, int x, int y, Widget receiver)
 	{
-		ErrorEx("Widget=" + w.GetName(), ErrorExSeverity.INFO);
 		m_RightArea.DraggingOverHeader(w, x, y, receiver);
 	}
 	

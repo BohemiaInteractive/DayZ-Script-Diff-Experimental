@@ -4028,7 +4028,8 @@ class PlayerBase extends ManBase
 	
 	override bool CanChangeStance(int previousStance, int newStance)
 	{
-		if (GetActionManager() && GetActionManager().GetRunningAction() && GetWeaponManager() && !GetWeaponManager().IsRunning())
+		// Check if the player is trying to perform restricted action while changing stance
+		if (GetActionManager() && GetActionManager().GetRunningAction() && !GetActionManager().GetRunningAction().CanBePerformedWhileChangingStance())
 			return false;
 
 		// Check if the player is playing a throwing animation

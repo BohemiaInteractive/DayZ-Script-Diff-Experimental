@@ -4,11 +4,13 @@ const float DEFAULT_SPAWN_DISTANCE = 0.6;
 
 class RecipeAnimationInfo
 {
+	string m_IngredientName;
 	int m_AnimationUID;
 	bool m_ItemVisible;
 	
-	void RecipeAnimationInfo(int animationID, bool itemVisible)
+	void RecipeAnimationInfo(string ingredient, int animationID, bool itemVisible)
 	{
+		m_IngredientName = ingredient;
 		m_AnimationUID = animationID;
 		m_ItemVisible = itemVisible;
 	}
@@ -21,7 +23,7 @@ class RecipeBase
 	string m_ItemsToCreate[MAXIMUM_RESULTS];
 	ref array<string> m_Ingredients[MAX_NUMBER_OF_INGREDIENTS];
 	ref array<string> m_SoundCategories[MAX_NUMBER_OF_INGREDIENTS];
-	protected ref map<string, ref RecipeAnimationInfo> m_AnimationInfos = new map<string, ref RecipeAnimationInfo>();	// used for overriding animation based on ingredient
+	protected ref array<ref RecipeAnimationInfo> m_AnimationInfos = new array<ref RecipeAnimationInfo>();	// used for overriding animation based on ingredient
 	
 	ItemBase m_Items[MAX_NUMBER_OF_INGREDIENTS];
 	
@@ -167,8 +169,14 @@ class RecipeBase
 
 		if(uid != BASE_CRAFT_ANIMATION_ID)
 		{
-			RecipeAnimationInfo rai = new RecipeAnimationInfo(uid, showItem);
-			m_AnimationInfos.Insert(ingredient, rai);
+			RecipeAnimationInfo rai = new RecipeAnimationInfo(ingredient, uid, showItem);
+			int animationIndex;
+			for(animationIndex = 0; animationIndex < m_AnimationInfos.Count(); animationIndex++)
+			{
+				if(GetGame().IsKindOf(ingredient, m_AnimationInfos[animationIndex].m_IngredientName))
+					break;
+			}
+			m_AnimationInfos.InsertAt(rai, animationIndex);
 		}
 	}
 	
@@ -638,9 +646,22 @@ class RecipeBase
 	RecipeAnimationInfo GetRecipeAnimationInfo(PlayerBase player, ItemBase mainItem, ItemBase target)
 	{
 		RecipeAnimationInfo recipeAnimationInfo;
-		if(!m_AnimationInfos.Find(mainItem.ClassName(), recipeAnimationInfo))
+		
+		int found = false;
+		
+		for(int i = 0; i < m_AnimationInfos.Count();i++)
 		{
-			recipeAnimationInfo = new RecipeAnimationInfo(BASE_CRAFT_ANIMATION_ID, false);
+			recipeAnimationInfo = m_AnimationInfos[i];
+			if(GetGame().IsKindOf(mainItem.GetType(), recipeAnimationInfo.m_IngredientName))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			recipeAnimationInfo = new RecipeAnimationInfo("ItemBase", BASE_CRAFT_ANIMATION_ID, false);
 		}
 
 		return recipeAnimationInfo;

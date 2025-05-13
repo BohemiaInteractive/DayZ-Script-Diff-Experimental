@@ -438,18 +438,27 @@ class WeaponChambering_MultiMuzzle extends WeaponChambering_Base
 	override void OnExit (WeaponEventBase e)
 	{
 		super.OnExit(e);
+		
 		for(int i = 0; i < m_weapon.GetMuzzleCount(); i++ )
 		{
 			if(!m_weapon.IsChamberFull(i))
 			{
-				if (m_weapon.PushCartridgeToChamber(i, m_damage, m_type))
-				{
-					if (LogManager.IsWeaponLogEnable()) { wpnDebugPrint("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering_Cartridge, ok - loaded chamber"); }
+				if(AcquireCartridgeFromMagazine())
+				{					
+					if (m_weapon.PushCartridgeToChamber(i, m_damage, m_type))
+					{
+						if (LogManager.IsWeaponLogEnable()) { wpnDebugPrint("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering_Cartridge, ok - loaded chamber"); }
+					}
+					else
+					{
+						if (LogManager.IsWeaponLogEnable()) { wpnDebugPrint("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering_Cartridge, error - cannot load chamber chamber!"); }
+						DropBullet(e);
+					}
+	
+					m_type = string.Empty;
+					
+					return;
 				}
-				else
-					if (LogManager.IsWeaponLogEnable()) { wpnDebugPrint("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering_Cartridge, error - cannot load chamber chamber!"); }
-				m_type = string.Empty;
-				return;
 			}
 		}
 	}

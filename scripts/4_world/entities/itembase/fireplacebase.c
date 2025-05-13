@@ -363,6 +363,8 @@ class FireplaceBase : ItemBase
 				m_UnderObjectDecalSpawnComponent.RemoveDecal();
 				m_UnderObjectDecalSpawnComponent = null;
 			}
+			
+			DestroyAreaDamage();
 		}
 		
 		m_SurfaceUnderWetnessModifier = GetSurfaceWetnessOnHeatModifier(this);
@@ -1638,6 +1640,12 @@ class FireplaceBase : ItemBase
 	{
 		m_HasAshes = has_ashes;
 	}
+	
+	//! returns true when FP is heating or cooling
+	bool IsProcessing()
+	{
+		return ((m_HeatingTimer && m_HeatingTimer.IsRunning()) || (m_CoolingTimer && m_CoolingTimer.IsRunning()));
+	}
 
 	//Is in oven state
 	bool IsOven()
@@ -1982,8 +1990,7 @@ class FireplaceBase : ItemBase
 			return;
 		}
 		
-		//float target = g_Game.GetMission().GetWorldData().GetBaseEnvTemperatureAtObject(this);
-		float target = 10;
+		float target = Math.Max(g_Game.GetMission().GetWorldData().GetBaseEnvTemperatureAtObject(this),10);
 		
 		if (temperature > target)
 		{
@@ -2506,6 +2513,16 @@ class FireplaceBase : ItemBase
 			return false;
 		}
 		return true;
+	}
+	
+	override bool CanPutIntoHands(EntityAI parent)
+	{
+		if (!super.CanPutIntoHands(parent))
+		{
+			return false;
+		}
+		
+		return GetTemperature() <= GameConstants.STATE_HOT_LVL_ONE; //say 'no' to 3rd degree burns!
 	}
 
 	//Action condition for building oven

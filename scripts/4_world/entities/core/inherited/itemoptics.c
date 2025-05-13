@@ -210,6 +210,11 @@ class ItemOptics extends InventoryItemSuper
 		return type.IsUsingOptics2DModel();
 	}
 	
+	bool IsSightOnly()
+	{
+		return false;
+	}
+	
 	override void OnWorkStart()
 	{
 		if (!GetGame().IsDedicatedServer())

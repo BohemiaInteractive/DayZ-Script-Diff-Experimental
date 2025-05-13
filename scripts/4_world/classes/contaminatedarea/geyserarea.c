@@ -59,7 +59,9 @@ class GeyserArea : EffectArea
 		{
 			if (m_TimeElapsed > PRE_ERUPTION_DURATION)
 			{
+				#ifdef ENABLE_LOGGING
 				Debug.Log(m_Name + ": ERUPTION_SOON, interval: " + m_RandomizedInterval + " sec");
+				#endif
 				
 				m_GeyserTrigger.AddGeyserState(EGeyserState.ERUPTION_SOON);
 				
@@ -70,7 +72,9 @@ class GeyserArea : EffectArea
 		{
 			if (m_TimeElapsed > m_RandomizedInterval)
 			{
+				#ifdef ENABLE_LOGGING
 				Debug.Log(m_Name + ": ERUPTING_PRIMARY, interval: " + m_RandomizedDuration + " sec");
+				#endif
 				
 				m_GeyserTrigger.RemoveGeyserState(EGeyserState.ERUPTION_SOON);
 				m_GeyserTrigger.AddGeyserState(EGeyserState.ERUPTING_PRIMARY);
@@ -88,7 +92,9 @@ class GeyserArea : EffectArea
 			{	
 				RandomizeIntervals();
 				
+				#ifdef ENABLE_LOGGING
 				Debug.Log(m_Name + ": ERUPTION_SOON, interval: " + m_RandomizedInterval + " sec");
+				#endif
 				
 				m_GeyserTrigger.RemoveGeyserState(EGeyserState.ERUPTING_PRIMARY);
 				m_GeyserTrigger.RemoveGeyserState(EGeyserState.ERUPTING_SECONDARY);

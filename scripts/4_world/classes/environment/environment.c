@@ -1469,24 +1469,28 @@ class Environment
 	protected void GatherTemperatureSources()
 	{
 		m_UTemperatureSources.Clear();
+		
+		// Calculate min and max positions of the box
+		vector pos = m_Player.GetPosition();
+		vector minPos = pos - Vector(GameConstants.ENVIRO_TEMP_SOURCES_LOOKUP_RADIUS, GameConstants.ENVIRO_TEMP_SOURCES_LOOKUP_RADIUS / 2, GameConstants.ENVIRO_TEMP_SOURCES_LOOKUP_RADIUS);
+		vector maxPos = pos + Vector(GameConstants.ENVIRO_TEMP_SOURCES_LOOKUP_RADIUS, GameConstants.ENVIRO_TEMP_SOURCES_LOOKUP_RADIUS / 2, GameConstants.ENVIRO_TEMP_SOURCES_LOOKUP_RADIUS);
 
-		array<Object> nearestObjects = new array<Object>();
-		GetGame().GetObjectsAtPosition(m_Player.GetPosition(), GameConstants.ENVIRO_TEMP_SOURCES_LOOKUP_RADIUS, nearestObjects, null);
-
-		foreach (Object nearestObject : nearestObjects)
+		array<EntityAI> nearestObjects = {};
+		DayZPlayerUtils.SceneGetEntitiesInBox(minPos, maxPos, nearestObjects, QueryFlags.STATIC|QueryFlags.DYNAMIC); //STATIC catches area effects and other static (or 'static') sources
+		
+		foreach (EntityAI nearestEntity : nearestObjects)
 		{
-			EntityAI ent = EntityAI.Cast(nearestObject);
-			if (ent && ent.IsUniversalTemperatureSource() && ent != m_Player)
+			if (nearestEntity.IsUniversalTemperatureSource() && nearestEntity != m_Player)
 			{
 				//! skip - Temperature Source is not affecting player entities
-				if (!ent.GetUniversalTemperatureSource().GetLambda().AffectsPlayer())
+				if (!nearestEntity.GetUniversalTemperatureSource().GetLambda().AffectsPlayer())
 					continue;
 
 				//! skip - Temperature Source is too far
-				if (vector.DistanceSq(m_Player.GetPosition(), ent.GetPosition()) > Math.SqrFloat(ent.GetUniversalTemperatureSource().GetMaxRange()))
+				if (vector.DistanceSq(pos, nearestEntity.GetPosition()) > Math.SqrFloat(nearestEntity.GetUniversalTemperatureSource().GetMaxRange()))
 					continue;
 
-				m_UTemperatureSources.Insert(ent.GetUniversalTemperatureSource());
+				m_UTemperatureSources.Insert(nearestEntity.GetUniversalTemperatureSource());
 			}
 		}
 

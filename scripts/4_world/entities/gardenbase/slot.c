@@ -16,6 +16,7 @@ class Slot
 {
 	static const int 		STATE_DIGGED 		= 1;
 	static const int 		STATE_PLANTED 		= 2;
+	static const int		FERTILIZER_USAGE	= 200;
 	
 	private int 			m_WaterQuantity;
 	static private int 		m_WaterNeeded 		= 190; // How much water is needed to water a plant from a bottle. Value is in mililitres
@@ -28,7 +29,7 @@ class Slot
 	int m_slotIndex;
 	int m_slotId;
 	
-	string m_FertilizerType;
+	string m_FertilizerType = "";
 	int    m_FertilityState = eFertlityState.NONE;
 	int    m_WateredState = eWateredState.DRY;
 	string m_DiggedSlotComponent; // example: "Component02" for the 1st slot in GardenBase
@@ -105,6 +106,7 @@ class Slot
 		if (plant)
 		{
 			plant.SetSlot(this);
+			plant.SetGarden(m_Garden);
 		}
 	}
 	
@@ -130,20 +132,19 @@ class Slot
 	
 	void GiveWater( float consumed_quantity )
 	{
-		bool needed_water = NeedsWater();
-		m_WaterQuantity = Math.Clamp(m_WaterQuantity + consumed_quantity, 0, GetWaterMax());		
+		m_WaterQuantity = Math.Clamp(m_WaterQuantity + consumed_quantity, 0.0, GetWaterMax());		
 		
 		if (!g_Game.IsServer())
 			return;
 		
-		if (!GetPlant() && GetSeed() && !needed_water) // if there is no seed then do not create plant. Plant will be created when the seed is inserted into watered slot.
+		if (!GetPlant() && GetSeed() && !NeedsWater()) // if there is no seed then do not create plant. Plant will be created when the seed is inserted into watered slot.
 			GetGarden().CreatePlant(this);
-		
-		if ( needed_water != NeedsWater() )
+				
+		bool needsWater = NeedsWater();
+		if (m_WateredState == eWateredState.DRY && !needsWater)
 		{
-			SetWateredState( eWateredState.WET );
-			if ( m_Garden.GetSlotWateredState() != m_Garden.GetMaxWaterStateVal() )
-				m_Garden.SlotWaterStateUpdate( this );
+			SetWateredState(eWateredState.WET);
+			m_Garden.SlotWaterStateUpdate(this);
 		}
 	}
 	
@@ -199,6 +200,11 @@ class Slot
 	void SetFertilizerQuantity(float fertility)
 	{
 		m_FertilizerQuantity = fertility;
+		if (m_FertilizerQuantity >= m_FertilizerQuantityMax)
+		{
+			SetFertilityState(eFertlityState.FERTILIZED);
+			m_Garden.SlotFertilityStateUpdate(this);
+		}
 	}
 	
 	float GetFertilizerQuantityMax()
@@ -273,6 +279,7 @@ class Slot
 		
 		return false;
 	}
+	
 	bool IsPlanted()
 	{
 		if (m_State == STATE_PLANTED)
@@ -286,14 +293,11 @@ class Slot
 	void Init( float base_fertility )
 	{
 		m_Fertility = base_fertility;
-		m_FertilizerUsage = 200;
+		m_FertilizerUsage = FERTILIZER_USAGE;
 		m_FertilizerQuantity = 0.0;
 		m_FertilizerType = "";
 		m_FertilityState = eFertlityState.NONE;
-		
-		m_WaterQuantity = 0;
 		m_WateredState = eWateredState.DRY;
-		
 		m_HarvestingEfficiency = 1.0;
 		//m_DiggedSlotComponent = "";
 		m_State = STATE_DIGGED;
@@ -327,15 +331,44 @@ class Slot
 		
 		if ( version >= 102 )
 		{
-			ctx.Read( m_Fertility );       
-			ctx.Read( m_FertilizerUsage );
-			ctx.Read( m_FertilizerQuantity );       
-			ctx.Read( m_HarvestingEfficiency );
-			ctx.Read( m_State );
+			if(!ctx.Read( m_Fertility ))
+				return false;
+
+			if(!ctx.Read( m_FertilizerUsage ))
+				return false;
 			
-			if ( !ctx.Read( m_FertilizerType ) )
+			if(!ctx.Read( m_FertilizerQuantity ))
+				return false;
+			
+			if(!ctx.Read( m_HarvestingEfficiency ))
+				return false;
+			
+			if(!ctx.Read( m_State ))
+				return false;
+   			
+			if (!ctx.Read( m_FertilizerType ))
 			{
 				m_FertilizerType = "";
+			}
+			else
+			{
+				if (m_FertilizerType != "")
+				{
+					SetFertilityState(eFertlityState.FERTILIZED);
+				}
+			}
+		}
+		
+		if (version >= 142)
+		{
+			int wateredState;
+			if(!ctx.Read( wateredState ))
+			{
+				return false;
+			}
+			else
+			{
+				SetWateredState(wateredState);
 			}
 		}
 		
@@ -350,5 +383,6 @@ class Slot
 		ctx.Write( m_HarvestingEfficiency );
 		ctx.Write( m_State );
 		ctx.Write( m_FertilizerType );
+		ctx.Write( m_WateredState );
 	}
 }
