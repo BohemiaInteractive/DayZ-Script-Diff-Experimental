@@ -82,12 +82,6 @@ class CAContinuousFertilizeGardenSlot : CAContinuousQuantity
 				if (m_Slot.GetFertilityType() != "" && m_Slot.GetFertilityType() != itemType)
 				{
 					m_Slot.SetFertilityType(itemType);
-					//m_Slot.SetFertility(0);
-					//m_Slot.SetFertilizerQuantity(0);
-					//m_Slot.SetFertilityState(eFertlityState.NONE);
-					
-					//m_AlreadyFilledAmount = 0;
-					//m_SlotFertilizerNeed = GetGame().ConfigGetFloat("cfgVehicles " + itemType + " Horticulture ConsumedQuantity");
 				}
 				
 				m_SpentQuantity = m_QuantityUsedPerSecond * action_data.m_Player.GetDeltaT();

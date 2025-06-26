@@ -1,4 +1,4 @@
-class ContaminatedArea_Local : ContaminatedArea_Dynamic
+class ContaminatedArea_Local : ContaminatedArea_DynamicBase
 {
 	const float TICK_RATE 	= 1;
 	ref Timer 	m_Timer1 	= new Timer;
@@ -32,10 +32,13 @@ class ContaminatedArea_Local : ContaminatedArea_Dynamic
 		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 			m_Timer1.Run(TICK_RATE, this, "Tick", NULL, true);
 	}
-	
+
 	override void DeferredInit()
 	{
 		super.DeferredInit();
+		
+		if (!m_ToxicClouds)
+			m_ToxicClouds = new array<Particle>();
 
 		SetupZoneData(new EffectAreaParams);
 	}
@@ -50,11 +53,6 @@ class ContaminatedArea_Local : ContaminatedArea_Dynamic
 		
 		props.Insert(ParticleProperties(partPos, ParticlePropertiesFlags.PLAY_ON_CREATION, null, GetGame().GetSurfaceOrientation( partPos[0], partPos[2] ), this));
 		++count;
-	}	
-	
-	override void SpawnItems()
-	{
-		// override base funcionality as we don't want any items spawned here
 	}
 	
 	override float GetStartDecayLifetime()

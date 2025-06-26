@@ -78,6 +78,8 @@ class EmoteLauncher
 	static const int FORCE_ALL = 2;
 	
 	protected bool m_InterruptsSameIDEmote;
+	protected bool m_IsStartGuaranteed; //remains in queue until played or canceled directly (logout sit pose etc.)
+	protected bool m_SyncRequestSent;
 	protected int m_ForcePlayEmote;
 	protected int m_ID;
 	
@@ -86,6 +88,8 @@ class EmoteLauncher
 		m_ID = emoteID;
 		m_InterruptsSameIDEmote = interrupts_same;
 		m_ForcePlayEmote = FORCE_NONE;
+		m_IsStartGuaranteed = false;
+		m_SyncRequestSent = false;
 	}
 	
 	void SetForced(int mode)
@@ -101,6 +105,26 @@ class EmoteLauncher
 	int GetID()
 	{
 		return m_ID;
+	}
+	
+	void SetStartGuaranteed(bool guaranted)
+	{
+		m_IsStartGuaranteed = guaranted;
+	}
+	
+	bool IsStartGuaranteed()
+	{
+		return m_IsStartGuaranteed;
+	}
+	
+	void VerifySyncRequest()
+	{
+		m_SyncRequestSent = true;
+	}
+	
+	bool WasSynced()
+	{
+		return m_SyncRequestSent;
 	}
 }
 
@@ -121,6 +145,8 @@ class EmoteManager
 	bool 					m_CancelEmote;
 	bool 					m_InstantCancelEmote;
 	bool 					m_GestureInterruptInput;
+	protected bool 			m_DisconnectEmoteQueued; //reaction to client logging out
+	protected bool 			m_DeferredEmoteLauncherCleanup; //safe cleanup from the outside
 	protected bool			m_ItemToHands; //deprecated
 	protected bool			m_ItemIsOn;
 	protected bool			m_MouseButtonPressed;
@@ -128,6 +154,7 @@ class EmoteManager
 	protected bool 			m_controllsLocked;
 	protected bool 			m_InventoryAccessLocked;
 	protected bool 			m_EmoteLockState;
+	protected int 			m_DeferredGuaranteedEmoteId; //secondary emote ID to ensure playback
 	protected int 			m_DeferredEmoteExecution;
 	protected int  			m_GestureID;
 	protected int			m_PreviousGestureID;
@@ -155,8 +182,11 @@ class EmoteManager
 		m_ItemIsOn = false;
 		m_controllsLocked = false;
 		m_InventoryAccessLocked = false;
+		m_DeferredEmoteLauncherCleanup = false;
+		m_DisconnectEmoteQueued = false;
 		m_RPSOutcome = -1;
 		m_DeferredEmoteExecution = CALLBACK_CMD_INVALID;
+		m_DeferredGuaranteedEmoteId = -1;
 		
 		m_InterruptInputs = new array<string>;
 		m_InterruptInputs.Insert("UAMoveForward");
@@ -270,6 +300,11 @@ class EmoteManager
 		return false;
 	}
 	
+	void SetPending(bool state)
+	{
+		m_bEmoteIsRequestPending = state;
+	}
+	
 	//Called from players commandhandler each frame, checks input
 	void Update(float deltaT)
 	{
@@ -279,7 +314,7 @@ class EmoteManager
 		
 		if (m_ItemToBeCreated)
 		{
-			if (!m_Player.GetItemInHands() && GetGame().IsServer())
+			if (GetGame().IsServer() && m_Callback && !m_Player.GetItemInHands())
 			{
 				m_Player.GetHumanInventory().CreateInHands("SurrenderDummyItem");
 			}
@@ -290,41 +325,59 @@ class EmoteManager
 		#ifndef SERVER
 			gestureSlot = DetermineGestureIndex();
 		#endif
+		
+		//nuclear solution to inventory question
+		if (GetGame().IsClient() && GetGame().GetUIManager().FindMenu(MENU_INVENTORY) && IsEmotePlaying())
+			m_Player.CloseInventoryMenu();
+		
 		//deferred emote cancel
 		if (m_InstantCancelEmote) //'hard' cancel
 		{
 			if (m_Callback)
-			{
 				m_Callback.Cancel();
-			}
 			
-			if (m_MenuEmote)
-			{
-				m_MenuEmote = null;
-			}
-			m_DeferredEmoteExecution = CALLBACK_CMD_INVALID;
+			ClearEmoteLauncher();
+			ClearDeferredExecution();
 			m_InstantCancelEmote = false;
-			m_bEmoteIsRequestPending = false;
-			SetEmoteLockState(false);
+			SetPending(false);
+			
+			if (m_IsSurrendered)
+				ClearSurrenderState();
+			else
+				SetEmoteLockState(false);
 		}
 		else if (m_CancelEmote) //'soft' cancel
 		{
-			if (m_IsSurrendered)
-			{
-				EndSurrenderRequest(new SurrenderData);
-			}
-			else if (m_Callback)
-			{
-				m_Callback.InternalCommand(DayZPlayerConstants.CMD_ACTIONINT_INTERRUPT);
-			}
-			
-			m_bEmoteIsRequestPending = false;
+			SetPending(false);
 			m_CancelEmote = false;
+			
+			if (m_IsSurrendered)
+				ClearSurrenderState();
+			else if (m_Callback)
+				m_Callback.InternalCommand(DayZPlayerConstants.CMD_ACTIONINT_INTERRUPT);
 		}
 		
-		if (m_MenuEmote && m_MenuEmote.GetForced() > EmoteLauncher.FORCE_NONE && !GetGame().IsDedicatedServer()) //forced emote playing
+		if (m_DeferredEmoteLauncherCleanup)
 		{
-			SendEmoteRequestSync(m_MenuEmote.GetID());
+			ClearEmoteLauncher(true);
+			m_DeferredEmoteLauncherCleanup = false;
+		}
+		
+		//if (m_DisconnectEmoteQueued && (!m_bEmoteIsPlaying && !m_bEmoteIsRequestPending))
+		if (m_DisconnectEmoteQueued)
+		{
+			if (!m_MenuEmote || !m_MenuEmote.IsStartGuaranteed())
+			{
+				CreateEmoteCBFromMenu(EmoteConstants.ID_EMOTE_SITA);
+				m_MenuEmote.SetForced(EmoteLauncher.FORCE_DIFFERENT);
+				m_MenuEmote.SetStartGuaranteed(true);
+			}
+		}
+		
+		bool forcedEmoteQueuedClient = m_MenuEmote && !m_MenuEmote.WasSynced() && m_MenuEmote.GetForced() > EmoteLauncher.FORCE_NONE && !GetGame().IsDedicatedServer();
+		if (forcedEmoteQueuedClient) //regular forced emote playing
+		{
+			SendEmoteRequestSyncEx(m_MenuEmote);
 		}
 		else if (m_Callback)
 		{
@@ -399,7 +452,7 @@ class EmoteManager
 				m_Callback.Cancel();
 			}
 			
-			if (m_MenuEmote && m_bEmoteIsPlaying)
+			if (m_MenuEmote && !m_MenuEmote.IsStartGuaranteed() && m_bEmoteIsPlaying)
 			{
 				SendEmoteRequestSync(CALLBACK_CMD_END);
 			}
@@ -419,7 +472,7 @@ class EmoteManager
 		{
 			if (m_bEmoteIsRequestPending && (m_Player.IsUnconscious() || !m_Player.IsAlive()))
 			{
-				m_bEmoteIsRequestPending = false;
+				SetPending(false);
 			}
 			
 			if (m_bEmoteIsPlaying)
@@ -431,8 +484,8 @@ class EmoteManager
 				PlaySurrenderInOut(false);
 				return;
 			}
-			// getting out of surrender state - hard cancel
-			else if (m_IsSurrendered && (m_HIC.IsSingleUse() || m_HIC.IsContinuousUseStart() || m_HIC.IsWeaponRaised()))
+			// getting out of surrender state
+			else if (m_IsSurrendered && m_Player.GetItemInHands() && (m_HIC.IsSingleUse() || m_HIC.IsContinuousUseStart() || m_HIC.IsWeaponRaised()))
 			{
 				if (m_Player.GetItemInHands())
 					m_Player.GetItemInHands().DeleteSafe();//Note, this keeps item 'alive' until it is released by all the systems (inventory swapping etc.)
@@ -441,19 +494,24 @@ class EmoteManager
 			// fallback in case lock does not end properly
 			else if (m_IsSurrendered && (!m_Player.GetItemInHands() || (m_Player.GetItemInHands() && m_Player.GetItemInHands().GetType() != "SurrenderDummyItem" && m_EmoteLockState)))
 			{
-				m_IsSurrendered = false;
-				SetEmoteLockState(false);
+				ClearSurrenderState();
 				return;
 			}
 			//actual emote launch
 			else if (m_DeferredEmoteExecution > CALLBACK_CMD_INVALID)
 			{
 				PlayEmote(m_DeferredEmoteExecution);
+				//m_DeferredGuaranteedEmoteId = CALLBACK_CMD_INVALID;
+			}
+			else if (m_DeferredGuaranteedEmoteId > CALLBACK_CMD_INVALID)
+			{
+				PlayEmote(m_DeferredGuaranteedEmoteId);
+				m_DeferredGuaranteedEmoteId = CALLBACK_CMD_INVALID;
 			}
 			//client-side emote launcher
-			else if (!m_bEmoteIsPlaying && m_MenuEmote && !GetGame().IsDedicatedServer())
+			else if (!m_bEmoteIsPlaying && m_MenuEmote && !m_MenuEmote.WasSynced() && !GetGame().IsDedicatedServer())
 			{
-				SendEmoteRequestSync(m_MenuEmote.GetID());
+				SendEmoteRequestSyncEx(m_MenuEmote);
 			}
 			else if (!m_MenuEmote && gestureSlot > 0)
 			{
@@ -472,22 +530,13 @@ class EmoteManager
 			return;
 		}
 		
-		//surrender "state" switch
-		if (m_CurrentGestureID == EmoteConstants.ID_EMOTE_SURRENDER)
-		{
-			m_IsSurrendered = !m_IsSurrendered;
-			SetEmoteLockState(m_IsSurrendered);
-		}
-		
 		m_CurrentGestureID = 0;
-		
 		m_bEmoteIsPlaying = false;
-		m_bEmoteIsRequestPending = false;
+		SetPending(false);
 		
 		if (m_IsSurrendered)
-		{
 			return;
-		}
+		
 		m_GestureInterruptInput = false;
 		SetEmoteLockState(false);
 
@@ -503,26 +552,37 @@ class EmoteManager
 		{
 			int forced = EmoteLauncher.FORCE_NONE;
 			int gestureID = -1;
+			int cancelID = 0;
 			int random = -1;
+			bool guaranteed = false;
 			
-			if (ctx.Read(gestureID))
+			if (!ctx.Read(gestureID))
+			{
+				cancelID = CALLBACK_CMD_INSTACANCEL; //fallback solution in case of severe data corruption
+			}
+			else
 			{
 				ctx.Read(forced);
+				ctx.Read(guaranteed);
 				if (ctx.Read(random))
-				{
 					m_RPSOutcome = random;
-				}
-				
 				//server-side check, sends CALLBACK_CMD_INSTACANCEL as a fail
-				if (forced == EmoteLauncher.FORCE_NONE && !CanPlayEmote(gestureID))
-					gestureID = CALLBACK_CMD_INSTACANCEL;
-				
-				ScriptJunctureData pCtx = new ScriptJunctureData;
-				pCtx.Write(gestureID);
-				pCtx.Write(forced);
-				m_Player.SendSyncJuncture(DayZPlayerSyncJunctures.SJ_GESTURE_REQUEST, pCtx);
-				m_bEmoteIsRequestPending = true;
+				bool canPlay = CanPlayEmote(gestureID);
+				if (!canPlay && (forced == EmoteLauncher.FORCE_NONE || !m_Player.GetCommand_Move())) //HOTFIX for swim and such
+				{
+					gestureID = CALLBACK_CMD_INVALID;
+					cancelID = CALLBACK_CMD_INSTACANCEL;
+				}
 			}
+			
+			ScriptJunctureData pCtx = new ScriptJunctureData;
+			pCtx.Write(gestureID);
+			pCtx.Write(cancelID);
+			pCtx.Write(forced);
+			pCtx.Write(guaranteed);
+			m_Player.SendSyncJuncture(DayZPlayerSyncJunctures.SJ_GESTURE_REQUEST, pCtx);
+			SetPending(true);
+			
 			return true;
 		}
 		return false;
@@ -531,15 +591,20 @@ class EmoteManager
 	//server and client
 	void OnSyncJuncture(int pJunctureID, ParamsReadContext pCtx)
 	{
+		int gestureID;
+		int cancelID;
 		int forced;
-		int gesture_id;
+		bool guaranteed;
+		
 		if (!m_CancelEmote)
 		{
-			pCtx.Read(gesture_id);
+			pCtx.Read(gestureID);
+			pCtx.Read(cancelID);
 			pCtx.Read(forced);
+			pCtx.Read(guaranteed);
 			
 			EmoteBase emoteData;
-			if ((m_Callback || m_IsSurrendered) && (forced == EmoteLauncher.FORCE_ALL || (forced == EmoteLauncher.FORCE_DIFFERENT && m_CurrentGestureID != gesture_id)))
+			if ((m_Callback || m_IsSurrendered) && (forced == EmoteLauncher.FORCE_ALL || (forced == EmoteLauncher.FORCE_DIFFERENT && m_CurrentGestureID != gestureID)))
 			{	
 				if (m_Callback)
 				{
@@ -551,7 +616,7 @@ class EmoteManager
 				m_CancelEmote = true;
 			}
 			
-			if (gesture_id == CALLBACK_CMD_INSTACANCEL)
+			if (cancelID == CALLBACK_CMD_INSTACANCEL)
 			{
 				if (m_Callback)
 				{
@@ -564,7 +629,9 @@ class EmoteManager
 				m_InstantCancelEmote = true;
 			}
 			
-			m_DeferredEmoteExecution = gesture_id;
+			if (guaranteed)
+				m_DeferredGuaranteedEmoteId = gestureID;
+			m_DeferredEmoteExecution = gestureID;
 		}
 		else
 			m_CancelEmote = false;
@@ -585,10 +652,13 @@ class EmoteManager
 	
 	bool PlayEmote(int id)
 	{
-		m_DeferredEmoteExecution = CALLBACK_CMD_INVALID;
-		m_bEmoteIsRequestPending = false;
+		ClearEmoteLauncher();
+		if (id == m_DeferredGuaranteedEmoteId)
+			m_DeferredGuaranteedEmoteId = CALLBACK_CMD_INVALID;
+		ClearDeferredExecution();
+		SetPending(false);
 		
-		if (CanPlayEmote(id))
+		//if (CanPlayEmote(id))
 		{
 			EmoteBase emote;
 			m_NameEmoteMap.Find(id,emote);
@@ -626,7 +696,7 @@ class EmoteManager
 			}
 		}
 		
-		SetEmoteLockState(m_bEmoteIsPlaying);
+		SetEmoteLockState(IsEmotePlaying());
 		return m_bEmoteIsPlaying;
 	}
 	
@@ -756,7 +826,23 @@ class EmoteManager
 	
 	void CreateEmoteCBFromMenu(int id, bool interrupts_same = false)
 	{
-		m_MenuEmote = new EmoteLauncher(id,interrupts_same);
+		if (ClearEmoteLauncher())
+			m_MenuEmote = new EmoteLauncher(id,interrupts_same);
+	}
+	
+	protected bool ClearEmoteLauncher(bool forced = false)
+	{
+		if (!forced && m_MenuEmote && m_MenuEmote.IsStartGuaranteed())
+			return false;
+		
+		m_MenuEmote = null;
+		return true;
+	}
+	
+	protected bool ClearDeferredExecution()
+	{
+		m_DeferredEmoteExecution = CALLBACK_CMD_INVALID;
+		return true;
 	}
 	
 	EmoteLauncher GetEmoteLauncher()
@@ -768,10 +854,8 @@ class EmoteManager
 	{
 		m_Callback.InternalCommand(DayZPlayerConstants.CMD_ACTIONINT_INTERRUPT);
 		
-		if (m_MenuEmote)
-			m_MenuEmote = null;
-		
-		m_DeferredEmoteExecution = CALLBACK_CMD_INVALID;
+		ClearEmoteLauncher();
+		ClearDeferredExecution();
 	}
 	
 	void EndCallbackCommand()
@@ -785,19 +869,15 @@ class EmoteManager
 			m_Callback.InternalCommand(DayZPlayerConstants.CMD_ACTIONINT_END);
 		}
 		
-		if (m_MenuEmote)
-			m_MenuEmote = null;
-		m_DeferredEmoteExecution = CALLBACK_CMD_INVALID;
+		ClearEmoteLauncher();
+		ClearDeferredExecution();
 	}
 	
 	//sends request (client)
 	void SendEmoteRequestSync(int id)
 	{
 		int forced = EmoteLauncher.FORCE_NONE;
-		if (m_MenuEmote)
-		{
-			forced = m_MenuEmote.GetForced();
-		}
+		bool guaranteedLaunch = false;
 		
 		m_RPSOutcome = -1;
 		switch (id)
@@ -823,8 +903,8 @@ class EmoteManager
 		if (GetGame().IsMultiplayer() && GetGame().IsClient())
 		{
 			bool canProceed = true; //running callbacks in certain state can block additional actions
-			EmoteBase emoteData;
-			if (m_Callback && m_NameEmoteMap.Find(m_CurrentGestureID,emoteData))
+			EmoteBase emoteData = m_NameEmoteMap.Get(m_CurrentGestureID);
+			if (m_Callback && emoteData)
 			{
 				canProceed = emoteData.CanBeCanceledNormally(m_Callback);
 			}
@@ -834,18 +914,19 @@ class EmoteManager
 				ctx.Write(INPUT_UDT_GESTURE);
 				ctx.Write(id);
 				ctx.Write(forced);
+				ctx.Write(guaranteedLaunch);
 				if (m_RPSOutcome != -1)
 				{
 					ctx.Write(m_RPSOutcome);
 				}
 				ctx.Send();
-				m_bEmoteIsRequestPending = true;
+				SetPending(true);
 			}
 			else
 			{
-				m_bEmoteIsRequestPending = false;
+				SetPending(false);
 			}
-			m_MenuEmote = NULL;
+			
 			SetEmoteLockState(IsEmotePlaying());
 		}
 		else if (!GetGame().IsMultiplayer())
@@ -866,7 +947,87 @@ class EmoteManager
 			{
 				SetEmoteLockState(IsEmotePlaying());
 			}
-			m_MenuEmote = NULL;
+		}
+	}
+	
+	//! To avoid mixing m_MenuEmote with exceptional sync commands
+	protected void SendEmoteRequestSyncEx(notnull EmoteLauncher launcher)
+	{
+		int id = launcher.GetID();
+		int forced = launcher.GetForced();
+		bool guaranteedLaunch = launcher.IsStartGuaranteed();
+		
+		m_RPSOutcome = -1;
+		switch (id)
+		{
+			case EmoteConstants.ID_EMOTE_RPS :
+				m_RPSOutcome = Math.RandomInt(0,3);
+			break;
+			
+			case EmoteConstants.ID_EMOTE_RPS_R :
+				m_RPSOutcome = 0;
+			break;
+			
+			case EmoteConstants.ID_EMOTE_RPS_P :
+				m_RPSOutcome = 1;
+			break;
+			
+			case EmoteConstants.ID_EMOTE_RPS_S :
+				m_RPSOutcome = 2;
+			break;
+		}
+		
+		ScriptInputUserData ctx = new ScriptInputUserData;
+		if (GetGame().IsMultiplayer() && GetGame().IsClient())
+		{
+			bool canProceed = true; //running callbacks in certain state can block additional actions
+			EmoteBase emoteData = m_NameEmoteMap.Get(m_CurrentGestureID);
+			if (m_Callback && emoteData)
+			{
+				canProceed = emoteData.CanBeCanceledNormally(m_Callback);
+			}
+			
+			if (ctx.CanStoreInputUserData() && ((CanPlayEmote(id) && CanPlayEmoteClientCheck(id)) || forced) && canProceed)
+			{
+				ctx.Write(INPUT_UDT_GESTURE);
+				ctx.Write(id);
+				ctx.Write(forced);
+				ctx.Write(guaranteedLaunch);
+				if (m_RPSOutcome != -1)
+				{
+					ctx.Write(m_RPSOutcome);
+				}
+				ctx.Send();
+				launcher.VerifySyncRequest();
+				SetPending(true);
+			}
+			else
+			{
+				SetPending(false);
+			}
+			
+			if (launcher == m_MenuEmote)
+				ClearEmoteLauncher();
+			SetEmoteLockState(IsEmotePlaying());
+		}
+		else if (!GetGame().IsMultiplayer())
+		{
+			if (id == CALLBACK_CMD_END)
+			{
+				EndCallbackCommand();
+			}
+			else if (id == CALLBACK_CMD_GESTURE_INTERRUPT)
+			{
+				m_DeferredEmoteExecution = CALLBACK_CMD_GESTURE_INTERRUPT;
+			}
+			else if (CanPlayEmote(id) && CanPlayEmoteClientCheck(id))
+			{
+				PlayEmote(id);
+			}
+			
+			if (launcher == m_MenuEmote)
+				ClearEmoteLauncher();
+			SetEmoteLockState(IsEmotePlaying());
 		}
 	}
 	
@@ -885,7 +1046,6 @@ class EmoteManager
 		
 		if (!m_Player || !m_Player.IsAlive() || (!IsEmotePlaying() && (m_Player.GetCommand_Action() || m_Player.GetCommandModifier_Action())) || m_Player.GetThrowing().IsThrowingModeEnabled())
 		{	
-			//Debug.Log("!CanPlayEmote | reason:  1");
 			return false;
 		}
 		
@@ -894,33 +1054,28 @@ class EmoteManager
 		{
 			if (item.IsHeavyBehaviour() && id != EmoteConstants.ID_EMOTE_SURRENDER)
 			{
-				//Debug.Log("!CanPlayEmote | reason:  2");
 				return false;
 			}
 			
 			SurrenderDummyItem sda;
 			if (m_Player.IsItemsToDelete() && Class.CastTo(sda,item) && !sda.IsSetForDeletion())
 			{
-				//Debug.Log("!CanPlayEmote | reason:  3");
 				return false;
 			}
 		}
 		
 		if ((m_Player.GetWeaponManager() && m_Player.GetWeaponManager().IsRunning()) || (m_Player.GetActionManager() && m_Player.GetActionManager().GetRunningAction()))
 		{
-			//Debug.Log("!CanPlayEmote | reason:  4");
 			return false;
 		}
 		
 		if (m_HIC.IsWeaponRaised() || m_Player.IsRolling() || m_Player.IsClimbing() || m_Player.IsRestrainStarted() || m_Player.IsFighting() || m_Player.IsSwimming() || m_Player.IsClimbingLadder() || m_Player.IsFalling() || m_Player.IsUnconscious() || m_Player.IsJumpInProgress() || m_Player.IsRestrained()) 	// rework conditions into something better?
 		{
-			//Debug.Log("!CanPlayEmote | reason:  5");
 			return false;
 		}
 		
 		if (m_Player.GetCommand_Vehicle())
 		{
-			//Debug.Log("!CanPlayEmote | reason:  6");
 			return false;
 		}
 		
@@ -936,13 +1091,11 @@ class EmoteManager
 		//"locks" player in surrender state
 		if (m_IsSurrendered && (id != EmoteConstants.ID_EMOTE_SURRENDER))
 		{
-			//Debug.Log("!CanPlayEmote | reason:  8");
 			return false;
 		}
 		
 		if (m_Player.GetDayZPlayerInventory().IsProcessing())
 		{
-			//Debug.Log("!CanPlayEmote | reason:  9");
 			return false;
 		}
 		
@@ -956,7 +1109,6 @@ class EmoteManager
 			{
 				return true;
 			}
-			//Debug.Log("!CanPlayEmote | reason:  10");
 		}
 		
 		return false;
@@ -969,33 +1121,51 @@ class EmoteManager
 		
 		if (GetGame().GetUIManager().FindMenu(MENU_INVENTORY))
 		{
-			//Debug.Log("!CanPlayEmoteClientCheck | reason:  1");
 			return false;
 		}
 		
 		return true;
 	}
 	
+	// is player able to perform the animation at the moment
+	/*bool CanPerformEmoteAnimation(int id)
+	{
+		
+	}*/
+	
 	void PlaySurrenderInOut(bool state)
 	{
 		m_PreviousGestureID = m_CurrentGestureID;
 		m_CurrentGestureID = EmoteConstants.ID_EMOTE_SURRENDER;
+		
 		if (state)
 		{
-			if (m_Player.GetItemInHands() && !m_Player.CanDropEntity(m_Player.GetItemInHands()))
-				return;
-			
-			if (m_Player.GetItemInHands() && GetGame().IsClient())
+			ItemBase item = m_Player.GetItemInHands();
+			if (item)
 			{
+				if (!m_Player.CanDropEntity(item))
+					return;
+				
 				if (m_Player.GetInventory().HasInventoryReservation(null, m_HandInventoryLocation))
 					m_Player.GetInventory().ClearInventoryReservationEx(null, m_HandInventoryLocation);
-				m_Player.PhysicalPredictiveDropItem(m_Player.GetItemInHands());
+				
+				if (GetGame().IsMultiplayer())
+				{
+					if (GetGame().IsServer())
+						m_Player.ServerDropEntity(item);
+				}
+				else
+				{
+					m_Player.PhysicalPredictiveDropItem(item); //SP only
+				}
 			}
 			
 			CreateEmoteCallback(EmoteCB,DayZPlayerConstants.CMD_GESTUREFB_SURRENDERIN,DayZPlayerConstants.STANCEMASK_ALL,true);
 			
 			if (m_Callback)
+			{
 				m_Callback.RegisterAnimationEvent("ActionExec", UA_ANIM_EVENT);
+			}
 		}
 		else
 		{
@@ -1019,6 +1189,9 @@ class EmoteManager
 			m_Player.SetInventorySoftLock(state);
 			m_InventoryAccessLocked = state;
 		}
+		
+		if (GetGame().IsClient() && m_InventoryAccessLocked && GetGame().GetUIManager().FindMenu(MENU_INVENTORY))
+			m_Player.CloseInventoryMenu();
 		
 		//Movement lock in fullbody anims
 		if (state && m_Callback && m_Callback.m_IsFullbody)
@@ -1066,17 +1239,56 @@ class EmoteManager
 		}
 	}
 	
-	//! directly force-ends surrender state from outside of normal flow
+	//! directly force-ends surrender state AND requests hard cancel
 	void EndSurrenderRequest(SurrenderData data = null)
 	{
 		if (m_IsSurrendered && data)
 		{
-			if (m_Player.GetItemInHands())
-				m_Player.GetItemInHands().DeleteSafe();//Note, this keeps item 'alive' until it is released by all the systems (inventory swapping etc.)
-			
-			m_IsSurrendered = false;
-			SetEmoteLockState(IsEmotePlaying());
+			PostSurrenderRequestServer();
 			data.End();
+		}
+	}
+	
+	void SetClientLoggingOut(bool state)
+	{
+		m_DisconnectEmoteQueued = state;
+		
+		if (!state)
+		{
+			if (m_MenuEmote)
+				m_DeferredEmoteLauncherCleanup = true;
+		}
+	}
+	
+	//! Queues item deletion only, surrender state cleared from item event directly
+	protected void ClearSurrenderState()
+	{
+		if (m_IsSurrendered)
+		{
+			SurrenderDummyItem dummyItem = SurrenderDummyItem.Cast(m_Player.GetItemInHands());
+			if (dummyItem)
+				dummyItem.DeleteSafe();
+			
+			//m_IsSurrendered = false;
+			//SetEmoteLockState(IsEmotePlaying());
+		}
+	}
+	
+	void ForceSurrenderState(bool state)
+	{
+		m_IsSurrendered = state;
+		SetEmoteLockState(IsEmotePlaying());
+	}
+	
+	//! server only
+	protected void PostSurrenderRequestServer()
+	{
+		if ((GetGame().IsMultiplayer() && GetGame().IsServer()) || !GetGame().IsMultiplayer())
+		{
+			ScriptJunctureData pCtx = new ScriptJunctureData;
+			pCtx.Write(CALLBACK_CMD_INSTACANCEL);
+			pCtx.Write(EmoteLauncher.FORCE_ALL);
+			m_Player.SendSyncJuncture(DayZPlayerSyncJunctures.SJ_GESTURE_REQUEST, pCtx);
 		}
 	}
 	

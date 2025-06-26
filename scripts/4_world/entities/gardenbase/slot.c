@@ -12,10 +12,15 @@ enum eWateredState
 	//Used to improve readability of watered state changes
 }
 
+enum eGardenSlotState
+{
+	STATE_DIGGED = 1,
+	STATE_PLANTED = 2
+	//Used to set bit values depending on seed plant state
+}
+
 class Slot
 {
-	static const int 		STATE_DIGGED 		= 1;
-	static const int 		STATE_PLANTED 		= 2;
 	static const int		FERTILIZER_USAGE	= 200;
 	
 	private int 			m_WaterQuantity;
@@ -47,7 +52,6 @@ class Slot
 	{
 		m_Seed = NULL;
 		m_Plant = NULL;
-		m_WaterQuantity = 0.0;
 		Init( base_fertility );
 	}
 
@@ -133,19 +137,26 @@ class Slot
 	void GiveWater( float consumed_quantity )
 	{
 		m_WaterQuantity = Math.Clamp(m_WaterQuantity + consumed_quantity, 0.0, GetWaterMax());		
+		m_Garden.SetWaterQuantity(GetSlotIndex(), m_WaterQuantity);
 		
-		if (!g_Game.IsServer())
-			return;
-		
-		if (!GetPlant() && GetSeed() && !NeedsWater()) // if there is no seed then do not create plant. Plant will be created when the seed is inserted into watered slot.
-			GetGarden().CreatePlant(this);
-				
 		bool needsWater = NeedsWater();
 		if (m_WateredState == eWateredState.DRY && !needsWater)
 		{
 			SetWateredState(eWateredState.WET);
 			m_Garden.SlotWaterStateUpdate(this);
 		}
+		//! This is here in case we want to support dry out the slot in the future
+		else if (m_WateredState == eWateredState.WET && needsWater)
+		{
+			SetWateredState(eWateredState.DRY);
+			m_Garden.SlotWaterStateUpdate(this);
+		}
+
+		if (!g_Game.IsServer())
+			return;
+		
+		if (!GetPlant() && GetSeed() && !NeedsWater()) // if there is no seed then do not create plant. Plant will be created when the seed is inserted into watered slot.
+			GetGarden().CreatePlant(this);
 	}
 	
 	bool NeedsWater()
@@ -200,7 +211,9 @@ class Slot
 	void SetFertilizerQuantity(float fertility)
 	{
 		m_FertilizerQuantity = fertility;
-		if (m_FertilizerQuantity >= m_FertilizerQuantityMax)
+		m_Garden.SetFertilizerQuantity(GetSlotIndex(), Math.Ceil(m_FertilizerQuantity));
+		
+		if (m_FertilizerQuantityMax != 0 && m_FertilizerQuantity >= m_FertilizerQuantityMax)
 		{
 			SetFertilityState(eFertlityState.FERTILIZED);
 			m_Garden.SlotFertilityStateUpdate(this);
@@ -217,7 +230,6 @@ class Slot
 		m_FertilizerQuantityMax = quantMax;
 	}
 	
-	
 	string GetFertilityType()
 	{
 		return m_FertilizerType;
@@ -233,9 +245,13 @@ class Slot
 		return m_FertilityState;
 	}
 	
-	void SetFertilityState( int newState )
+	void SetFertilityState(int newState)
 	{
-		m_FertilityState = newState;
+		if (m_FertilityState == newState)
+			return;
+
+		m_FertilityState = newState;		
+		m_Garden.SlotFertilityStateUpdate(this);
 	}
 	
 	int GetWateredState()
@@ -243,11 +259,22 @@ class Slot
 		return m_WateredState;
 	}
 	
-	void SetWateredState( int newState )
+	void SetWateredState(int newState)
 	{
+		if (m_WateredState == newState)
+			return;
+		
 		m_WateredState = newState;
-		if ( m_WateredState == eWateredState.WET )
-			SetWater( GetWaterMax() );
+		if (m_WateredState == eWateredState.WET)
+		{
+			SetWater(GetWaterMax());
+		}
+		else if (m_WateredState == eWateredState.DRY)
+		{
+			SetWater(0);
+		}
+		
+		m_Garden.SlotWaterStateUpdate(this);
 	}
 	
 	float GetWaterUsage()
@@ -268,11 +295,12 @@ class Slot
 	void SetState(int new_state)
 	{
 		m_State = new_state;
+		m_Garden.SetSlotState(GetSlotIndex(), new_state);
 	}
 	
 	bool IsDigged()
 	{
-		if (m_State == STATE_DIGGED)
+		if (m_State == eGardenSlotState.STATE_DIGGED)
 		{
 			return true;
 		}
@@ -282,7 +310,7 @@ class Slot
 	
 	bool IsPlanted()
 	{
-		if (m_State == STATE_PLANTED)
+		if (m_State == eGardenSlotState.STATE_PLANTED)
 		{
 			return true;
 		}
@@ -298,9 +326,9 @@ class Slot
 		m_FertilizerType = "";
 		m_FertilityState = eFertlityState.NONE;
 		m_WateredState = eWateredState.DRY;
+		m_WaterQuantity = 0.0;
 		m_HarvestingEfficiency = 1.0;
-		//m_DiggedSlotComponent = "";
-		m_State = STATE_DIGGED;
+		m_State = eGardenSlotState.STATE_DIGGED;
 		m_Plant = NULL;
 	}
 
@@ -349,13 +377,6 @@ class Slot
 			if (!ctx.Read( m_FertilizerType ))
 			{
 				m_FertilizerType = "";
-			}
-			else
-			{
-				if (m_FertilizerType != "")
-				{
-					SetFertilityState(eFertlityState.FERTILIZED);
-				}
 			}
 		}
 		

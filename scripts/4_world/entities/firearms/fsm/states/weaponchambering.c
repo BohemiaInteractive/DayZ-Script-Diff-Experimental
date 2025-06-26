@@ -6,8 +6,9 @@ class WeaponChambering_Start extends WeaponStartAction
 		super.OnEntry(e);
 		if (e)
 		{
+			m_weapon.EffectBulletHide(m_weapon.GetCurrentMuzzle());
 			m_weapon.SelectionBulletHide();
-			m_weapon.ForceSyncSelectionState();
+			//m_weapon.ForceSyncSelectionState();
 		}
 	}
 	

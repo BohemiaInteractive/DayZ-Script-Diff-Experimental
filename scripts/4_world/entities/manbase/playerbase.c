@@ -1979,16 +1979,7 @@ class PlayerBase extends ManBase
 		return super.CanReceiveItemIntoHands(item_to_hands);
 	}
 	
-	override bool CanSaveItemInHands(EntityAI item_in_hands)
-	{
-		return super.CanSaveItemInHands(item_in_hands);
-	}
-	
-	override bool CanReleaseFromHands(EntityAI handheld)
-	{
-		return super.CanReleaseFromHands(handheld);
-	}
-	
+
 	int GetCraftingRecipeID()
 	{
 		if (GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_CLIENT)
@@ -2847,6 +2838,10 @@ class PlayerBase extends ManBase
 				}
 			}
 			
+			SurrenderDummyItem dummyItem;
+			if (Class.CastTo(dummyItem, item) && GetEmoteManager())
+				GetEmoteManager().ForceSurrenderState(true);
+			
 			OnItemInHandsChanged();
 		}
 	}
@@ -2859,6 +2854,10 @@ class PlayerBase extends ManBase
 		{
 			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(TogglePlacingLocal);
 		}
+		
+		SurrenderDummyItem dummyItem;
+		if (Class.CastTo(dummyItem, item) && GetEmoteManager())
+			GetEmoteManager().ForceSurrenderState(false);
 		
 		OnItemInHandsChanged();
 	}

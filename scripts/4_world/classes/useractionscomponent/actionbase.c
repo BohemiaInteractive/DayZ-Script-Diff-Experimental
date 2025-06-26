@@ -1065,25 +1065,22 @@ class ActionBase : ActionBase_Basic
 		bool accepted = true;
 		if (action_data.m_Player.GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_SERVER)
 		{
-			if (HasTarget())
+			if (HasTarget() && IsLockTargetOnUse() && action_data.m_Target)
 			{
 				EntityAI targetEntity;
-				if (EntityAI.CastTo(targetEntity,action_data.m_Target.GetObject()))
+				if (EntityAI.CastTo(targetEntity, action_data.m_Target.GetObject()))
 				{
-					if (IsLockTargetOnUse())
+					InventoryLocation targetIl = new InventoryLocation();
+					targetEntity.GetInventory().GetCurrentInventoryLocation(targetIl);
+					
+					//Lock target
+					if (!GetGame().AddInventoryJunctureEx(action_data.m_Player, targetEntity, targetIl, true, 10000))
 					{
-						InventoryLocation targetIl = new InventoryLocation();
-						targetEntity.GetInventory().GetCurrentInventoryLocation(targetIl);
-						
-						//Lock target
-						if (!GetGame().AddInventoryJunctureEx(action_data.m_Player, targetEntity, targetIl, true, 10000))
-						{
-							accepted = false;
-						}
-						else
-						{
-							action_data.m_ReservedInventoryLocations.Insert(targetIl);
-						}
+						accepted = false;
+					}
+					else
+					{
+						action_data.m_ReservedInventoryLocations.Insert(targetIl);
 					}
 				}
 			}

@@ -93,7 +93,7 @@ class PlantBase extends ItemBase
 		if (m_TimeTicker)
 			m_TimeTicker.Stop();
 		
-		if (!m_MarkForDeletion)
+		if (!m_MarkForDeletion && !IsPendingDeletion())
 		{
 			DestroyPlant();
 		}
