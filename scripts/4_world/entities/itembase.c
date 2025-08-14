@@ -3871,8 +3871,7 @@ class ItemBase extends InventoryItem
 		if (PlayerBase.CastTo(nplayer, player))
 		{
 			m_CanPlayImpactSound = true;
-			//nplayer.OnItemInventoryEnter(this);
-			nplayer.SetEnableQuickBarEntityShortcut(this,!GetHierarchyParent() || GetHierarchyParent().GetInventory().AreChildrenAccessible());	
+			nplayer.SetEnableQuickBarEntityShortcut(this,!GetHierarchyParent() || GetHierarchyParent().GetInventory().AreChildrenAccessible());
 		}
 	}
 	
@@ -3883,15 +3882,12 @@ class ItemBase extends InventoryItem
 		PlayerBase nplayer;
 		if (PlayerBase.CastTo(nplayer,player))
 		{		
-			//nplayer.OnItemInventoryExit(this);
 			nplayer.SetEnableQuickBarEntityShortcut(this,false);
 
 		}
 		
-		//if (!GetGame().IsDedicatedServer())
 		player.GetHumanInventory().ClearUserReservedLocationForContainer(this);
-		
-		
+
 		if (HasEnergyManager())
 		{
 			GetCompEM().UpdatePlugState(); // Unplug the el. device if it's necesarry.

@@ -32,7 +32,6 @@ class PlayerBase extends ManBase
 	protected PluginPresenceNotifier  m_PresenceNotifier;
 	
 	protected ref UndergroundHandlerClient	m_UndergroundHandler;
-	protected ref UndergroundBunkerHandlerClient	m_UndergroundBunkerHandler;
 	ref PlayerStats 				m_PlayerStats;
 	PluginRecipesManager 			m_ModuleRecipesManager;
 	ref BleedingSourcesManagerServer 	m_BleedingManagerServer;
@@ -549,6 +548,18 @@ class PlayerBase extends ManBase
 		m_BloodyHandsPenaltyChancePerAgent = new map<eAgents, float>();
 		
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.OnPlayerLoaded);
+	}
+	
+	void ~PlayerBase()
+	{
+		if (GetGame() && (!GetGame().IsDedicatedServer()))
+		{
+			ClientData.RemovePlayerBase(this);
+			SetContaminatedEffectEx(false);
+		}
+		
+		SEffectManager.DestroyEffect(m_FliesEff);
+		StopSoundSet(m_SoundFliesEffect);
 	}
 	
 	ScriptInvoker GetOnUnconsciousStart()
@@ -1502,16 +1513,6 @@ class PlayerBase extends ManBase
 		}
 		
 		return m_UndergroundHandler;
-	}
-	
-	UndergroundBunkerHandlerClient GetUndergroundBunkerHandler()
-	{
-		if (!m_UndergroundBunkerHandler && IsAlive())
-		{
-			m_UndergroundBunkerHandler = new UndergroundBunkerHandlerClient(this);
-		}
-		
-		return m_UndergroundBunkerHandler;
 	}
 	
 	void KillUndergroundHandler()
@@ -2545,13 +2546,15 @@ class PlayerBase extends ManBase
 			{
 				if (ScriptInputUserData.CanStoreInputUserData())
 				{
-					ScriptInputUserData ctx = new ScriptInputUserData;
+					ScriptInputUserData ctx = new ScriptInputUserData();
 					ctx.Write(INPUT_UDT_ADVANCED_PLACEMENT);
 					ctx.Send();
 					
 					PlacingCancelLocal();
 				}
 			}
+			else
+				PlacingCancelLocal();
 		}
 		else if (!item)
 		{
@@ -2619,17 +2622,6 @@ class PlayerBase extends ManBase
 	}
 
 	// -------------------------------------------------------------------------
-	void ~PlayerBase()
-	{
-		if (GetGame() && (!GetGame().IsDedicatedServer()))
-		{
-			ClientData.RemovePlayerBase(this);
-			SetContaminatedEffectEx(false);
-		}
-		
-		SEffectManager.DestroyEffect(m_FliesEff);
-		StopSoundSet(m_SoundFliesEffect);
-	}
 
 	void OnCameraChanged(DayZPlayerCameraBase new_camera)
 	{			
@@ -3373,6 +3365,8 @@ class PlayerBase extends ManBase
 	void OnUnconsciousStart()
 	{
 		CloseInventoryMenu();
+		
+		RequestSoundEventStop(0);
 		
 		if (GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_CLIENT)
 		{
@@ -4160,9 +4154,7 @@ class PlayerBase extends ManBase
 	{
 		if (GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_CLIENT)
 		{
-			#ifndef NO_GUI
-			m_Hud.Update(timeSlice);
-			
+			#ifndef NO_GUI			
 			if (IsControlledPlayer() && m_EffectWidgets && m_EffectWidgets.IsAnyEffectRunning())
 			{
 				m_EffectWidgets.Update(timeSlice);
@@ -5729,6 +5721,7 @@ class PlayerBase extends ManBase
 	override void OnVariablesSynchronized()
 	{
 		super.OnVariablesSynchronized();
+
 		if (m_ModuleLifespan)
 		{
 			m_ModuleLifespan.SynchLifespanVisual(this, m_LifeSpanState, m_HasBloodyHandsVisible, m_HasBloodTypeVisible, m_BloodType);
@@ -5741,6 +5734,7 @@ class PlayerBase extends ManBase
 		}
 		
 		CheckSoundEvent();
+
 		if (GetBleedingManagerRemote() && IsPlayerLoaded())
 		{
 			GetBleedingManagerRemote().OnVariablesSynchronized(GetBleedingBits());
@@ -7204,6 +7198,7 @@ class PlayerBase extends ManBase
 			PlaySoundEventEx(id, false, false, param);
 			return;
 		}
+
 		SendSoundEventEx(id, param);
 	}
 	
@@ -7211,6 +7206,17 @@ class PlayerBase extends ManBase
 	{
 		RequestSoundEventEx(id, from_server_and_client);
 	}
+	
+	override void RequestSoundEventStop(EPlayerSoundEventID id, bool from_server_and_client = false, int param = EPlayerSoundEventParam.STOP_PLAYBACK)
+	{
+		if (from_server_and_client && GetInstanceType() == DayZPlayerInstanceType.INSTANCETYPE_CLIENT)
+		{
+			StopSoundEvent(id, false, param);
+			return;
+		}
+
+		SendSoundEventEx(id, param);
+	}	
 
 	override protected void SendSoundEvent(EPlayerSoundEventID id)
 	{
@@ -7273,6 +7279,14 @@ class PlayerBase extends ManBase
 			return false;
 
 		return m_PlayerSoundEventHandler.PlayRequestEx(id, is_from_server, param);
+	}
+
+	override bool StopSoundEvent(EPlayerSoundEventID id, bool is_from_server = false, int param = 0)
+	{
+		if (!m_PlayerSoundEventHandler)
+			return false;
+
+		return m_PlayerSoundEventHandler.StopRequest(id, is_from_server, param);	
 	}
 	
 	PlayerSoundEventHandler GetPlayerSoundEventHandler()
@@ -7411,12 +7425,13 @@ class PlayerBase extends ManBase
 	
 	void CheckSoundEvent()
 	{
-		if (m_SoundEvent != 0)
-		{
+		if (m_SoundEvent != 0 && (m_SoundEventParam & EPlayerSoundEventParam.STOP_PLAYBACK) != EPlayerSoundEventParam.STOP_PLAYBACK)
 			PlaySoundEventEx(m_SoundEvent, false, true,m_SoundEventParam);
-			m_SoundEvent = 0;
-			m_SoundEventParam = 0;
-		}
+		else if (m_SoundEventParam & EPlayerSoundEventParam.STOP_PLAYBACK)
+			StopSoundEvent(m_SoundEvent, true, m_SoundEventParam);
+
+		m_SoundEvent = 0;
+		m_SoundEventParam = 0;
 		
 		// cancelling marked interrupted sounds
 		if (m_PerformedAnimActionID == -1)
@@ -8868,13 +8883,6 @@ class PlayerBase extends ManBase
 		return m_ActiveNVTypes;
 	}
 	
-	//!Deprecated
-	void SetNVGWorking(bool state)
-	{
-		//Deprecated, below is for legacy's sake
-		AddActiveNV(NVTypes.NV_GOGGLES);
-	}
-	
 	void SetNVGLowered(bool state)
 	{
 		m_LoweredNVGHeadset = state;
@@ -9457,6 +9465,8 @@ class PlayerBase extends ManBase
 	
 	static ref array<Object> SPREAD_AGENTS_OBJECTS = new array<Object>;
 	static ref array<CargoBase> SPREAD_AGENTS_PROXY_CARGOS = new array<CargoBase>;
+
+	protected ref UndergroundBunkerHandlerClient	m_UndergroundBunkerHandler;
 	
 	private int	m_FaceCoveredForShaveLayers = 0;
 	int m_AntibioticsActive;
@@ -9504,11 +9514,23 @@ class PlayerBase extends ManBase
 		InsertAgent(eAgents.SALMONELLA, 1);
 	}
 	
-	//!Deprecated
 	override void DepleteStamina(EStaminaModifiers modifier, float dT = -1)
 	{
 		if (GetStaminaHandler())
 			GetStaminaHandler().DepleteStamina(modifier,dT);
+	}
+	
+	[Obsolete("use the GetUndergroundHandler instead")]	
+	UndergroundBunkerHandlerClient GetUndergroundBunkerHandler()
+	{
+		return null;
+	}
+	
+	[Obsolete("no replacement")]
+	void SetNVGWorking(bool state)
+	{
+		//Deprecated, below is for legacy's sake
+		AddActiveNV(NVTypes.NV_GOGGLES);
 	}
 }
 

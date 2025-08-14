@@ -150,7 +150,7 @@ class ActionGetInTransport: ActionBase
 			il.SetVehicle(transport, action_data.m_Player, nextSeat);
 		
 			//Lock target
-			if (GetGame().AddInventoryJunctureEx(action_data.m_Player, action_data.m_Player, il, true, 10000))
+			if (GetGame().AddInventoryJunctureEx(action_data.m_Player, action_data.m_Player, il, true, 10000, action_data))
 			{
 				accepted = true;
 				action_data.m_ReservedInventoryLocations.Insert(il);

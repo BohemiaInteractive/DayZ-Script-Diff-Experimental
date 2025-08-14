@@ -466,6 +466,9 @@ class PluginDiagMenu : PluginBase
 				//---------------------------------------------------------------
 				// LEVEL 2 - Script > Underground Areas
 				//---------------------------------------------------------------
+				#ifdef DEVELOPER
+				DiagMenu.RegisterBool(DiagMenuIDs.UNDERGROUND_DEBUG, "", "Enable debug", DiagMenuIDs.UNDERGROUND_MENU);
+				#endif
 				DiagMenu.RegisterBool(DiagMenuIDs.UNDERGROUND_SHOW_BREADCRUMB, "", "Show Breadcrumbs", DiagMenuIDs.UNDERGROUND_MENU);
 				DiagMenu.RegisterBool(DiagMenuIDs.UNDERGROUND_DISABLE_DARKENING, "lctrl+f", "Disable Darkening", DiagMenuIDs.UNDERGROUND_MENU);
 			}

@@ -736,11 +736,11 @@ class CGame
 	proto native NoiseSystem GetNoiseSystem();
 	
 	// inventory
-	proto native bool	AddInventoryJuncture(Man player, notnull EntityAI item, InventoryLocation dst, bool test_dst_occupancy, int timeout_ms);
+	proto native bool	AddInventoryJuncture(Man player, notnull EntityAI item, InventoryLocation dst, bool test_dst_occupancy, int timeout_ms, Managed userData = null);
 	
-	bool	AddInventoryJunctureEx(Man player, notnull EntityAI item, InventoryLocation dst, bool test_dst_occupancy, int timeout_ms)
+	bool	AddInventoryJunctureEx(Man player, notnull EntityAI item, InventoryLocation dst, bool test_dst_occupancy, int timeout_ms, Managed userData = null)
 	{
-		bool result = AddInventoryJuncture(player, item, dst, test_dst_occupancy, timeout_ms/*10000000*/);
+		bool result = AddInventoryJuncture(player, item, dst, test_dst_occupancy, timeout_ms/*10000000*/, userData);
 		#ifdef ENABLE_LOGGING
 		if ( LogManager.IsInventoryReservationLogEnable() )
 		{
@@ -755,7 +755,7 @@ class CGame
 	proto native bool 	HasInventoryJunctureItem(notnull EntityAI item);
 	proto native bool   HasInventoryJuncture(Man player, notnull EntityAI item);
 	proto native bool 	HasInventoryJunctureDestination(Man player, notnull InventoryLocation dst);
-	proto native bool	AddActionJuncture(Man player, notnull EntityAI item, int timeout_ms);
+	proto native bool	AddActionJuncture(Man player, notnull EntityAI item, int timeout_ms, Managed userData = null);
 	proto native bool	ExtendActionJuncture(Man player, notnull EntityAI item, int timeout_ms);
 	proto native bool	ClearJuncture(Man player, notnull EntityAI item);
 	
@@ -836,7 +836,7 @@ class CGame
 	 * 
 	 * Tracker for 'GizmoFind' is the owned Entity
 	 * 
-	 * Note: GizmoGet doesn't work due as 'Physics' can't be compared against 'Class'
+	 * Note: Currently, GizmoGetInstance doesn't work due to Script Error: 'Physics' can't be compared against 'Class'
 	 */
 	proto native void GizmoSelectPhysics(Physics physics);
 
@@ -1553,8 +1553,8 @@ class CGame
 		if (!m_CharacterData)
 		{
 			m_CharacterData = new MenuDefaultCharacterData;
-			if (fill_data)
-				GetGame().GetMenuData().RequestGetDefaultCharacterData(); //fills the structure
+			if (fill_data && !GetGame().IsDedicatedServer())
+				GetMenuData().RequestGetDefaultCharacterData(); //fills the structure
 		}
 		return m_CharacterData;
 	}

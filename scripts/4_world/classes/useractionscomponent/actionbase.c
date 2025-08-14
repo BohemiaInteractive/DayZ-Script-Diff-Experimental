@@ -32,6 +32,12 @@ class ActionData
 		m_State = UA_NONE;
 	}
 	
+	event float OnJunctureTimedOut()
+	{
+		// extend juncture another 1 second
+		return 1.0;
+	}
+
 	ref ActionBase						m_Action;
 	ItemBase							m_MainItem;
 	ActionBaseCB 						m_Callback;
@@ -184,7 +190,7 @@ class ActionBase : ActionBase_Basic
 		if ( !Post_SetupAction( action_data ) )
 			return false;
 		
-		if ( (!GetGame().IsDedicatedServer()) && !IsInstant() )
+		if ( !GetGame().IsServer() && !IsInstant() )
 		{
 			if (!InventoryReservation(action_data))
 			{
@@ -972,6 +978,9 @@ class ActionBase : ActionBase_Basic
 	// return if has successfuly reserved inventory
 	bool InventoryReservation(ActionData action_data)
 	{
+		if (GetGame().IsServer())
+			return true;
+
 		if ((IsLocal() || !UseAcknowledgment()) && IsInstant())
 			return true;
 		
@@ -1048,14 +1057,17 @@ class ActionBase : ActionBase_Basic
 	
 	void RefreshReservations(ActionData action_data)
 	{
-		if (action_data.m_ReservedInventoryLocations)
+		if (action_data.m_Player.GetInstanceType() != DayZPlayerInstanceType.INSTANCETYPE_SERVER)
 		{
-			InventoryLocation il;
-			for (int i = 0; i < action_data.m_ReservedInventoryLocations.Count(); i++)
+			if (action_data.m_ReservedInventoryLocations)
 			{
-				il = action_data.m_ReservedInventoryLocations.Get(i);
-				EntityAI entity = il.GetItem();
-				action_data.m_Player.GetInventory().ExtendInventoryReservationEx(il.GetItem() , il, 10000);
+				InventoryLocation il;
+				for (int i = 0; i < action_data.m_ReservedInventoryLocations.Count(); i++)
+				{
+					il = action_data.m_ReservedInventoryLocations.Get(i);
+					EntityAI entity = il.GetItem();
+					action_data.m_Player.GetInventory().ExtendInventoryReservationEx(il.GetItem() , il, 10000);
+				}
 			}
 		}
 	}
@@ -1074,7 +1086,7 @@ class ActionBase : ActionBase_Basic
 					targetEntity.GetInventory().GetCurrentInventoryLocation(targetIl);
 					
 					//Lock target
-					if (!GetGame().AddInventoryJunctureEx(action_data.m_Player, targetEntity, targetIl, true, 10000))
+					if (!GetGame().AddInventoryJunctureEx(action_data.m_Player, targetEntity, targetIl, true, 10000, action_data))
 					{
 						accepted = false;
 					}
@@ -1111,8 +1123,10 @@ class ActionBase : ActionBase_Basic
 		}
 	}
 	
+	[Obsolete("Handled by 'ActionData.OnJunctureTimedOut' now")]
 	void RefreshActionJuncture(ActionData action_data)
 	{
+		//! kumarjac: No longer necessary as we pass in the ActionData with 'OnJunctureTimedOut' function to automatically refresh
 		if (action_data.m_ReservedInventoryLocations)
 		{
 			InventoryLocation il;
@@ -1252,15 +1266,6 @@ class ActionBase : ActionBase_Basic
 	
 	void OnUpdateServer(ActionData action_data)
 	{
-		if (action_data.m_RefreshJunctureTimer > 0)
-		{
-			action_data.m_RefreshJunctureTimer--;
-		}
-		else
-		{
-			action_data.m_RefreshJunctureTimer = m_RefreshReservationTimerValue;
-			RefreshActionJuncture(action_data);
-		}
 	}
 	
 	void OnStart(ActionData action_data)

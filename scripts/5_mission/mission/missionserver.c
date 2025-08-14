@@ -54,6 +54,13 @@ class MissionServer extends MissionBase
 	PlayerBase m_player;
 	MissionBase m_mission;
 	
+#ifndef NO_GUI
+	protected int 					m_ControlDisabledMode;
+	protected ref array<string> 	m_ActiveInputExcludeGroups; //exclude groups defined in 'specific.xml' file
+	protected ref array<int> 		m_ActiveInputRestrictions; //additional scripted restrictions
+	protected bool					m_ProcessInputExcludes;
+#endif
+
 	void MissionServer()
 	{
 		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.UpdatePlayersStats, 30000, true);
@@ -94,6 +101,16 @@ class MissionServer extends MissionBase
 	
 	override void OnUpdate(float timeslice)
 	{
+#ifndef NO_GUI
+#ifdef FEATURE_CURSOR
+		if (GetTimeStamp() == 0)
+		{
+			//! Only once the game is loaded should we take control of the cursor
+			g_Game.GetUIManager().ShowUICursor(false);
+		}
+#endif
+#endif
+
 		UpdateDummyScheduler();
 		TickScheduler(timeslice);
 		UpdateLogoutPlayers();		
@@ -103,6 +120,35 @@ class MissionServer extends MissionBase
 		RandomArtillery(timeslice);
 		
 		super.OnUpdate(timeslice);
+
+#ifndef NO_GUI
+		UIManager uiManager = GetGame().GetUIManager();
+		UIScriptedMenu menu = uiManager.GetMenu();
+		Input input = GetGame().GetInput();
+		
+		if (menu && !menu.UseKeyboard() && menu.UseMouse())
+		{
+			int i;
+			for (i = 0; i < 5; i++)
+			{
+				input.DisableKey(i | INPUT_DEVICE_MOUSE);
+				input.DisableKey(i | INPUT_ACTION_TYPE_DOWN_EVENT | INPUT_DEVICE_MOUSE);
+				input.DisableKey(i | INPUT_ACTION_TYPE_DOUBLETAP | INPUT_DEVICE_MOUSE);
+			}
+			
+			for (i = 0; i < 6; i++)
+			{
+				input.DisableKey(i | INPUT_DEVICE_MOUSE_AXIS);
+			}
+		}
+
+		if (m_ProcessInputExcludes)
+		{
+			PerformRefreshExcludes();
+			m_ProcessInputExcludes = false;
+		}
+#endif
+
 	}
 	
 	override void OnGameplayDataHandlerLoad()
@@ -781,6 +827,207 @@ class MissionServer extends MissionBase
 	{
 		return m_ActiveRefresherLocations;
 	}
+
+#ifndef NO_GUI
+	//! Removes one or more exclude groups and refreshes excludes
+	override void RemoveActiveInputExcludes(array<string> excludes, bool bForceSupress = false)
+	{
+		super.RemoveActiveInputExcludes(excludes,bForceSupress);
+		
+		if (excludes.Count() != 0)
+		{
+			bool changed = false;
+			
+			if (m_ActiveInputExcludeGroups)
+			{
+				foreach (string excl : excludes)
+				{
+					if (m_ActiveInputExcludeGroups.Find(excl) != -1)
+					{
+						m_ActiveInputExcludeGroups.RemoveItem(excl);
+						changed = true;
+					}
+				}
+				
+				if (changed)
+				{
+					RefreshExcludes();
+				}
+			}
+			
+			// supress control for next frame
+			GetUApi().SupressNextFrame(bForceSupress);
+		}
+	}
+	
+	//! Removes one restriction (specific behaviour oudside regular excludes, defined below)
+	override void RemoveActiveInputRestriction(int restrictor)
+	{
+		//unique behaviour outside regular excludes
+		if (restrictor > -1)
+		{
+			switch (restrictor)
+			{
+				case EInputRestrictors.INVENTORY:
+				{
+					GetUApi().GetInputByID(UAWalkRunForced).ForceEnable(false); // force walk off!
+					break;
+				}
+				case EInputRestrictors.MAP:
+				{
+					GetUApi().GetInputByID(UAWalkRunForced).ForceEnable(false); // force walk off!
+					break;
+				}
+			}
+			
+			if (m_ActiveInputRestrictions && m_ActiveInputRestrictions.Find(restrictor) != -1)
+			{
+				m_ActiveInputRestrictions.RemoveItem(restrictor);
+			}
+		}
+	}
+	
+	//! Adds one or more exclude groups to disable and refreshes excludes
+	override void AddActiveInputExcludes(array<string> excludes)
+	{
+		super.AddActiveInputExcludes(excludes);
+		
+		if (excludes.Count() != 0)
+		{
+			bool changed = false;
+			if (!m_ActiveInputExcludeGroups)
+			{
+				m_ActiveInputExcludeGroups = new array<string>;
+			}
+			
+			foreach (string excl : excludes)
+			{
+				if (m_ActiveInputExcludeGroups.Find(excl) == -1)
+				{
+					m_ActiveInputExcludeGroups.Insert(excl);
+					changed = true;
+				}
+			}
+			
+			if (changed)
+			{
+				RefreshExcludes();
+				#ifdef BULDOZER
+					GetUApi().SupressNextFrame(true);
+				#endif
+			}
+		}
+	}
+	
+	//! Adds one input restriction (specific behaviour oudside regular excludes, defined below)
+	override void AddActiveInputRestriction(int restrictor)
+	{
+		//unique behaviour outside regular excludes
+		if (restrictor > -1)
+		{
+			switch (restrictor)
+			{
+				case EInputRestrictors.INVENTORY:
+				{
+					GetUApi().GetInputByID(UAWalkRunForced).ForceEnable(true); // force walk on!
+					PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
+					if ( player )
+					{
+						ItemBase item = player.GetItemInHands();
+						if (item && item.IsWeapon())
+							player.RequestResetADSSync();
+					}
+					break;
+				}
+				case EInputRestrictors.MAP:
+				{
+					GetUApi().GetInputByID(UAWalkRunForced).ForceEnable(true); // force walk on!
+					break;
+				}
+			}
+			
+			if (!m_ActiveInputRestrictions)
+			{
+				m_ActiveInputRestrictions = new array<int>;
+			}
+			if (m_ActiveInputRestrictions.Find(restrictor) == -1)
+			{
+				m_ActiveInputRestrictions.Insert(restrictor);
+			}
+		}
+	}
+	
+	//! queues refresh of input excludes
+	override void RefreshExcludes()
+	{
+		m_ProcessInputExcludes = true;
+	}
+	
+	//! applies queued excludes (0 == clear excludes)
+	protected void PerformRefreshExcludes()
+	{
+		if (m_ActiveInputExcludeGroups)
+		{
+			foreach (string excl : m_ActiveInputExcludeGroups)
+			{
+				GetUApi().ActivateExclude(excl);
+			}
+		}
+		
+		GetUApi().UpdateControls();
+	}
+	
+	//! Removes all active input excludes and restrictions
+	override void EnableAllInputs(bool bForceSupress = false)
+	{
+		m_ControlDisabledMode = -1;
+		
+		if (m_ActiveInputRestrictions)
+		{
+			int count = m_ActiveInputRestrictions.Count();
+			for (int i = 0; i < count; i++)
+			{
+				RemoveActiveInputRestriction(m_ActiveInputRestrictions[0]);
+			}
+			m_ActiveInputRestrictions.Clear(); //redundant?
+		}
+		if (m_ActiveInputExcludeGroups)
+		{
+			m_ActiveInputExcludeGroups.Clear();
+		}
+		
+		GetUApi().UpdateControls(); //it is meant to happen instantly, does not wait for update to process
+		GetUApi().SupressNextFrame(bForceSupress); // supress control for next frame
+	}
+	
+	//! returns if ANY exclude groups, restriction (or deprecated disable, if applicable) is active
+	override bool IsControlDisabled()
+	{
+		bool active = false;
+		if (m_ActiveInputExcludeGroups)
+		{
+			active |= m_ActiveInputExcludeGroups.Count() > 0;
+		}
+		if (m_ActiveInputRestrictions)
+		{
+			active |= m_ActiveInputRestrictions.Count() > 0;
+		}
+		active |= m_ControlDisabledMode >= INPUT_EXCLUDE_ALL; //legacy stuff, Justin case
+		return active;
+	}
+	
+	//! Returns true if the particular input exclude group had been activated via script and is active
+	override bool IsInputExcludeActive(string exclude)
+	{
+		return m_ActiveInputExcludeGroups && m_ActiveInputExcludeGroups.Find(exclude) != -1;
+	}
+	
+	//! Returns true if the particular 'restriction' (those govern special behaviour outside regular input excludes, *EInputRestrictors*) is active
+	override bool IsInputRestrictionActive(int restriction)
+	{
+		return m_ActiveInputRestrictions && m_ActiveInputRestrictions.Find(restriction) != -1;
+	}
+#endif
 	
 	//! DEPRECATED
 	PluginAdditionalInfo m_moduleDefaultCharacter;

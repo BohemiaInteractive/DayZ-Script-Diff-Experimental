@@ -57,7 +57,11 @@ class PluginManager
 		RegisterPlugin( "PluginAdminLog",								false, 	true );
 		
 		// Developer + Diag
+#ifdef NO_GUI
 		RegisterPluginDiag( "PluginKeyBinding",							true, 	false );
+#else
+		RegisterPluginDiag( "PluginKeyBinding",							true, 	true );
+#endif
 		RegisterPluginDiag( "PluginDeveloper",							true, 	true );
 		RegisterPluginDiag( "PluginDeveloperSync",						true, 	true );
 		RegisterPluginDiag( "PluginDiagMenuClient",						true, 	false );
@@ -331,6 +335,19 @@ PluginBase GetPlugin(typename plugin_type)
 			}
 			#endif
 		}
+	}
+	
+	return plugin;
+}
+
+// Inspired by BaseItem::SafeCast, no asserts version
+PluginBase GetPluginSafe(typename plugin_type)
+{
+	PluginBase plugin = null;
+	
+	if ( IsPluginManagerExists() )
+	{
+		plugin = GetPluginManager().GetPluginByType(plugin_type);
 	}
 	
 	return plugin;

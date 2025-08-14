@@ -1243,7 +1243,30 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 			identity = GetGame().GetPlayer().GetIdentity();
 		}
 		
-		GetGame().RPCSingleParam(null, ERPCs.DEV_SET_WEATHER, new Param1<DebugWeatherRPCData>(data), true, identity);
+		if (GetGame().IsDedicatedServer())
+		{
+			// have to define earlier due to 'ScriptReadWriteContext' asserting on attempting to 
+			// decrement ref count of the serializers. This is due to the Serializers being inline allocated
+			ParamsWriteContext wCtx;
+			ParamsReadContext rCtx;
+
+			ScriptReadWriteContext ctx = new ScriptReadWriteContext();
+			
+			// see above comment
+			wCtx = ctx.GetWriteContext();
+			rCtx = ctx.GetReadContext();
+
+			// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa it was null for some reason
+			Param1<DebugWeatherRPCData> d = new Param1<DebugWeatherRPCData>(data);
+			
+			wCtx.Write(d);
+
+			g_Game.OnRPC(null, null, ERPCs.DEV_SET_WEATHER, rCtx);
+		}
+		else
+		{
+			GetGame().RPCSingleParam(null, ERPCs.DEV_SET_WEATHER, new Param1<DebugWeatherRPCData>(data), true, identity);
+		}
 	}
 	
 	protected void InvokeSendRPC()

@@ -176,6 +176,12 @@ class Building extends EntityAI
 		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.BUILDING_UNLOCK_DOOR, "Unlock Door", FadeColors.LIGHT_GREY));
 		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.SEPARATOR, "___________________________", FadeColors.RED));
 		
+		if (Gizmo_IsSupported())
+		{
+			outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.GIZMO_OBJECT, "Gizmo Object", FadeColors.LIGHT_GREY));
+			outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.SEPARATOR, "___________________________", FadeColors.RED));
+		}
+		
 		super.GetDebugActions(outputList);
 	}
 	
@@ -184,6 +190,16 @@ class Building extends EntityAI
 		if (super.OnAction(action_id, player, ctx))
 			return true;
 
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
+		{
+			switch (action_id)
+			{
+				case EActions.GIZMO_OBJECT:
+					GetGame().GizmoSelectObject(this);
+					return true;
+			}
+		}
+		
 		switch (action_id)
 		{
 		case EActions.BUILDING_PLAY_DOOR_SOUND:

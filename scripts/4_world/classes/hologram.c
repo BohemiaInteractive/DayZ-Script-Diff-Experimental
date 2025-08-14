@@ -394,7 +394,7 @@ class Hologram
 	}
 	
 	#ifdef DIAG_DEVELOPER
-	void DebugText(string header, bool mustBeTrue = false, bool condition = true, string info = "")
+	void DebugLog(string header, bool mustBeTrue = false, bool condition = true, string info = "")
 	{		
 		if ( DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM) )
 		{
@@ -450,7 +450,7 @@ class Hologram
 		else if ( m_Projection.IsInherited( TrapSpawnBase ))
 		{
 			#ifdef DIAG_DEVELOPER
-			DebugText("Inherits from TrapSpawnBase, checking IsPlaceableAtposition", true);
+			DebugLog("Inherits from TrapSpawnBase, checking IsPlaceableAtposition", true);
 			#endif
 
 			TrapSpawnBase trapSpawnBase;
@@ -460,7 +460,7 @@ class Hologram
 		else if (m_Projection.IsInherited(TrapBase))
 		{
 			#ifdef DIAG_DEVELOPER
-			DebugText("Inherits from TrapBase, checking IsPlaceableAtposition", true);
+			DebugLog("Inherits from TrapBase, checking IsPlaceableAtposition", true);
 			#endif
 			TrapBase trapBase;
 			Class.CastTo(trapBase, m_Projection);
@@ -497,8 +497,8 @@ class Hologram
 		}
 		
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsClippingRoof: ", false, b1, " | (projection height) " + m_Projection.GetPosition()[1] + " > (camera height) " + GetGame().GetCurrentCameraPosition()[1]);
-		DebugText("IsClippingRoof: ", false, b2, " | (DoPlacingHeightCheck) " + m_Projection.DoPlacingHeightCheck() + " && (IsUnderRoof) " + MiscGameplayFunctions.IsUnderRoof(m_Projection) + " | from: " + from[1] + " | to: " + to[1]);
+		DebugLog("IsClippingRoof: ", false, b1, " | (projection height) " + m_Projection.GetPosition()[1] + " > (camera height) " + GetGame().GetCurrentCameraPosition()[1]);
+		DebugLog("IsClippingRoof: ", false, b2, " | (DoPlacingHeightCheck) " + m_Projection.DoPlacingHeightCheck() + " && (IsUnderRoof) " + MiscGameplayFunctions.IsUnderRoof(m_Projection) + " | from: " + from[1] + " | to: " + to[1]);
 		#endif
 		
 		return b1 || b2;
@@ -511,7 +511,7 @@ class Hologram
 		vector projection_orientation = m_Projection.GetOrientation();		
 		bool isTrue = Math.AbsFloat( projection_orientation[1] ) > m_YawPitchRollLimit[1] || Math.AbsFloat( projection_orientation[2] ) > m_YawPitchRollLimit[2];
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsCollidingAngle: ", false, isTrue, " | (proj pitch) " + Math.AbsFloat( projection_orientation[1] ) + " > (pitch limit) " + m_YawPitchRollLimit[1] + " | (proj roll) " + Math.AbsFloat( projection_orientation[2] ) + " > (roll limit) " + m_YawPitchRollLimit[2]);
+		DebugLog("IsCollidingAngle: ", false, isTrue, " | (proj pitch) " + Math.AbsFloat( projection_orientation[1] ) + " > (pitch limit) " + m_YawPitchRollLimit[1] + " | (proj roll) " + Math.AbsFloat( projection_orientation[2] ) + " > (roll limit) " + m_YawPitchRollLimit[2]);
 		#endif
 
 		return isTrue;
@@ -571,7 +571,7 @@ class Hologram
 			foreach (Object object: collidedObjects)
 				text += " | " + Object.GetDebugName(object);
 
-			DebugText("IsCollidingBBox: ", false, isTrue, text);
+			DebugLog("IsCollidingBBox: ", false, isTrue, text);
 		
 			int color = 0x01FFFFFF;
 			if (isTrue)
@@ -654,7 +654,7 @@ class Hologram
 			return false;
 
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsCollidingGPlot: ", false, m_IsCollidingGPlot);
+		DebugLog("IsCollidingGPlot: ", false, m_IsCollidingGPlot);
 		#endif
 
 		return m_IsCollidingGPlot;
@@ -665,7 +665,7 @@ class Hologram
 		vector origin = Vector(0, 0, 0);
 		bool isTrue = GetProjectionPosition() == origin;
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsCollidingZeroPos: ", false, isTrue);
+		DebugLog("IsCollidingZeroPos: ", false, isTrue);
 		#endif
 
 		return isTrue;
@@ -685,9 +685,9 @@ class Hologram
 		//and item which had been placed on top of them, would stay floating in the air			
 		#ifdef DIAG_DEVELOPER
 		if (objectToCheck == null)
-			DebugText("IsBaseStatic(must be true): ", true, true, " | objectToCheck is null (this is good)");
+			DebugLog("IsBaseStatic(must be true): ", true, true, " | objectToCheck is null (this is good)");
 		else
-			DebugText("IsBaseStatic(must be true): ", true, IsObjectStatic(objectToCheck));
+			DebugLog("IsBaseStatic(must be true): ", true, IsObjectStatic(objectToCheck));
 		#endif
 		return objectToCheck == null || IsObjectStatic(objectToCheck);
 	}
@@ -701,7 +701,7 @@ class Hologram
 	{
 		bool isTrue = (under_left_close == under_right_close && under_right_close == under_left_far && under_left_far == under_right_far);
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsBaseIntact(must be true and all equal): ", true, isTrue, " | ulc: " + Object.GetDebugName(under_left_close) + " | urc: " + Object.GetDebugName(under_right_close) + " | ulf: " + Object.GetDebugName(under_left_far) + " | urf: " + Object.GetDebugName(under_right_far));
+		DebugLog("IsBaseIntact(must be true and all equal): ", true, isTrue, " | ulc: " + Object.GetDebugName(under_left_close) + " | urc: " + Object.GetDebugName(under_right_close) + " | ulf: " + Object.GetDebugName(under_left_far) + " | urf: " + Object.GetDebugName(under_right_far));
 		if (!isTrue)
 		{
 			array<bool> conditions = new array<bool>();
@@ -793,7 +793,7 @@ class Hologram
 		
 		bool isTrue = slope_pos_left_close < m_SlopeTolerance && slope_pos_right_close < m_SlopeTolerance && slope_pos_left_far < m_SlopeTolerance && slope_pos_right_far < m_SlopeTolerance;
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsBaseFlat(must be true): ", true, isTrue, " (slope < slopeTolerance) | slopeTolerance:  " + m_SlopeTolerance + " | lc: " + slope_pos_left_close + " | rc: " + slope_pos_right_close + " | lf: " + slope_pos_left_far + " | rf: " + slope_pos_right_far);
+		DebugLog("IsBaseFlat(must be true): ", true, isTrue, " (slope < slopeTolerance) | slopeTolerance:  " + m_SlopeTolerance + " | lc: " + slope_pos_left_close + " | rc: " + slope_pos_right_close + " | lf: " + slope_pos_left_far + " | rf: " + slope_pos_right_far);
 		DrawArrow(projection_pos, contact_pos_left_close, slope_pos_left_close < m_SlopeTolerance);
 		DrawArrow(projection_pos, contact_pos_right_close, slope_pos_right_close < m_SlopeTolerance);		
 		DrawArrow(projection_pos, contact_pos_left_far, slope_pos_left_far < m_SlopeTolerance);
@@ -812,7 +812,7 @@ class Hologram
 		bool isTrue = m_Parent && m_Parent.CanBePlaced(m_Player, GetProjectionPosition());
 
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsPlacementPermitted(must be true): ", true, isTrue, " (Note: ItemBase::CanBePlaced() return value)");
+		DebugLog("IsPlacementPermitted(must be true): ", true, isTrue, " (Note: ItemBase::CanBePlaced() return value)");
 		#endif
 		return isTrue;
 	}
@@ -831,13 +831,13 @@ class Hologram
 			if ( delta1 > DEFAULT_MAX_PLACEMENT_HEIGHT_DIFF || delta1 < -DEFAULT_MAX_PLACEMENT_HEIGHT_DIFF )
 			{
 				#ifdef DIAG_DEVELOPER
-				DebugText("HeightPlacementCheck(must be true): ", true, false, " | Height difference between item and player is larger than " + DEFAULT_MAX_PLACEMENT_HEIGHT_DIFF);
+				DebugLog("HeightPlacementCheck(must be true): ", true, false, " | Height difference between item and player is larger than " + DEFAULT_MAX_PLACEMENT_HEIGHT_DIFF);
 				#endif
 				return false;
 			}
 		}
 		#ifdef DIAG_DEVELOPER
-		DebugText("HeightPlacementCheck(must be true): ", true, true);
+		DebugLog("HeightPlacementCheck(must be true): ", true, true);
 		#endif
 		return true;
 	}
@@ -854,7 +854,7 @@ class Hologram
 		if (liquid & (LIQUID_GROUP_WATER - LIQUID_SNOW))
 		{
 			#ifdef DIAG_DEVELOPER
-			DebugText("IsUnderwater: ", false, true, " | Surface under object is water");
+			DebugLog("IsUnderwater: ", false, true, " | Surface under object is water");
 			#endif
 			return true;
 		}
@@ -874,8 +874,8 @@ class Hologram
 		float lf = g_Game.GetWaterDepth(left_far);
 		float rf = g_Game.GetWaterDepth(right_far);
 		bool isTrue = (lc > 0 || rc > 0 || lf > 0 || rf > 0 || belowMaxSea);
-		DebugText("IsUnderwater: ", false, isTrue, " belowMaxSea: " + belowMaxSea + " | (all must be less than zero) | lc: " + lc + " | rc: " + rc + " | lf: " + lf + " | rf: " + rf);
-		//DebugText("Corner Height: ", false, true, " lc: " + left_close[1] + " | rc: " + right_close[1] + " | lf: " + left_far[1] + " | rf: " + right_far[1]);
+		DebugLog("IsUnderwater: ", false, isTrue, " belowMaxSea: " + belowMaxSea + " | (all must be less than zero) | lc: " + lc + " | rc: " + rc + " | lf: " + lf + " | rf: " + rf);
+		//DebugLog("Corner Height: ", false, true, " lc: " + left_close[1] + " | rc: " + right_close[1] + " | lf: " + left_far[1] + " | rf: " + right_far[1]);
 		if (isTrue)
 		{
 			array<bool> conditions = {lc <= 0, rc <= 0, lf <= 0, rf <= 0};
@@ -955,7 +955,7 @@ class Hologram
 			array<bool> conditions = {!lc, !rc, !lf, !rf};
 			DrawBaseSpheres(conditions);
 		}
-		DebugText("IsInTerrain: ", false, isTrue, text);
+		DebugLog("IsInTerrain: ", false, isTrue, text);
 		#endif
 
 		if (DayZPhysics.RaycastRV( from_left_close, to_left_close_down, contact_pos_left_close, contact_dir_left_close, contact_component_left_close, NULL, m_Projection, m_Projection, false, true, ObjIntersectFire ))
@@ -1168,11 +1168,11 @@ class Hologram
 		vector playerToProjection;
 		
 		#ifdef DIAG_DEVELOPER
-		DebugText("SetHologramPosition::startPosition: ", false, m_IsHidden, string.Format(" | %1", startPosition));
-		DebugText("SetHologramPosition::contactPosition [in]: ", false, m_IsHidden, string.Format(" | %1", contactPosition));
-		DebugText("SetHologramPosition::minProjectionDistance: ", false, m_IsHidden, string.Format(" | %1", minProjectionDistance));
-		DebugText("SetHologramPosition::maxProjectionDistance: ", false, m_IsHidden, string.Format(" | %1", maxProjectionDistance));
-		DebugText("SetHologramPosition::playerToProjectionDistance: ", false, m_IsHidden, string.Format(" | %1", playerToProjectionDistance));
+		DebugLog("SetHologramPosition::startPosition: ", false, m_IsHidden, string.Format(" | %1", startPosition));
+		DebugLog("SetHologramPosition::contactPosition [in]: ", false, m_IsHidden, string.Format(" | %1", contactPosition));
+		DebugLog("SetHologramPosition::minProjectionDistance: ", false, m_IsHidden, string.Format(" | %1", minProjectionDistance));
+		DebugLog("SetHologramPosition::maxProjectionDistance: ", false, m_IsHidden, string.Format(" | %1", maxProjectionDistance));
+		DebugLog("SetHologramPosition::playerToProjectionDistance: ", false, m_IsHidden, string.Format(" | %1", playerToProjectionDistance));
 		#endif
 
 		//hologram is at min distance from player
@@ -1186,7 +1186,7 @@ class Hologram
 			contactPosition = startPosition + (playerToProjection * minProjectionDistance);
 			
 			#ifdef DIAG_DEVELOPER
-			DebugText("SetHologramPosition::contactPosition[out] (< minProjectDistance): ", false, m_IsHidden, string.Format(" | %1", contactPosition));
+			DebugLog("SetHologramPosition::contactPosition[out] (< minProjectDistance): ", false, m_IsHidden, string.Format(" | %1", contactPosition));
 			#endif
 
 			return true;
@@ -1202,7 +1202,7 @@ class Hologram
 			contactPosition = startPosition + (playerToProjection * maxProjectionDistance);
 			
 			#ifdef DIAG_DEVELOPER
-			DebugText("SetHologramPosition::contactPosition[out] (< maxProjectionDistance): ", false, m_IsHidden, string.Format(" | %1", contactPosition));
+			DebugLog("SetHologramPosition::contactPosition[out] (< maxProjectionDistance): ", false, m_IsHidden, string.Format(" | %1", contactPosition));
 			#endif
 		
 			return true;
@@ -1293,7 +1293,7 @@ class Hologram
 	void SetIsColliding( bool is_colliding )
 	{
 		#ifdef DIAG_DEVELOPER
-		DebugText("Is colliding: ", false, is_colliding, m_CollisionDetails);
+		DebugLog("Is colliding: ", false, is_colliding, m_CollisionDetails);
 		#endif
 		m_IsColliding = is_colliding;
 	}
@@ -1316,7 +1316,7 @@ class Hologram
 	bool IsFloating()
 	{
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsFloating: ", false, m_IsFloating);
+		DebugLog("IsFloating: ", false, m_IsFloating);
 		#endif
 		return m_IsFloating;
 	}
@@ -1329,7 +1329,7 @@ class Hologram
 	bool IsHidden()
 	{
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsHidden: ", false, m_IsHidden);
+		DebugLog("IsHidden: ", false, m_IsHidden);
 		#endif
 		return m_IsHidden;
 	}
@@ -1339,7 +1339,7 @@ class Hologram
 		if (CfgGameplayHandler.GetDisableIsCollidingPlayerCheck())
 			return false;
 		#ifdef DIAG_DEVELOPER
-		DebugText("IsCollidingPlayer: ", false, m_IsCollidingPlayer);
+		DebugLog("IsCollidingPlayer: ", false, m_IsCollidingPlayer);
 		#endif
 		return m_IsCollidingPlayer;
 	}

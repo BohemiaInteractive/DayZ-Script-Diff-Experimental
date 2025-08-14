@@ -14,31 +14,7 @@ class DayZPlayerCommandDeathCallback : HumanCommandDeathCallback
 
 	override void 	OnSimulationEnd()
 	{
-		if (LogManager.IsSyncLogEnable()) syncDebugPrint("DZPI::OnSimulationEnd - trying to drop item");
-		
-		if (GetGame().IsServer())
-		{
-			EntityAI itemInHands = m_pPlayer.GetHumanInventory().GetEntityInHands();
-			if (itemInHands)
-			{
-				int boneIndex = m_pPlayer.GetBoneIndexByName("RightHand_Dummy");
-			
-				vector m4[4];
-				m_pPlayer.GetBoneTransformWS(boneIndex, m4);
-			
-				m_pPlayer.GetInventory().DropEntityWithTransform(InventoryMode.SERVER, m_pPlayer, itemInHands, m4);
-				
-				if (GetCEApi())
-				{
-					int deadBodyLifetime = GetCEApi().GetCEGlobalInt("CleanupLifetimeDeadPlayer");
-					if (deadBodyLifetime <= 0)
-					{
-						deadBodyLifetime = 3600;
-					}
-					itemInHands.SetLifetime(deadBodyLifetime);
-				}
-			}	
-		}
+		m_pPlayer.DeathDropHandEntity();
 	}
 
 	override bool ShouldSimulationBeDisabled()
@@ -221,6 +197,8 @@ class DayZPlayerImplement extends DayZPlayer
 		m_PerformedActionSounds = new array<AbstractWave>();
 		m_CurrentWaterLevel = 0;
 		m_WeaponRaiseTime = 0;
+		
+		m_CachedEquipmentStorage = CachedEquipmentStorage(this);
 		
 		RegisterNetSyncVariableBoolSignal("m_TriggerPullPlayerOutOfVehicleSynch");
 	}
@@ -476,10 +454,13 @@ class DayZPlayerImplement extends DayZPlayer
 		m_ClimbingLadderType = value;
 	}
 
-	//! Implementations only! - used on PlayerBase
-	bool CanConsumeStamina(EStaminaConsumers consumer) {};
-	bool CanStartConsumingStamina(EStaminaConsumers consumer) {};
-	void DepleteStaminaEx(EStaminaModifiers modifier, float dT = -1, float coef = 1.0) {};
+	bool CanConsumeStamina(EStaminaConsumers consumer);
+	bool CanStartConsumingStamina(EStaminaConsumers consumer);
+	void DepleteStaminaEx(EStaminaModifiers modifier, float dT = -1, float coef = 1.0);
+	override CachedEquipmentStorage GetCachedEquipment()
+	{
+		return CachedEquipmentStorage.Cast(m_CachedEquipmentStorage);
+	}
 	
 	bool IsInVehicle()
 	{
@@ -500,6 +481,7 @@ class DayZPlayerImplement extends DayZPlayer
 	bool PlaySoundEventType(ESoundEventType soundType, int soundEventID, int param = 0) {};
 	bool PlaySoundEvent(EPlayerSoundEventID id, bool from_anim_system = false, bool is_from_server = false) {};
 	bool PlaySoundEventEx(EPlayerSoundEventID id, bool from_anim_system = false, bool is_from_server = false, int param = 0) {};
+	bool StopSoundEvent(EPlayerSoundEventID id, bool is_from_server = false, int param = 0) {};
 
 	bool IsFBSymptomPlaying()
 	{
@@ -618,6 +600,47 @@ class DayZPlayerImplement extends DayZPlayer
 		}
 
 		super.OnVariablesSynchronized();
+	}
+
+	void DeathDropHandEntity()
+	{
+		if (!GetGame().IsServer())
+		{
+			return;
+		}
+
+#ifdef ENABLE_LOGGING
+		if (LogManager.IsSyncLogEnable())
+		{
+			syncDebugPrint("DZPI::OnSimulationEnd - trying to drop item");
+		}
+#endif
+
+		EntityAI itemInHands = GetHumanInventory().GetEntityInHands();
+		if (!itemInHands)
+		{
+			return;
+		}
+		
+		int boneIndex = GetBoneIndexByName("RightHand_Dummy");
+		
+		vector m4[4];
+		GetBoneTransformWS(boneIndex, m4);
+		
+		// TODO(kumarjac): Change to occur on the earlier event and drop with physics instead? 
+		// aside from dynamic lifetime of entities being too low, physics is stable now.
+		GetInventory().DropEntityWithTransform(InventoryMode.SERVER, this, itemInHands, m4);
+		
+		if (GetCEApi())
+		{
+			int deadBodyLifetime = GetCEApi().GetCEGlobalInt("CleanupLifetimeDeadPlayer");
+			if (deadBodyLifetime <= 0)
+			{
+				deadBodyLifetime = 3600;
+			}
+
+			itemInHands.SetLifetime(deadBodyLifetime);
+		}
 	}
 
 	bool HandleDeath(int pCurrentCommandID)
@@ -957,6 +980,7 @@ class DayZPlayerImplement extends DayZPlayer
 	}
 	void RequestSoundEvent(EPlayerSoundEventID id, bool from_server_and_client = false);
 	void RequestSoundEventEx(EPlayerSoundEventID id, bool from_server_and_client = false, int param = 0);
+	void RequestSoundEventStop(EPlayerSoundEventID id, bool from_server_and_client = false, int param = EPlayerSoundEventParam.STOP_PLAYBACK);
 	protected void SendSoundEvent(EPlayerSoundEventID id);
 	protected void SendSoundEventEx(EPlayerSoundEventID id, int param = 0);
 	
@@ -1778,7 +1802,7 @@ class DayZPlayerImplement extends DayZPlayer
 
 	bool CanClimb(int climbType, SHumanCommandClimbResult climbRes)
 	{
-		if (IsFBSymptomPlaying() || IsRestrained() || IsUnconscious() || IsInFBEmoteState())
+		if (IsFBSymptomPlaying() || IsRestrained() || IsUnconscious() || IsInFBEmoteState() || GetCommand_Action() || GetCommandModifier_Action())
 			return false;
 		
 		if (m_MovementState.m_iStanceIdx == DayZPlayerConstants.STANCEIDX_PRONE || m_MovementState.m_iStanceIdx == DayZPlayerConstants.STANCEIDX_RAISEDPRONE)
@@ -1829,6 +1853,12 @@ class DayZPlayerImplement extends DayZPlayer
 	void AbortWeaponEvent()
 	{
 		GetDayZPlayerInventory().AbortWeaponEvent();
+	}
+
+	// Please on't depend on this, we will eventually hopefully remove this
+	void SyncDeferredEventToRemotes()
+	{
+		GetDayZPlayerInventory().SyncDeferredEventToRemotes();
 	}
 
 	//-------------------------------------------------------------
@@ -3932,44 +3962,35 @@ class DayZPlayerImplement extends DayZPlayer
 			optics.Insert(preferredOptics);
 		}
 		
-		// Draw equipped NVGs; employ better finding!
-		EntityAI nvAttachment = GetNVEntityAttached();
+		// Draw equipped NVGs
+		EntityAI nvAttachment;
+		CachedEquipmentStorageQuery query 	= new CachedEquipmentStorageQuery();
+		query.m_Category 					= ECachedEquipmentItemCategory.NVG;
+		query.m_Placement 					= ECachedEquipmentPlacement.ATTACHMENT;
+		array<Entity> nvgs = GetCachedEquipment().GetEntitiesByCategory(query);
+		foreach (Entity nvg : nvgs)
+		{
+			nvAttachment = EntityAI.Cast(nvg);
+			break;
+		}
+
 		if (nvAttachment)
 		{
 			bool blockedByOptics = preferredOptics && preferredOptics.IsInOptics() && !preferredOptics.IsUsingOptics2DModel();
 			if (!blockedByOptics && PlayerBase.Cast(this).IsNVGWorking())
 			{
-				NVGoggles nvg = NVGoggles.Cast(nvAttachment);
-				if (nvg)
+				NVGoggles goggles = NVGoggles.Cast(nvAttachment);
+				if (goggles)
 				{
 					if (!optics) 
 						optics = {};
 					
-					optics.Insert(nvg);
+					optics.Insert(goggles);
 				}
 			}
 		}
 		
 		return optics;
-	}
-	
-	//!
-	//! TODO: transitional change - will be cleaned in near future
-	//! Do NOT mod this method - will be removed
-	private EntityAI GetNVEntityAttached()
-	{
-		EntityAI entity;
-		
-		if (FindAttachmentBySlotName("Eyewear") && FindAttachmentBySlotName("Eyewear").FindAttachmentBySlotName("NVG"))
-		{
-			entity = FindAttachmentBySlotName("Eyewear").FindAttachmentBySlotName("NVG");
-		}
-		else if (FindAttachmentBySlotName("Headgear") && FindAttachmentBySlotName("Headgear").FindAttachmentBySlotName("NVG"))
-		{
-			entity = FindAttachmentBySlotName("Headgear").FindAttachmentBySlotName("NVG");
-		}
-
-		return entity;
 	}
 
 #ifdef DIAG_DEVELOPER

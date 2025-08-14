@@ -22,6 +22,8 @@ class Debug
 	private static const string	LOG_DEFAULT					= "n/a";
 	
 	private static ref array<Shape>	m_DebugShapes;
+	private static ref array<ref DebugTextScreenSpace> m_DebugTextsSS;
+	private static ref array<ref DebugTextWorldSpace> m_DebugTextsWS;
 	
 	static Widget m_DebugLayoutCanvas;
 	static CanvasWidget m_CanvasDebug;
@@ -77,38 +79,93 @@ class Debug
 	
 	static void	Init()
 	{
-		m_DebugShapes	= new array<Shape>;
+		m_DebugShapes	= new array<Shape>();
+		m_DebugTextsSS	= new array<ref DebugTextScreenSpace>();
+		m_DebugTextsWS	= new array<ref DebugTextWorldSpace>();
+	}
+	
+	static void DestroyAll()
+	{
+		DestroyAllShapes();
+		DestroyAllTextSS();
+		DestroyAllTextWS();
 	}
 	
 	static void DestroyAllShapes()
 	{
-		for ( int i = 0; i < m_DebugShapes.Count(); ++i )
-		{
-			if ( m_DebugShapes.Get(i) )
-			{
-				m_DebugShapes.Get(i).Destroy();
-			}
-		}
+		foreach (Shape debugShape : m_DebugShapes)
+			debugShape.Destroy();
 		
 		m_DebugShapes.Clear();
+	}
+		
+	static void DestroyAllTextSS()
+	{
+		m_DebugTextsSS.Clear();
+	}
+	
+	static void DestroyAllTextWS()
+	{
+		m_DebugTextsWS.Clear();
 	}
 	
 	static void RemoveShape(out Shape shape)
 	{
-		if (!shape) return;
-		for ( int i = 0; i < m_DebugShapes.Count(); i++ )
+		if (!shape)
+			return;
+
+		for (int i = 0; i < m_DebugShapes.Count(); ++i)
 		{
-			Shape found_shape = m_DebugShapes.Get(i);
+			Shape foundShape = m_DebugShapes.Get(i);
 			
-			if ( found_shape  &&  found_shape == shape )
+			if (foundShape && foundShape == shape)
 			{
-				found_shape.Destroy();
+				foundShape.Destroy();
 				m_DebugShapes.Remove(i); // Mandatory! Otherwise the Destroy() function causes crash!
 				shape = null;
 				return;
 			}
 		}
 	}
+	
+	static void RemoveTextSS(out DebugTextScreenSpace text)
+	{
+		if (!text)
+			return;
+
+		for (int i = 0; i < m_DebugTextsSS.Count(); ++i)
+		{
+			DebugTextScreenSpace foundText = m_DebugTextsSS.Get(i);
+			
+			if (foundText && foundText == text)
+			{
+				foundText = null;
+				m_DebugTextsSS.Remove(i);
+				text = null;
+				return;
+			}
+		}
+	}
+	
+	static void RemoveTextWS(out DebugTextWorldSpace text)
+	{
+		if (!text)
+			return;
+
+		for (int i = 0; i < m_DebugTextsWS.Count(); ++i)
+		{
+			DebugTextWorldSpace foundText = m_DebugTextsWS.Get(i);
+			
+			if (foundText && foundText == text)
+			{
+				foundText = null;
+				m_DebugTextsWS.Remove(i);
+				text = null;
+				return;
+			}
+		}
+	}
+
 	/**
 	\brief Prints debug message with normal prio
 		\param msg \p string Debug message for print
@@ -367,6 +424,22 @@ class Debug
 		shapes.Clear();
 	}
 	
+	static void CleanupTextsSS(array<ref DebugTextScreenSpace> texts)
+	{
+		foreach (DebugTextScreenSpace text : texts)
+			Debug.RemoveTextSS(text);
+		
+		texts.Clear();
+	}
+	
+	static void CleanupTextsWS(array<ref DebugTextWorldSpace> texts)
+	{
+		foreach (DebugTextWorldSpace text : texts)
+			Debug.RemoveTextWS(text);
+		
+		texts.Clear();
+	}
+	
 	/**
 	DrawLine
 	\nFlags:
@@ -407,9 +480,27 @@ class Debug
 		m_DebugShapes.Insert(shape);
 		return shape;
 	}
+	
+	
+	
+	static DebugTextScreenSpace DrawTextSS(string text, float x, float y, float size = 20.0, int color = 0xFFFFFFFF, int bgColor = 0x00000000, DebugTextFlags flags = DebugTextFlags.DEFAULT, int priority = 1000)
+	{
+		DebugTextScreenSpace textSS = DebugTextScreenSpace.Create(text, flags, x, y, size, color, bgColor, priority);
+		if ((flags & DebugTextFlags.ONCE) == 0)
+			m_DebugTextsSS.Insert(textSS);
+		
+		return textSS;
+	}
 
-	
-	
+	static DebugTextWorldSpace DrawTextWS(string text, vector position, float size = 20.0, int color = 0xFFFFFFFF, int bgColor = 0x00000000, DebugTextFlags flags = DebugTextFlags.DEFAULT, int priority = 1000)
+	{
+		DebugTextWorldSpace textWS = DebugTextWorldSpace.Create(text, flags, position[0], position[1], position[2], size, color, bgColor, priority);
+		if ((flags & DebugTextFlags.ONCE) == 0)
+			m_DebugTextsWS.Insert(textWS);
+
+		return textWS;
+	}
+
 	/**
 	\brief Returns some of base config classes strings like CfgVehicles, CfgWeapons, etc. for searching purposes
 		\param base_classes \p out TStringArray Array containing some of base config classes

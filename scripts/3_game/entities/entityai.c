@@ -84,6 +84,13 @@ class DebugSpawnParams
 {
 	Man m_Player;
 
+	static DebugSpawnParams None()
+	{
+		DebugSpawnParams params = new DebugSpawnParams();
+		params.m_Player = null;
+		return params;
+	}
+
 	static DebugSpawnParams WithPlayer(Man player)
 	{
 		DebugSpawnParams params = new DebugSpawnParams();
@@ -324,6 +331,11 @@ class EntityAI extends Entity
 	bool DeleteComponent(int comp_type)
 	{
 		return m_ComponentsBank.DeleteComponent(comp_type);
+	}
+	
+	ECachedEquipmentItemCategory GetCachedEquipmentCategory()
+	{
+		return ECachedEquipmentItemCategory.NONE;
 	}
 	
 	string GetDestructionBehaviour()
@@ -946,64 +958,61 @@ class EntityAI extends Entity
 	}
 	
 	
-	void OnItemLocationChanged(EntityAI old_owner, EntityAI new_owner) { }
-	void OnChildItemRemoved(InventoryItem item) { }
-	void OnChildItemReceived(InventoryItem item) { }
+	void OnItemLocationChanged(EntityAI old_owner, EntityAI new_owner);
+	void OnChildItemRemoved(InventoryItem item);
+	void OnChildItemReceived(InventoryItem item);
 	
-	void OnItemAttachmentSlotChanged (notnull InventoryLocation oldLoc, notnull InventoryLocation newLoc) {}
+	void OnItemAttachmentSlotChanged(notnull InventoryLocation oldLoc, notnull InventoryLocation newLoc);
 	
-	void EEItemLocationChanged (notnull InventoryLocation oldLoc, notnull InventoryLocation newLoc)
+	void EEItemLocationChanged(notnull InventoryLocation oldLoc, notnull InventoryLocation newLoc)
 	{
-		EntityAI old_owner = oldLoc.GetParent();
-		EntityAI new_owner = newLoc.GetParent();
-		OnItemLocationChanged(old_owner, new_owner);
+		EntityAI oldOwner = oldLoc.GetParent();
+		EntityAI newOwner = newLoc.GetParent();
+		OnItemLocationChanged(oldOwner, newOwner);
 		
 		if (oldLoc.GetType() == InventoryLocationType.ATTACHMENT && newLoc.GetType() == InventoryLocationType.ATTACHMENT)
-		{
-			OnItemAttachmentSlotChanged(oldLoc,newLoc);
-		}
+			OnItemAttachmentSlotChanged(oldLoc, newLoc);
 		
 		if (oldLoc.GetType() == InventoryLocationType.ATTACHMENT)
 		{
-			if (old_owner)
-				OnWasDetached(old_owner, oldLoc.GetSlot());
+			if (oldOwner)
+				OnWasDetached(oldOwner, oldLoc.GetSlot());
 			else
-				Error("EntityAI::EEItemLocationChanged - detached, but old_owner is null");
+				Error("EntityAI::EEItemLocationChanged - detached, but oldOwner is null");
 		}
 		
 		if (newLoc.GetType() == InventoryLocationType.ATTACHMENT)
 		{
-			if (new_owner)
-				OnWasAttached(newLoc.GetParent(), newLoc.GetSlot());
+			if (newOwner)
+				OnWasAttached(newOwner, newLoc.GetSlot());
 			else
-				Error("EntityAI::EEItemLocationChanged - attached, but new_owner is null");
+				Error("EntityAI::EEItemLocationChanged - attached, but newOwner is null");
 		}
 		
+		Man player;
 		if (oldLoc.GetType() == InventoryLocationType.HANDS)
 		{
-			Man.Cast(oldLoc.GetParent()).OnItemInHandsChanged();
+			player = Man.Cast(oldOwner);
+			player.OnItemInHandsChanged();
+			player.GetCachedEquipment().OnItemCargoOut(this);
 		}
 		
 		if (newLoc.GetType() == InventoryLocationType.HANDS)
 		{
-			Man.Cast(newLoc.GetParent()).OnItemInHandsChanged();
+			player = Man.Cast(newOwner);
+			player.OnItemInHandsChanged();
+			player.GetCachedEquipment().OnItemCargoIn(this);
 		}
 	}
 
 	//! Called from 'IEntity.AddChild'
-	void EEParentedTo(EntityAI parent)
-	{
-	}
+	void EEParentedTo(EntityAI parent);
 
 	//! Called from 'IEntity.RemoveChild' or 'IEntity.AddChild' when hierarchy changes
-	void EEParentedFrom(EntityAI parent)
-	{
-	}
+	void EEParentedFrom(EntityAI parent);
 	
-	void EEInventoryIn (Man newParentMan, EntityAI diz, EntityAI newParent)
-	{
-	}
-	void EEInventoryOut (Man oldParentMan, EntityAI diz, EntityAI newParent)
+	void EEInventoryIn(Man newParentMan, EntityAI diz, EntityAI newParent);
+	void EEInventoryOut(Man oldParentMan, EntityAI diz, EntityAI newParent)
 	{
 		m_LastUpdatedTime = GetGame().GetTickTime();
 		
@@ -1127,8 +1136,12 @@ class EntityAI extends Entity
 	void EEItemAttached(EntityAI item, string slot_name)
 	{
 		int slotId = InventorySlots.GetSlotIdFromString(slot_name);
-		PropagateExclusionValueRecursive(item.GetAttachmentExclusionMaskAll(slotId),slotId); //Performed from parent to avoid event order issues on swap
+		PropagateExclusionValueRecursive(item.GetAttachmentExclusionMaskAll(slotId), slotId); //Performed from parent to avoid event order issues on swap
 		SetWeightDirty();
+
+		Man player = GetHierarchyRootPlayer();
+		if (player)
+			player.GetCachedEquipment().OnItemAttached(item, slotId, this);
 
 		if ( m_ComponentsBank != NULL )
 		{
@@ -1162,8 +1175,12 @@ class EntityAI extends Entity
 	void EEItemDetached(EntityAI item, string slot_name)
 	{
 		int slotId = InventorySlots.GetSlotIdFromString(slot_name);
-		ClearExclusionValueRecursive(item.GetAttachmentExclusionMaskAll(slotId),slotId); //Performed from parent to avoid event order issues on swap
+		ClearExclusionValueRecursive(item.GetAttachmentExclusionMaskAll(slotId), slotId); //Performed from parent to avoid event order issues on swap
 		SetWeightDirty();
+
+		Man player = GetHierarchyRootPlayer();
+		if (player)
+			player.GetCachedEquipment().OnItemDetached(item, slotId, this);
 		
 		if ( m_ComponentsBank != NULL )
 		{
@@ -1185,7 +1202,6 @@ class EntityAI extends Entity
 		
 		if ( m_AttachmentsWithAttachments.Find( item ) > -1 )
 			m_AttachmentsWithAttachments.RemoveItem( item );
-		
 				
 		if ( m_OnItemDetached )
 			m_OnItemDetached.Invoke( item, slot_name, this );
@@ -1197,7 +1213,10 @@ class EntityAI extends Entity
 		
 		if( m_OnItemAddedIntoCargo )
 			m_OnItemAddedIntoCargo.Invoke( item, this );
-			
+
+		Man player = item.GetHierarchyRootPlayer();
+		if (player)		
+			player.GetCachedEquipment().OnItemCargoIn(item);
 		item.OnMovedInsideCargo(this);
 	}
 
@@ -1207,7 +1226,10 @@ class EntityAI extends Entity
 		
 		if( m_OnItemRemovedFromCargo )
 			m_OnItemRemovedFromCargo.Invoke( item, this );
-			
+	
+		Man player = item.GetHierarchyRootPlayer();
+		if (player)
+			player.GetCachedEquipment().OnItemCargoOut(item);
 		item.OnRemovedFromCargo(this);
 	}
 
@@ -1773,7 +1795,7 @@ class EntityAI extends Entity
 	}	
 
 	// !Called on CHILD when it's attached to parent.
-	void OnWasAttached( EntityAI parent, int slot_id );
+	void OnWasAttached(EntityAI parent, int slot_id);
 	
 	// !Called on CHILD when it's detached from parent.
 	void OnWasDetached( EntityAI parent, int slot_id )
@@ -1786,7 +1808,7 @@ class EntityAI extends Entity
 		}
 	}
 	
-	void OnCargoChanged() { }
+	void OnCargoChanged();
 	
 	bool IsTakeable()
 	{

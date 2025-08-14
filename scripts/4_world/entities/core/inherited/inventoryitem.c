@@ -211,6 +211,42 @@ class CarWheel extends InventoryItemSuper
 	{
 		return true;
 	}
+
+	string GetRuinedReplacement()
+	{
+		string newWheel = "";
+		switch (GetType())
+		{
+			case "HatchbackWheel":
+				newWheel = "HatchbackWheel_Ruined";
+				break;
+	
+			case "CivSedanWheel":
+				newWheel = "CivSedanWheel_Ruined";
+				break;
+	
+			case "Hatchback_02_Wheel":
+				newWheel = "Hatchback_02_Wheel_Ruined";
+				break;
+			
+			case "Sedan_02_Wheel":
+				newWheel = "Sedan_02_Wheel_Ruined";
+				break;
+	
+			case "Truck_01_Wheel":
+				newWheel = "Truck_01_Wheel_Ruined";
+				break;
+	
+			case "Truck_01_WheelDouble":
+				newWheel = "Truck_01_WheelDouble_Ruined";
+				break;
+
+			case "Offroad_02_Wheel":
+				newWheel = "Offroad_02_Wheel_Ruined";
+				break;
+		}
+		return newWheel;
+	}
 	
 	override void EEHealthLevelChanged(int oldLevel, int newLevel, string zone)
 	{
@@ -218,37 +254,7 @@ class CarWheel extends InventoryItemSuper
 		
 		if (newLevel ==  GameConstants.STATE_RUINED)
 		{
-			string newWheel = "";
-			switch (GetType())
-			{
-				case "HatchbackWheel":
-					newWheel = "HatchbackWheel_Ruined";
-					break;
-	
-				case "CivSedanWheel":
-					newWheel = "CivSedanWheel_Ruined";
-					break;
-	
-				case "Hatchback_02_Wheel":
-					newWheel = "Hatchback_02_Wheel_Ruined";
-					break;
-				
-				case "Sedan_02_Wheel":
-					newWheel = "Sedan_02_Wheel_Ruined";
-					break;
-	
-				case "Truck_01_Wheel":
-					newWheel = "Truck_01_Wheel_Ruined";
-					break;
-	
-				case "Truck_01_WheelDouble":
-					newWheel = "Truck_01_WheelDouble_Ruined";
-					break;
-
-				case "Offroad_02_Wheel":
-					newWheel = "Offroad_02_Wheel_Ruined";
-					break;
-			}
+			string newWheel = GetRuinedReplacement();
 			
 			if (newWheel != "")
 			{
@@ -327,45 +333,51 @@ class CarWheel_Ruined : CarWheel
 
 		return true;
 	}
+
+	string GetReplacement()
+	{
+		string newWheel = "";
+		switch (GetType())
+		{
+			case "HatchbackWheel_Ruined":
+				newWheel = "HatchbackWheel";
+				break;
+	
+			case "CivSedanWheel_Ruined":
+				newWheel = "CivSedanWheel";
+				break;
+	
+			case "Hatchback_02_Wheel_Ruined":
+				newWheel = "Hatchback_02_Wheel";
+				break;
+			
+			case "Sedan_02_Wheel_Ruined":
+				newWheel = "Sedan_02_Wheel";
+				break;
+	
+			case "Truck_01_Wheel_Ruined":
+				newWheel = "Truck_01_Wheel";
+				break;
+	
+			case "Truck_01_WheelDouble_Ruined":
+				newWheel = "Truck_01_WheelDouble";
+				break;
+
+			case "Offroad_02_Wheel_Ruined":
+				newWheel = "Offroad_02_Wheel";
+				break;
+		}
+		return newWheel;
+	}
 	
 	override void EEHealthLevelChanged(int oldLevel, int newLevel, string zone)
 	{
 		super.EEHealthLevelChanged( oldLevel, newLevel, zone );
-		#ifdef DEVELOPER
+#ifdef DIAG_DEVELOPER
 		// used when fixing the whole car through debug
 		if (newLevel ==  GameConstants.STATE_PRISTINE)
 		{
-			string newWheel = "";
-			switch (GetType())
-			{
-				case "HatchbackWheel_Ruined":
-					newWheel = "HatchbackWheel";
-					break;
-	
-				case "CivSedanWheel_Ruined":
-					newWheel = "CivSedanWheel";
-					break;
-	
-				case "Hatchback_02_Wheel_Ruined":
-					newWheel = "Hatchback_02_Wheel";
-					break;
-				
-				case "Sedan_02_Wheel_Ruined":
-					newWheel = "Sedan_02_Wheel";
-					break;
-	
-				case "Truck_01_Wheel_Ruined":
-					newWheel = "Truck_01_Wheel";
-					break;
-	
-				case "Truck_01_WheelDouble_Ruined":
-					newWheel = "Truck_01_WheelDouble";
-					break;
-
-				case "Offroad_02_Wheel_Ruined":
-					newWheel = "Offroad_02_Wheel";
-					break;
-			}
+			string newWheel = GetReplacement();
 
 			if (newWheel != "")
 			{
@@ -378,7 +390,7 @@ class CarWheel_Ruined : CarWheel
 				GetInventory().ReplaceItemWithNew(InventoryMode.SERVER, lambda);
 			}
 		}
-		#endif
+#endif
 	}
 	
 }

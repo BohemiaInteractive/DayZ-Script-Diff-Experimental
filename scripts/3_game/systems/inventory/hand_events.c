@@ -425,18 +425,17 @@ class HandEventDrop extends HandEventRemove
 	{
 		m_EventID = HandEventID.DROP;
 		m_CanPerformDrop = true;
+		m_IsSet = false;
+
+		m_Dst = new InventoryLocation();
 	}
 
 	override void ReadFromContext(ParamsReadContext ctx)
 	{
 		super.ReadFromContext(ctx);
-
-		if (!m_Dst)
-		{
-			m_Dst = new InventoryLocation();
-		}
 		
 		ctx.Read(m_CanPerformDrop);
+		ctx.Read(m_IsSet);
 		OptionalLocationReadFromContext(m_Dst, ctx);
 	}
 
@@ -445,14 +444,16 @@ class HandEventDrop extends HandEventRemove
 		super.WriteToContext(ctx);
 
 		ctx.Write(m_CanPerformDrop);
+		ctx.Write(m_IsSet);
 		OptionalLocationWriteToContext(m_Dst, ctx);
 	}
 
 	override bool CheckRequestEx(InventoryValidation validation)
 	{
 		//! Check to see if this is the initial call from the server (but the event originated from a client)
-		if (!validation.m_IsJuncture && IsAuthoritative())
+		if (validation.m_Mode == InventoryMode.JUNCTURE && !validation.m_IsJuncture && IsAuthoritative())
 		{
+			m_IsSet = true;
 			m_CanPerformDrop = GameInventory.SetGroundPosByOwner(m_Player, GetSrcEntity(), m_Dst);
 		}
 
@@ -467,34 +468,29 @@ class HandEventDrop extends HandEventRemove
 	
 	override bool CanPerformEventEx(InventoryValidation validation)
 	{
-		if (!m_CanPerformDrop)
-		{
-			return false;
-		}
-
 		//! On multiplayer client, if this is the initial call then we are waiting for the server to setup this event still
-		if (!validation.m_IsJuncture && !validation.m_IsRemote && !GetDst() && (GetGame().IsMultiplayer() && GetGame().IsClient()))
+		if (validation.m_Mode == InventoryMode.JUNCTURE && !validation.m_IsJuncture && !validation.m_IsRemote && GetGame().IsClient())
 		{
 			return true;
 		}
-		
+
 		//! Singleplayer or server was initial caller
-		if (!validation.m_IsRemote && !GetDst())
+		if (!m_IsSet)
 		{
-			m_Dst = new InventoryLocation();
+			m_IsSet = true;
 			m_CanPerformDrop = GameInventory.SetGroundPosByOwner(m_Player, GetSrcEntity(), m_Dst);
-			
-			if (!m_CanPerformDrop)
-			{
-				validation.m_Reason = InventoryValidationReason.DROP_PREVENTED;
-				return false;
-			}
+		}
+
+		if (!m_CanPerformDrop)
+		{
+			return false;
 		}
 
 		return super.CanPerformEventEx(validation);
 	}
 	
 	bool m_CanPerformDrop;
+	bool m_IsSet;
 };
 
 class HandEventThrow extends HandEventRemove

@@ -1300,14 +1300,14 @@ class MiscGameplayFunctions
 	{
 		array<Object> vicinityObjects= new array<Object>;
 		vicinityObjects.Copy(objects);
-		
+
 		int i = 0;
 		int j = 0;
 		int k = 0;			
 		int mCount = vicinityObjects.Count();
 		
 		if (!filteredObjects)
-			filteredObjects = new array<Object>;
+			filteredObjects = new array<Object>();
 		
 		// Remove objects that are too far from the player anyways
 		if ( doDistanceCheck )
@@ -1321,9 +1321,9 @@ class MiscGameplayFunctions
 		}
 
 		// Sort obstructingObjects to have the furthest one first
-		array<Object> sortedObstructingObjects = new array<Object>;
-		array<float> distanceHelper = new array<float>;
-		array<float> distanceHelperUnsorted = new array<float>;
+		array<Object> sortedObstructingObjects = new array<Object>();
+		array<float> distanceHelper = new array<float>();
+		array<float> distanceHelperUnsorted = new array<float>();
 		float distance, dist1, dist2;
 
 		for ( i = 0; i < obstructingObjects.Count(); ++i )
@@ -1338,8 +1338,8 @@ class MiscGameplayFunctions
 		for ( i = distanceHelper.Count() - 1; i >= 0; --i )
 			sortedObstructingObjects.Insert(obstructingObjects[distanceHelperUnsorted.Find(distanceHelper[i])]);
 
-		array<ref array<Object>> tempGroups = new array<ref array<Object>>;
-		array<ref array<Object>> objectGroups = new array<ref array<Object>>;
+		array<ref array<Object>> tempGroups = new array<ref array<Object>>();
+		array<ref array<Object>> objectGroups = new array<ref array<Object>>();
 		array<Object> group;
 		
 		float cos = Math.Cos(90);
@@ -1366,7 +1366,7 @@ class MiscGameplayFunctions
 				half = (max - min) * 0.5;
 				half = Vector(Math.AbsFloat(half[0]), Math.AbsFloat(half[1]), Math.AbsFloat(half[2]));
 
-				group = new array<Object>;
+				group = new array<Object>();
 
 				// Group objects within the above box
 				for ( j = vicinityObjects.Count() - 1; j >= 0; --j )
@@ -1395,18 +1395,19 @@ class MiscGameplayFunctions
 		// Split initial groups by distance
 		SplitArrayIntoGroupsByDistance(vicinityObjects, objectGroups, distanceDelta);
 
-		// Raycast accordingly to groups		
+		// Raycast items in groups (previously sample item in group which is not enough, sadly)
 		IsObjectObstructedCache cache = new IsObjectObstructedCache(origin, mCount);
-		for ( i = 0; i < objectGroups.Count(); ++i )
+		foreach (array<Object> objectGroup : objectGroups)
 		{
-			array<Object> objectGroup = objectGroups[i];
-			Object sampleObject = objectGroup[0];
+			foreach (Object filteredObject : objectGroup)
+			{
+				if (!IsObjectObstructedEx(filteredObject, cache))
+					filteredObjects.Insert(filteredObject);
+			}
 
-			if ( !IsObjectObstructedEx(sampleObject, cache) )
-				filteredObjects.InsertAll(objectGroup);
-
-			cache.ClearCache();
 		}
+
+		cache.ClearCache();
 	}
 
 	static void SplitArrayIntoGroupsByDistance(array<Object> objects, array<ref array<Object>> objectGroups, float squaredDistanceDelta)
@@ -1446,7 +1447,7 @@ class MiscGameplayFunctions
 	static bool IsObjectObstructed(Object object, bool doDistanceCheck = false, vector distanceCheckPos = "0 0 0", float maxDist = 0)
 	{
 		vector rayStart;
-		MiscGameplayFunctions.GetHeadBonePos(PlayerBase.Cast(GetGame().GetPlayer()), rayStart);
+		MiscGameplayFunctions.GetHeadBonePos(PlayerBase.Cast(g_Game.GetPlayer()), rayStart);
 		IsObjectObstructedCache cache = new IsObjectObstructedCache(rayStart, 1);
 
 		return IsObjectObstructedEx(object, cache, doDistanceCheck, distanceCheckPos, maxDist);

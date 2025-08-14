@@ -107,6 +107,61 @@ class ActionDebug : ActionInstantBase
 	{
 		return false;
 	}
+
+	override bool CanBeUsedInVehicle()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedOnLadder()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedSwimming()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedInRestrain()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedRaised()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedOnBack()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedThrowing()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedLeaning()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedWithBrokenLegs()
+	{
+		return true;
+	}
+
+	override bool CanBeUsedInFreelook()
+	{
+		return true;
+	}
+
+	override void InitConditionMask()
+	{
+		m_ConditionMask = 0xFFFFFFFF;
+	}
 	
 };
 #endif

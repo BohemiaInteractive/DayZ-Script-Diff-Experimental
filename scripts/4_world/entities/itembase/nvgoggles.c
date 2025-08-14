@@ -8,6 +8,11 @@ class NVGoggles extends PoweredOptic_Base
 		RotateGoggles(true);
 	}
 	
+	override ECachedEquipmentItemCategory GetCachedEquipmentCategory()
+	{
+		return ECachedEquipmentItemCategory.NVG;
+	}
+	
 	override void SetActions()
 	{
 		super.SetActions();

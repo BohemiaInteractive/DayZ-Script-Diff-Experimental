@@ -48,6 +48,8 @@ class InventoryValidation
 	InventoryValidationResult m_Result = InventoryValidationResult.FAILED;
 	InventoryValidationReason m_Reason = InventoryValidationReason.UNKNOWN;
 
+	InventoryMode m_Mode = InventoryMode.JUNCTURE;
+
 	bool IsAuthoritative()
 	{
 		return !m_IsJuncture && !m_IsRemote;

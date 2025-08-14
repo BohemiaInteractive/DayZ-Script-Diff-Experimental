@@ -75,6 +75,8 @@ class ActionDeployBase : ActionContinuousBase
 
 		if (!poActionData.m_MainItem)
 			return;
+
+		ClearActionJuncture(action_data);
 		
 		EntityAI entity_for_placing = poActionData.m_MainItem;
 		vector position = vector.Zero;
@@ -156,6 +158,29 @@ class ActionDeployBase : ActionContinuousBase
 		
 		m_MovedItems.Clear();
 	}
+
+	override bool AddActionJuncture(ActionData action_data)
+	{
+		bool accepted = super.AddActionJuncture(action_data);
+
+		EntityAI targetEntity = action_data.m_MainItem;
+
+		InventoryLocation targetIl = new InventoryLocation();
+		targetEntity.GetInventory().GetCurrentInventoryLocation(targetIl);
+		
+		//Lock target
+		if (!GetGame().AddActionJuncture(action_data.m_Player, targetEntity, 10000, action_data))
+		{
+			accepted = false;
+			ClearActionJuncture(action_data);
+		}
+		else
+		{
+			action_data.m_ReservedInventoryLocations.Insert(targetIl);
+		}
+
+		return accepted;
+	}
 	
 	void DropDuringPlacing(PlayerBase player)
 	{
@@ -166,7 +191,16 @@ class ActionDeployBase : ActionContinuousBase
 		if (item.IsBasebuildingKit())
 			return;
 		
-		player.PredictiveDropEntity(item);
+		if (GetGame().IsDedicatedServer())
+		{
+			player.LocalDropEntity(item);
+
+			player.SyncDeferredEventToRemotes();
+		}
+		else
+		{
+			player.LocalDropEntity(item);
+		}
 	}
 	
 	void MoveEntityToFinalPosition(ActionData action_data, vector position, vector orientation)

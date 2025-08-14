@@ -607,9 +607,9 @@ class ServerBrowserMenuNew extends UIScriptedMenu
 	{		
 		m_Favorites = new TStringArray;
 		
-#ifdef PLATFORM_WINDOWS
+	#ifdef PLATFORM_WINDOWS
 		OnlineServices.GetFavoriteServers(m_Favorites);
-#else
+	#else
 		GetGame().GetProfileStringList("SB_Favorites", m_Favorites);
 		
 		// ignore any ids that do not follow correct IP:PORT format
@@ -635,7 +635,19 @@ class ServerBrowserMenuNew extends UIScriptedMenu
 			m_Favorites.Resize(MAX_FAVORITES);
 			m_Favorites.Invert();
 		}
-#endif
+	#endif
+		
+		if (m_Favorites.Count() == 0)
+			GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(SwitchToOfficalTab);
+	}
+	
+	protected void SwitchToOfficalTab()
+	{
+		if (GetSelectedTab().GetTabType() != TabType.FAVORITE)
+			return;
+		
+		if (GetTabberUI() && GetOfficalTab().IsNotInitialized() && !GetOfficalTab().IsLoadingServers())
+			GetTabberUI().PerformSwitchTab(TabType.OFFICIAL);
 	}
 	
 	void SaveFavoriteServersConsoles()
@@ -909,5 +921,15 @@ class ServerBrowserMenuNew extends UIScriptedMenu
 	{
 		super.OnHide();
 		PPERequesterBank.GetRequester(PPERequester_ServerBrowserBlur).Stop();
+	}
+	
+	TabberUI GetTabberUI()
+	{
+		return m_Tabber;
+	}
+	
+	ServerBrowserTab GetOfficalTab()
+	{
+		return m_OfficialTab;
 	}
 }

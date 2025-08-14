@@ -78,6 +78,8 @@ class Man extends EntityAI
 	//Called when an item is moved around in the cargo of this item
 	protected ref ScriptInvoker		m_OnItemRemovedFromHands;
 	
+	protected ref CachedEquipmentStorageBase m_CachedEquipmentStorage;
+	
 	ScriptInvoker GetOnItemAddedToHands()
 	{
 		if (!m_OnItemAddedToHands)
@@ -875,6 +877,11 @@ class Man extends EntityAI
 	}
 	
 	void UpdateInventoryMenu();
+	
+	CachedEquipmentStorageBase GetCachedEquipment()
+	{
+		return m_CachedEquipmentStorage;
+	}
 	
 	///@{ Stats
 	//! Registers new stat type for this player.

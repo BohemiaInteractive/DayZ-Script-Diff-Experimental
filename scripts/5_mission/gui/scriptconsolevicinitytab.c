@@ -151,9 +151,19 @@ class ScriptConsoleVicinityTab : ScriptConsoleTabBase
 	
 	void OnSelectAction(EntityAI ent, int actionId)
 	{
-		#ifdef DIAG_DEVELOPER 
-		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
-		player.GetActionManager().OnInstantAction(ActionDebug,new Param2<EntityAI,int>(ent,actionId));
+		#ifdef DIAG_DEVELOPER
+		if (!ent || ent.IsSetForDeletion())
+			return;
+		
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		if (player)
+		{
+			player.GetActionManager().OnInstantAction(ActionDebug, new Param2<EntityAI, int>(ent, actionId));
+		}
+		else
+		{
+			ent.OnAction(actionId, null, null);
+		}
 		#endif
 	}
 }

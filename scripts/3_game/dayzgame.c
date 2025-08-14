@@ -1067,9 +1067,19 @@ class DayZGame extends CGame
 		for (int p = 0; p < count; ++p)
 		{
 			ConfigGetChildName(path, p, child_name);
+
+			if (ConfigGetInt(path + " " + child_name + " scope") != 2)
+				continue;
 			
-			if (ConfigGetInt(path + " " + child_name + " scope") == 2 && IsKindOf(child_name, "SurvivorBase"))
-				m_CharClassNames.Insert(child_name);
+			if (!IsKindOf(child_name, "SurvivorBase"))
+				continue;
+
+#ifdef USER_kumarjac
+			if (child_name == "SurvivorF_Keiko")
+				continue;
+#endif
+
+			m_CharClassNames.Insert(child_name);
 		}
 		
 		m_IsConnecting = false;
@@ -2194,6 +2204,7 @@ class DayZGame extends CGame
 	void UpdateInputDeviceDisconnectWarning()
 	{
 		#ifdef PLATFORM_CONSOLE
+		#ifndef AUTOTEST
 		if (!GetUIManager().IsMenuOpen(MENU_WARNING_INPUTDEVICE_DISCONNECT))
 		{
 			m_ShouldShowControllerDisconnect = !GetInput().AreAllAllowedInputDevicesActive();
@@ -2202,6 +2213,7 @@ class DayZGame extends CGame
 				GetCallQueue(CALL_CATEGORY_GUI).Call(GetUIManager().EnterScriptedMenu,MENU_WARNING_INPUTDEVICE_DISCONNECT,GetUIManager().GetMenu());
 			}
 		}
+		#endif
 		#endif
 	}
 	
@@ -3006,6 +3018,17 @@ class DayZGame extends CGame
 		{
 			GetPostUpdateQueue(CALL_CATEGORY_GAMEPLAY).Invoke(timeslice);
 		}
+		
+	#ifndef NO_GUI	
+		if (mission)
+		{
+			Hud hud = mission.GetHud();
+			if (hud)
+			{
+				hud.Update(timeslice);
+			}
+		}
+	#endif
 	}
 	
 	// ------------------------------------------------------------

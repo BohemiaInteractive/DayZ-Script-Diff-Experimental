@@ -21,6 +21,9 @@ class PluginDiagMenuClient : PluginDiagMenu
 	ref FallDamageDebugData m_FallDamageDebugData;
 #ifndef SERVER
 	ref WeaponLiftDiag m_WeaponLiftDiag = new WeaponLiftDiag();
+	#ifdef DEVELOPER
+	ref UndergroundDiag m_UndergroundDiag = new UndergroundDiag();
+	#endif
 #endif
 	
 	override void OnInit()
@@ -296,6 +299,9 @@ class PluginDiagMenuClient : PluginDiagMenu
 		CheckTimeAccel();		
 		UpdateMaterialDebug();
 		UpdateWeaponLiftDiag(delta_time);
+		#ifdef DEVELOPER // TODO@RR - temporary, 
+		UpdateUndegroundDiag(delta_time);
+		#endif
 	}
 	
 	//---------------------------------------------
@@ -453,7 +459,10 @@ class PluginDiagMenuClient : PluginDiagMenu
 	{		
 		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		if (player)
-			DiagToggleRPCServer(enabled, player.HasBloodyHands(), ERPCs.DIAG_LIFESPAN_BLOODY_HANDS);
+		{
+			bool hasBloodyHands = player.HasBloodyHands();
+			DiagToggleRPCServer(enabled, hasBloodyHands, ERPCs.DIAG_LIFESPAN_BLOODY_HANDS);
+		}
 	}
 
 	//---------------------------------------------
@@ -578,6 +587,16 @@ class PluginDiagMenuClient : PluginDiagMenu
 		return pluginDiag.m_WeaponLiftDiag;
 	}
 	#endif
+	
+	void UpdateUndegroundDiag(float deltaTIme)
+	{
+		#ifndef SERVER
+		#ifdef DEVELOPER
+		if (DiagMenu.GetBool(DiagMenuIDs.UNDERGROUND_DEBUG))
+			m_UndergroundDiag.DrawDiag(deltaTIme);
+		#endif
+		#endif
+	}
 	
 	//---------------------------------------------
 	void MatGhostDebug()

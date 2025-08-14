@@ -356,7 +356,7 @@ class ControlsXbox extends UIScriptedMenu
 		string preset_text;
 		UAInputAPI inputAPI = GetUApi();
 		TextWidget nameWidget;
-		if (Class.CastTo(nameWidget,layoutRoot.FindAnyWidget("PresetText")));
+		if (Class.CastTo(nameWidget,layoutRoot.FindAnyWidget("PresetText")))
 		{
 			preset_text = inputAPI.PresetName(inputAPI.PresetCurrent());
 			nameWidget.SetText(preset_text);

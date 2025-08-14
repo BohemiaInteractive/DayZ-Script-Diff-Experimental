@@ -23,6 +23,11 @@ class BloodLoss extends SymptomBase
 		
 	}
 	
+	override bool AllowInUnconscious()
+	{
+		return true;
+	}
+	
 	//!gets called every frame
 	override void OnUpdateServer(PlayerBase player, float deltatime)
 	{

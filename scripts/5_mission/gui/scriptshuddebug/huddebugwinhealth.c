@@ -14,6 +14,7 @@ class HudDebugWinHealth : HudDebugWinBase
 	protected bool 			m_IsInit;
 	protected bool 			m_IsModeSelf = true;
 	protected Widget		m_WgtPanel;
+	protected ScrollWidget	m_WgtPanelScroll;
 	protected TextWidget 	m_TargetDisplayNameW;
 	protected ButtonWidget 	m_ButtonSelf;
 	protected ButtonWidget	m_ButtonTarget;
@@ -26,8 +27,9 @@ class HudDebugWinHealth : HudDebugWinBase
 	//============================================
 	void HudDebugWinHealth(Widget widget_root)
 	{	
-		m_WgtRoot = widget_root;
-		m_WgtPanel = Widget.Cast(m_WgtRoot.FindAnyWidget("HealthPanel") );
+		m_WgtRoot 			= widget_root;
+		m_WgtPanel 			= Widget.Cast(m_WgtRoot.FindAnyWidget("HealthPanel") );
+		m_WgtPanelScroll 	= ScrollWidget.Cast(m_WgtRoot.FindAnyWidget("HealthPanelScroll") );
 	}
 
 	void ~HudDebugWinHealth()
@@ -234,6 +236,7 @@ class HudDebugWinHealth : HudDebugWinBase
 		AutoHeightSpacer WgtModifiersContent_panel_script;
 		m_WgtPanel.GetScript( WgtModifiersContent_panel_script );
 		WgtModifiersContent_panel_script.Update();
+		m_WgtPanelScroll.VScrollToPos(0);
 	}
 	
 	void InitEntry(SyncedValue data)
@@ -243,11 +246,11 @@ class HudDebugWinHealth : HudDebugWinBase
 		entry.m_EntryZoneW = TextWidget.Cast(entry.m_EntryRootW.FindAnyWidget("Name"));
 		
 		if (data.m_ValueNorm == 1)
-				entry.m_HealthMode = "Shock";
-			else if (data.m_ValueNorm == 2)
+			entry.m_HealthMode = "Shock";
+		else if (data.m_ValueNorm == 2)
 			entry.m_HealthMode = "Blood";
-			else 
-				entry.m_HealthMode = "Health";
+		else 
+			entry.m_HealthMode = "Health";
 		
 		entry.m_IsTitleEntry = data.m_State;
 		

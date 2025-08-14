@@ -388,19 +388,17 @@ class InGameMenuXbox extends UIScriptedMenu
 	{
 		super.OnModalResult(w, x, y, code, result);
 		
-		CGame game;
 		if (code == IDC_INT_EXIT && result == DBB_YES)
 		{
-			game = GetGame();
-			if (game.IsMultiplayer())
+			if (g_Game.IsMultiplayer())
 			{
-				MissionGameplay mission = MissionGameplay.Cast(game.GetMission());		
-				ScriptCallQueue scQueue = game.GetCallQueue(CALL_CATEGORY_GUI);
+				MissionGameplay mission = MissionGameplay.Cast(g_Game.GetMission());		
+				ScriptCallQueue scQueue = g_Game.GetCallQueue(CALL_CATEGORY_GUI);
 				
-				game.LogoutRequestTime();
+				g_Game.LogoutRequestTime();
 				scQueue.Call(mission.CreateLogoutMenu, this);
 							
-				int logoutAfterCancelTimeout = game.GetLogoutAfterCancelTimeout();		
+				int logoutAfterCancelTimeout = g_Game.GetLogoutAfterCancelTimeout();		
 				if (logoutAfterCancelTimeout > 0)
 				{
 					mission.SetExitButtonDisabledRemainingTime(logoutAfterCancelTimeout);
@@ -411,7 +409,7 @@ class InGameMenuXbox extends UIScriptedMenu
 			else
 			{
 				// skip logout screen in singleplayer
-				game.GetMission().AbortMission();
+				g_Game.GetMission().AbortMission();
 			}
 			g_Game.CancelLoginTimeCountdown();
 			
@@ -426,10 +424,9 @@ class InGameMenuXbox extends UIScriptedMenu
 		{
 			if (result == DBB_YES)
 			{
-				game = GetGame();
-				if (game.GetMission().GetRespawnModeClient() == GameConstants.RESPAWN_MODE_CUSTOM)
+				if (g_Game.GetMission().GetRespawnModeClient() == GameConstants.RESPAWN_MODE_CUSTOM)
 				{
-					game.GetCallQueue(CALL_CATEGORY_GUI).Call(game.GetUIManager().EnterScriptedMenu,MENU_RESPAWN_DIALOGUE,this);
+					g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.GetUIManager().EnterScriptedMenu,MENU_RESPAWN_DIALOGUE,this);
 				}
 				else
 				{
@@ -448,20 +445,19 @@ class InGameMenuXbox extends UIScriptedMenu
 	
 	void GameRetry(bool random)
 	{
-		CGame game = GetGame();
-		if (game.IsMultiplayer())
+		if (g_Game.IsMultiplayer())
 		{
-			game.GetMenuDefaultCharacterData(false).SetRandomCharacterForced(random);
-			game.RespawnPlayer();
+			g_Game.GetMenuDefaultCharacterData(false).SetRandomCharacterForced(random);
+			g_Game.RespawnPlayer();
 
-			PlayerBase player = PlayerBase.Cast(game.GetPlayer());
+			PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 			if (player)
 			{
 				player.SimulateDeath(true);
-				game.GetCallQueue(CALL_CATEGORY_GUI).Call(player.ShowDeadScreen, true, 0);
+				g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(player.ShowDeadScreen, true, 0);
 			}
 			
-			MissionGameplay missionGP = MissionGameplay.Cast(game.GetMission());
+			MissionGameplay missionGP = MissionGameplay.Cast(g_Game.GetMission());
 			missionGP.DestroyAllMenus();
 			missionGP.SetPlayerRespawning(true);
 			missionGP.Continue();
@@ -470,7 +466,7 @@ class InGameMenuXbox extends UIScriptedMenu
 		}
 		else
 		{
-			game.RestartMission();
+			g_Game.RestartMission();
 		}
 	}
 	

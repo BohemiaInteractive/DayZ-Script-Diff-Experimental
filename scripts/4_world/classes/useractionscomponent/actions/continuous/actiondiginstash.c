@@ -167,10 +167,7 @@ class ActionDigInStash: ActionContinuousBase
 			stash.GetInventory().GetCurrentInventoryLocation(ilj);
 		
 			if (GameInventory.LocationCanRemoveEntity(targetIL))
-			{
-				GetGame().AddInventoryJunctureEx(action_data.m_Player, targetEntity, ilj, true, 10000);
-				GetGame().ClearJunctureEx(action_data.m_Player, targetEntity);
-			
+			{			
 				if (!GetGame().IsMultiplayer())
 				{
 					ClearInventoryReservationEx(action_data);

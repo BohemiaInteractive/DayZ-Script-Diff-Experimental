@@ -41,13 +41,15 @@ class MainMenu extends UIScriptedMenu
 	protected ref ModsMenuDetailed	m_ModsDetailed;
 	protected ref ModsMenuTooltip	m_ModsTooltip;
 	
-	protected Widget 								m_DlcFrame;
-	protected ref map<string,ref ModInfo> 			m_AllDlcsMap;
-	protected ref JsonDataDLCList 					m_DlcData;
-	protected ref array<ref MainMenuDlcHandlerBase> m_DlcHandlers;
-	protected ref MainMenuDlcHandlerBase 			m_DisplayedDlcHandler;
-	
+	protected Widget 				m_DlcFrame;
 
+	protected Widget 				m_NewsCarouselFrame;
+	protected ref NewsCarousel  	m_NewsCarousel;
+	protected bool					m_DisplayCarousel;
+	
+	protected int					m_PrevWidth, m_PrevHeight;
+	protected int					m_Width, m_Height;
+	
 	override Widget Init()
 	{
 		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/main_menu.layout");
@@ -66,6 +68,7 @@ class MainMenu extends UIScriptedMenu
 		m_NextCharacter				= layoutRoot.FindAnyWidget("next_character");
 
 		m_DlcFrame 					= layoutRoot.FindAnyWidget("dlc_Frame");
+		m_NewsCarouselFrame 		= layoutRoot.FindAnyWidget("carousel_Frame");
 		m_Version					= TextWidget.Cast(layoutRoot.FindAnyWidget("version"));
 		m_ModdedWarning				= TextWidget.Cast(layoutRoot.FindAnyWidget("ModdedWarning"));
 		m_CharacterRotationFrame	= layoutRoot.FindAnyWidget("character_rotation_frame");
@@ -108,13 +111,18 @@ class MainMenu extends UIScriptedMenu
 		Refresh();
 		
 		LoadMods();
-		PopulateDlcFrame();
 		
+		CheckWidth();
+		
+		m_NewsCarousel = new NewsCarousel(m_NewsCarouselFrame, this);
+
+		ShowNewsCarousel(true);
+		
+		GetGame().GetMission().GetOnModMenuVisibilityChanged().Insert(ShowNewsCarousel);
 		GetDayZGame().GetBacklit().MainMenu_OnShow();
-		GetGame().GetMission().GetOnModMenuVisibilityChanged().Insert(ShowDlcFrame);
 	
 		g_Game.SetLoadState(DayZLoadState.MAIN_MENU_CONTROLLER_SELECT);
-		
+				
 		return layoutRoot;
 	}
 	
@@ -122,23 +130,19 @@ class MainMenu extends UIScriptedMenu
 	{
 		if (GetGame().GetMission())
 		{
-			GetGame().GetMission().GetOnModMenuVisibilityChanged().Remove(ShowDlcFrame);
+			GetGame().GetMission().GetOnModMenuVisibilityChanged().Remove(ShowNewsCarousel);
 		}
+	}
+	
+	void ShowNewsCarousel(bool show)
+	{
+		m_NewsCarouselFrame.Show(show);
+		if (m_NewsCarousel)
+			m_NewsCarousel.ShowNewsCarousel(show);
 	}
 	
 	void LoadMods()
 	{
-		array<ref ModInfo> modArray = new array<ref ModInfo>();
-		GetGame().GetModInfos(modArray);
-
-		if (modArray.Count() > 0)
-		{
-			modArray.Remove(modArray.Count() - 1);
-			modArray.Invert();
-		}
-		
-		FilterDlcs(modArray);
-		
 		if (m_ModsSimple)
 			delete m_ModsSimple;
 		if (m_ModsDetailed)
@@ -146,66 +150,33 @@ class MainMenu extends UIScriptedMenu
 		
 		m_ModdedWarning.Show(GetGame().GetModToBeReported());
 		
+		MainMenuData.LoadMods();
+
+		array<ref ModInfo> modArray = MainMenuData.GetAllMods();
+		FilterDlcsEx(modArray); //! Filters out DLC items from mod list!
+		
 		if (modArray.Count() > 0)
 		{
 			layoutRoot.FindAnyWidget("ModsSimple").Show(true);
 			m_ModsTooltip = new ModsMenuTooltip(layoutRoot);
-
 			m_ModsDetailed = new ModsMenuDetailed(modArray, layoutRoot.FindAnyWidget("ModsDetailed"), m_ModsTooltip, this);
-			
 			m_ModsSimple = new ModsMenuSimple(modArray, layoutRoot.FindAnyWidget("ModsSimple"), m_ModsDetailed);
 		}
 	}
 	
-	void FilterDlcs(inout array<ref ModInfo> modArray)
+	void FilterDlcsEx(inout array<ref ModInfo> modArray)
 	{
-		if (!m_AllDlcsMap)
-			m_AllDlcsMap = new map<string,ref ModInfo>();
-		m_AllDlcsMap.Clear();
-		
-		int count = modArray.Count();
 		ModInfo info;
-		for (int i = count - 1; i > -1; i--)
+		for (int i = modArray.Count() - 1; i > -1; i--)
 		{
 			info = modArray[i];
 			if (info.GetIsDLC())
 			{
-				m_AllDlcsMap.Set(info.GetName(),info);
 				modArray.Remove(i);
 			}
 		}
 	}
-	
-	void ShowDlcFrame(bool show)
-	{
-		m_DlcFrame.Show(show);
-		if (m_DisplayedDlcHandler)
-			m_DisplayedDlcHandler.ShowInfoPanel(show);
-	}
-	
-	void PopulateDlcFrame()
-	{
-		if (!m_DlcHandlers)
-			m_DlcHandlers = new array<ref MainMenuDlcHandlerBase>();
-		
-		m_DlcData = DlcDataLoader.GetData();
-		int count = m_DlcData.DLCs.Count();
-		JsonDataDLCInfo data;
-		ModInfo info;
-		
-		for (int i = 0; i < count; i++)
-		{
-			data = m_DlcData.DLCs[i];
-			info = m_AllDlcsMap.Get(data.Name);
-			MainMenuDlcHandlerBase handler = new MainMenuDlcHandlerBase(info, m_DlcFrame, data);
-			
-			handler.ShowInfoPanel(true);
-			m_DisplayedDlcHandler = handler;//TODO: carousel will take care of this later
-			
-			m_DlcHandlers.Insert(handler);
-		}
-	}
-	
+				
 	override bool OnMouseButtonDown(Widget w, int x, int y, int button)
 	{
 		if (w == m_CharacterRotationFrame)
@@ -421,6 +392,8 @@ class MainMenu extends UIScriptedMenu
 	{
 		super.Update(timeslice);
 		
+		CheckWidth();
+		
 		if (GetGame() && GetUApi().GetInputByID(UAUIBack).LocalPress())
 		{
 			if (!GetGame().GetUIManager().IsDialogHiding())
@@ -428,6 +401,9 @@ class MainMenu extends UIScriptedMenu
 				Exit();
 			}
 		}
+		
+		if (m_NewsCarousel)
+			m_NewsCarousel.Update(timeslice);
 	}
 	
 	void Play()
@@ -718,6 +694,99 @@ class MainMenu extends UIScriptedMenu
 		if (text2)
 		{
 			text2.SetColor(color);
+		}
+	}
+	
+	void CheckWidth()
+	{
+		int w, h;
+		ScreenWidthType widthType; 
+		GetScreenSize(w, h);
+		
+		if(h > 0)
+		{
+			float ratio = w / h;
+			if(ratio > 1.75)
+				widthType = ScreenWidthType.WIDE;
+			else if(ratio > 1.5)
+				widthType = ScreenWidthType.MEDIUM;
+			else
+				widthType = ScreenWidthType.NARROW;
+		}
+		
+		m_Width = w;
+		m_Height = h;
+				
+		if (m_PrevWidth != m_Width || m_PrevHeight != m_Height)
+		{
+			//! Recreate news carousel when screen size has changed
+			if (m_NewsCarousel)
+			{
+				m_NewsCarousel.Destroy();
+				m_NewsCarousel = null;
+				m_NewsCarousel = new NewsCarousel(m_NewsCarouselFrame, this);
+			}
+			
+			m_PrevWidth = w;
+			m_PrevHeight = h;
+		}
+	}
+	
+	//! DEPRICATED
+	protected ref array<ref MainMenuDlcHandlerBase> m_DlcHandlers;
+	protected ref MainMenuDlcHandlerBase 			m_DisplayedDlcHandler;
+	protected ref map<string, ref ModInfo> 			m_AllDlcsMap;
+	protected ref JsonDataDLCList 					m_DlcData;
+	
+	[Obsolete("No replacement")]
+	void PopulateDlcFrame()
+	{
+		if (!m_DlcHandlers)
+			m_DlcHandlers = new array<ref MainMenuDlcHandlerBase>();
+		
+		m_DlcData = DlcDataLoader.GetData();
+		int count = m_DlcData.DLCs.Count();
+		JsonDataDLCInfo data;
+		ModInfo info;
+		
+		for (int i = 0; i < count; i++)
+		{
+			data = m_DlcData.DLCs[i];
+			info = m_AllDlcsMap.Get(data.Name);
+			MainMenuDlcHandlerBase handler = new MainMenuDlcHandlerBase(info, m_DlcFrame, data);
+			
+			handler.ShowInfoPanel(true);
+			m_DisplayedDlcHandler = handler;//TODO: carousel will take care of this later
+			
+			m_DlcHandlers.Insert(handler);
+		}
+	}
+	
+	[Obsolete("No replacement")]
+	void ShowDlcFrame(bool show)
+	{
+		m_DlcFrame.Show(show);
+		if (m_DisplayedDlcHandler)
+			m_DisplayedDlcHandler.ShowInfoPanel(show);
+	}
+	
+	[Obsolete("No replacement")]
+	void FilterDlcs(inout array<ref ModInfo> modArray)
+	{
+		if (!m_AllDlcsMap)
+			m_AllDlcsMap = new map<string,ref ModInfo>();
+		m_AllDlcsMap.Clear();
+		
+		int count = modArray.Count();
+		ModInfo info;
+		for (int i = count - 1; i > -1; i--)
+		{
+			info = modArray[i];
+			if (info.GetIsDLC())
+			{
+				m_AllDlcsMap.Set(info.GetName(),info);
+				modArray.Remove(i);
+			}
 		}
 	}
 }

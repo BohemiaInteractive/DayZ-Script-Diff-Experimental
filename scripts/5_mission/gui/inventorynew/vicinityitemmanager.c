@@ -49,7 +49,7 @@ class VicinityItemManager
 			return;
 		}
 		
-		if (GameInventory.CheckManipulatedObjectsDistances(entity, GetGame().GetPlayer(), VICINITY_CONE_REACH_DISTANCE + 1.0) == false)
+		if (GameInventory.CheckManipulatedObjectsDistances(entity, g_Game.GetPlayer(), VICINITY_CONE_REACH_DISTANCE + 1.0) == false)
 		{
 			if (!FreeDebugCamera.GetInstance() || FreeDebugCamera.GetInstance().IsActive() == false)
 			{

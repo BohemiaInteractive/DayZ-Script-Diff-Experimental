@@ -151,6 +151,15 @@ class CarScriptMove : CarMove
 {
 };
 
+#ifdef DIAG_DEVELOPER
+enum ECarDebugMode
+{
+	NONE,
+	FORWARD_10,
+	FORWARD_50,
+};
+#endif
+
 #ifdef DIAG_DEVELOPER 
 CarScript _car;
 #endif
@@ -304,6 +313,10 @@ class CarScript extends Car
 	private float m_DebugMessageCleanTime;
 	private string m_DebugContactDamageMessage;
 	#endif
+	
+#ifdef DIAG_DEVELOPER
+	ECarDebugMode m_eDebugMode;
+#endif
 	
 	void CarScript()
 	{
@@ -597,6 +610,29 @@ class CarScript extends Car
 		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.CAR_COOLANT_DECREASE, "10% decrease", FadeColors.LIGHT_GREY));
 		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.SEPARATOR, "___________________________", FadeColors.RED));
 		
+#ifdef DIAG_DEVELOPER
+		typename e = ECarDebugMode;
+		
+		int i;
+			
+		int cnt = e.GetVariableCount();
+		int val;
+	
+		for (i = 0; i < cnt; i++)
+		{
+			if (!e.GetVariableValue(null, i, val))
+				continue;
+			
+			val = val + EActions.PLAYER_BOT_INTERNAL_START;
+				
+			string name = e.GetVariableName(i);
+			
+			outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, val, name, FadeColors.LIGHT_GREY));
+		}
+
+		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.SEPARATOR, "___________________________", FadeColors.RED));
+#endif
+						
 		super.GetDebugActions(outputList);
 	}
 	
@@ -648,6 +684,27 @@ class CarScript extends Car
 				Leak(CarFluid.COOLANT, GetFluidCapacity(CarFluid.COOLANT) * 0.1);
 				return true;
 		}
+		
+#ifdef DIAG_DEVELOPER
+		typename e = ECarDebugMode;
+		
+		int i;
+			
+		int cnt = e.GetVariableCount();
+		int val;
+	
+		for (i = 0; i < cnt; i++)
+		{
+			if (!e.GetVariableValue(null, i, val))
+				continue;
+			
+			if ((val + EActions.PLAYER_BOT_INTERNAL_START) == action_id)
+			{
+				m_eDebugMode = val;
+				dBodyActive(this, ActiveState.ACTIVE);
+			}
+		}
+#endif
 	
 		return false;
 	}
@@ -1246,6 +1303,88 @@ class CarScript extends Car
 		return true;
 	}
 	
+	override void OnInput(float dt)
+	{
+		super.OnInput(dt);
+		
+#ifdef DIAG_DEVELOPER
+		if (m_eDebugMode == ECarDebugMode.NONE)
+			return;
+		
+		float currentRPM = EngineGetRPM();
+        if (currentRPM < EngineGetRPMIdle())
+        {
+            if (currentRPM < 1.0 && EngineIsOn())
+            {
+                //! Stalled
+                EngineStop();
+            }
+            else if (!EngineIsOn())
+            {
+                EngineStart();
+            }
+              
+            return;
+        }
+		
+		float speed = GetSpeedometerAbsolute();
+		
+		float thrustWanted = 0.0;
+		float steeringWanted = 0.0;
+		
+		bool attemptSpeed = false;
+		float speedWanted = 0;
+		
+		switch (m_eDebugMode)
+		{
+		case ECarDebugMode.FORWARD_10:
+			attemptSpeed = true;
+			speedWanted = 10;
+			break;
+		case ECarDebugMode.FORWARD_50:
+			attemptSpeed = true;
+			speedWanted = 50;
+			break;
+		}
+		
+		if (attemptSpeed)
+		{
+			// very basic and doesn't actually work
+			thrustWanted = Math.Clamp(1.0 - Math.InverseLerp(0, speedWanted, speed), 0, 1);
+		}
+		
+		bool isManual = GearboxGetType() == CarGearboxType.MANUAL;
+		bool isReverse = GetGear() == CarGear.REVERSE;
+		
+		if (isManual)
+		{
+			float thrustWantedAbs = Math.AbsFloat(thrustWanted);
+		
+			if (currentRPM > EngineGetRPMRedline() * 0.8)
+			{
+				if (thrustWantedAbs > 0.1)
+				{
+					ShiftUp();
+				}
+			}
+			else if (GetGear() > CarGear.FIRST && thrustWantedAbs < 0.1)
+			{
+				ShiftDown();
+			}
+			else if (GetGear() < CarGear.FIRST || (thrustWanted > 0.0 && speed < 5.0))
+			{
+				ShiftTo(CarGear.FIRST);
+			}
+		}
+		
+		SetThrottle(thrustWanted);
+		SetSteering(steeringWanted);
+		SetBrake(0.0);
+		SetHandbrake(0.0);
+		SetBrakesActivateWithoutDriver(false);
+#endif
+	}
+	
 	override void OnUpdate( float dt )
     {
 		Human driver = CrewDriver();
@@ -1810,8 +1949,9 @@ class CarScript extends Car
 	*/
 	override bool OnBeforeEngineStart()
 	{
-		ECarOperationalState state = CheckOperationalRequirements();
 		SetCarEngineSoundState(CarEngineSoundState.NONE);
+
+		ECarOperationalState state = CheckOperationalRequirements();
 		return state == ECarOperationalState.OK;
 	}
 

@@ -193,6 +193,7 @@ class ServerBrowserTabConsolePages extends ServerBrowserTab
 		string msg = "#servers_found: " + m_TotalLoadedServers;
 		if (m_TotalLoadedServers == 0)
 		{
+			
 			msg = "#server_browser_tab_unable_to_get_server";
 		}
 

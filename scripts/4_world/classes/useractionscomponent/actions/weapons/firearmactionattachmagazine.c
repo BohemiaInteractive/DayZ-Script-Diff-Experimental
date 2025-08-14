@@ -337,6 +337,9 @@ class FirearmActionAttachMagazineQuick : FirearmActionBase
 	
 	override bool InventoryReservation( ActionData action_data)
 	{
+		if (GetGame().IsServer())
+			return true;
+
 		if( (IsLocal() || !UseAcknowledgment()) && IsInstant() )
 			return true;
 		

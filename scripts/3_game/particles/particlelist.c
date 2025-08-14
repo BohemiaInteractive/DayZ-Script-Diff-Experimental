@@ -356,6 +356,8 @@ class ParticleList
 	
 	// STEPS
 	static const int STEP_SNOW						= RegisterParticle("step_snow");
+	static const int STEP_DESERT					= RegisterParticle("step_desert");
+	static const int STEP_SOIL						= RegisterParticle("step_soil");
 	
 	// STEPS
 	static const int VEHICLE_WHEEL_SNOW				= RegisterParticle("vehicle_wheel_snow");//

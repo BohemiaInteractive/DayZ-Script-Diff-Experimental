@@ -81,7 +81,7 @@ class ScriptedEntity extends EntityAI
 	{
 		if (radius <=0)
 		{
-			ErrorEx("Radius has to >= 0");
+			ErrorEx("Radius has to be > 0");
 			return;
 		}
 

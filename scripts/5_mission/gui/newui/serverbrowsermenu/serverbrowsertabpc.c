@@ -223,11 +223,18 @@ class ServerBrowserTabPc extends ServerBrowserTab
 		
 		if (m_TotalLoadedServers == 0)
 		{
-			if (GetTabType() != TabType.FAVORITE && GetTabType() != TabType.LAN)
-				SwitchToFilters();
+			switch (m_TabType)
+			{
+				case TabType.OFFICIAL:
+				case TabType.COMMUNITY:
+				{
+					SwitchToFilters();
+					break;
+				}
+			}
 		}
 	}
-	
+		
 	override void OnLoadServersAsyncPC(GetServersResult result_list, EBiosError error, string response)
 	{
 		if (result_list)

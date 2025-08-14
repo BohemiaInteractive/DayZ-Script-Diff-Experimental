@@ -116,8 +116,10 @@ class GeyserTrigger : EffectTrigger
 		}
 		else if (!CheckGeyserState(EGeyserState.ERUPTION_SOON) && m_bIsEruptingSoon)
 		{
-			m_GeyserBubblesParticle.StopParticle();
-			m_SoundBubbling.Stop();
+			if (m_GeyserBubblesParticle)
+				m_GeyserBubblesParticle.StopParticle();
+			if (m_SoundBubbling)
+				SEffectManager.DestroyEffect(m_SoundBubbling);
 			
 			m_bIsEruptingSoon = false;
 		}
@@ -133,10 +135,13 @@ class GeyserTrigger : EffectTrigger
 		}
 		else if (!CheckGeyserState(EGeyserState.ERUPTING_PRIMARY) && m_bIsErupting)
 		{
-			m_GeyserParticle.StopParticle();
+			if (m_GeyserParticle)
+				m_GeyserParticle.StopParticle();
 			
-			m_SoundEruptionStart.Stop();
-			m_SoundEruption.Stop();
+			if (m_SoundEruptionStart)
+				SEffectManager.DestroyEffect(m_SoundEruptionStart);
+			if (m_SoundEruption)
+				SEffectManager.DestroyEffect(m_SoundEruption);
 			
 			m_bIsErupting = false;
 		}
@@ -155,9 +160,12 @@ class GeyserTrigger : EffectTrigger
 			m_GeyserSplashParticle = ParticleManager.GetInstance().PlayInWorld(ParticleList.GEYSER_SPLASH, m_DefaultPosition);
 			m_SoundEruptionSecondaryEnd = SEffectManager.PlaySound(SOUND_ERUPTION_TALL_END, m_DefaultPosition, 0, 0, false);
 			
-			m_GeyserTallParticle.StopParticle();
-			m_SoundEruptionSecondaryStart.Stop();
-			m_SoundEruptionSecondary.Stop();
+			if (m_GeyserTallParticle)
+				m_GeyserTallParticle.StopParticle();
+			if (m_SoundEruptionSecondaryStart)
+				SEffectManager.DestroyEffect(m_SoundEruptionSecondaryStart);
+			if (m_SoundEruptionSecondary)
+				SEffectManager.DestroyEffect(m_SoundEruptionSecondary);
 			
 			m_bIsEruptingTall = false;
 		}
@@ -187,22 +195,28 @@ class GeyserTrigger : EffectTrigger
 	{
 		if (m_bIsEruptingSoon)
 		{
-			m_GeyserBubblesParticle.StopParticle();
-			m_SoundBubbling.Stop();
+			if (m_GeyserBubblesParticle)
+				m_GeyserBubblesParticle.StopParticle();
+			if (m_SoundBubbling)
+				SEffectManager.DestroyEffect(m_SoundBubbling);
 			m_bIsEruptingSoon = false;
 		}
 		
 		if (m_bIsErupting)
 		{
-			m_GeyserParticle.StopParticle();
-			m_SoundEruption.Stop();
+			if (m_GeyserParticle)
+				m_GeyserParticle.StopParticle();
+			if (m_SoundEruption)
+				SEffectManager.DestroyEffect(m_SoundEruption);
 			m_bIsErupting = false;
 		}
 		
 		if (m_bIsEruptingTall)
 		{
-			m_GeyserTallParticle.StopParticle();
-			m_SoundEruptionSecondary.Stop();
+			if (m_GeyserTallParticle)
+				m_GeyserTallParticle.StopParticle();
+			if (m_SoundEruptionSecondary)
+				SEffectManager.DestroyEffect(m_SoundEruptionSecondary);
 			m_bIsEruptingTall = false;
 		}
 	}

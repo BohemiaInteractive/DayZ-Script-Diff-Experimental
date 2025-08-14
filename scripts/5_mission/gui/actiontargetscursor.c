@@ -315,6 +315,9 @@ class ActionTargetsCursor : ScriptedWidgetEventHandler
 
 		if (!m_AM)
 			GetActionManager();
+
+		if (!m_Player || !m_AM)
+			return;
 		
 		if (m_Player.IsInVehicle() || m_AM.GetRunningAction())
 			m_Hidden = true;
@@ -396,7 +399,7 @@ class ActionTargetsCursor : ScriptedWidgetEventHandler
 					if (!m_FixedOnPosition)
 					{
 						//Print(">> cached widget");
-						BuildFloatingCursor(false);
+						BuildFloatingCursor(true);
 						m_Root.Show(true);
 						m_Hidden = false;
 						return;

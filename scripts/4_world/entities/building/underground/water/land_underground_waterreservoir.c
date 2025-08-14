@@ -976,6 +976,8 @@ class Land_Underground_WaterReservoir : BuildingBase
 		{
 			return;
 		}
+		
+		EffectSound snd;
 
 		EffectSound sndDrain, sndFill;
 		float drainPressureLevel = GetValvePressureLevelGauge(VALVE_INDEX_DRAIN);
@@ -985,7 +987,8 @@ class Land_Underground_WaterReservoir : BuildingBase
 			{
 				PlaySoundSetAtMemoryPoint(sndDrain, SOUND_NAME_PIPE_SPRINKLING_START, VALVE_NAME_DRAIN, false, 0.0, 0.5);
 				m_PipeSounds[VALVE_INDEX_DRAIN] = sndDrain;
-				StopSoundSet(m_PipeSounds[VALVE_INDEX_DRAIN]);
+				snd = m_PipeSounds[VALVE_INDEX_DRAIN];
+				StopSoundSet(snd);
 				m_PipeSounds[VALVE_INDEX_DRAIN] = null;
 				PlaySoundSetAtMemoryPointLooped(sndDrain, SOUND_NAME_PIPE_SPRINKLING_LOOP1, VALVE_NAME_DRAIN, 0.5, 0.5);
 				m_PipeSounds[VALVE_INDEX_DRAIN] = sndDrain;
@@ -996,7 +999,8 @@ class Land_Underground_WaterReservoir : BuildingBase
 		{
 			if (m_PipeSounds[VALVE_INDEX_DRAIN] != null)
 			{
-				StopSoundSet(m_PipeSounds[VALVE_INDEX_DRAIN]);
+				snd = m_PipeSounds[VALVE_INDEX_DRAIN];
+				StopSoundSet(snd);
 				m_PipeSounds[VALVE_INDEX_DRAIN] = null;
 			}
 		}
@@ -1009,7 +1013,8 @@ class Land_Underground_WaterReservoir : BuildingBase
 			if (m_PipeSounds[VALVE_INDEX_FILL] == null)
 			{
 				PlaySoundSetAtMemoryPoint(sndFill, SOUND_NAME_PIPE_SPRINKLING_START, VALVE_NAME_FILL, false, 0.0, 0.5);
-				StopSoundSet(m_PipeSounds[VALVE_INDEX_FILL]);
+				snd = m_PipeSounds[VALVE_INDEX_FILL];
+				StopSoundSet(snd);
 				m_PipeSounds[VALVE_INDEX_FILL] = null;
 				PlaySoundSetAtMemoryPointLooped(sndFill, SOUND_NAME_PIPE_SPRINKLING_LOOP2, VALVE_NAME_FILL, 0.5, 0.5);
 				m_PipeSounds[VALVE_INDEX_FILL] = sndFill;
@@ -1020,7 +1025,8 @@ class Land_Underground_WaterReservoir : BuildingBase
 		{
 			if (m_PipeSounds[VALVE_INDEX_FILL] != null)
 			{
-				StopSoundSet(m_PipeSounds[VALVE_INDEX_FILL]);
+				snd = m_PipeSounds[VALVE_INDEX_FILL];
+				StopSoundSet(snd);
 				m_PipeSounds[VALVE_INDEX_FILL] = null;
 			}
 		}

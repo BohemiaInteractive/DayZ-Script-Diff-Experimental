@@ -314,16 +314,6 @@ class TrapBase extends ItemBase
 				case ERPCs.RPC_TRAP_DISARM:
 					OnDisarm();
 					break;
-				
-				case SoundTypeTrap.ACTIVATING:
-			
-					Param1<bool> p = new Param1<bool>(false);
-					
-					bool isActivating = false;
-					if (ctx.Read(p))
-						isActivating = p.param1;
-								
-					break;
 			}
 		}
 	}

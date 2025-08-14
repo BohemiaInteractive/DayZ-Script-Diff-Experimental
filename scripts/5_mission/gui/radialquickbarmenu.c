@@ -203,6 +203,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 			if (hud)
 			{
 				hud.ShowQuickbarUI(false);
+				hud.ShowHudUI(false);
 			}
 		}
 		
@@ -221,6 +222,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 			if (hud)
 			{
 				hud.ShowQuickbarUI(true);
+				hud.ShowHudUI(true);
 			}
 		}
 		

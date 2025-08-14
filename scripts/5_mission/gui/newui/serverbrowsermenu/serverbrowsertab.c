@@ -1,9 +1,9 @@
 enum TabType
 {
+	FAVORITE,
 	OFFICIAL,
 	COMMUNITY,
 	LAN,
-	FAVORITE,
 	NONE
 }
 
@@ -121,6 +121,11 @@ class ServerBrowserTab extends ScriptedWidgetEventHandler
 	bool GetIsServerLoadingFinished()
 	{
 		return m_LoadingFinished;
+	}
+	
+	bool IsLoadingServers()
+	{
+		return m_Loading;
 	}
 
 	void OnDLCChange(EDLCId dlcId)

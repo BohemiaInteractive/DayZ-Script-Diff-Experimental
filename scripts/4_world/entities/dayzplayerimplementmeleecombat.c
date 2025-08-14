@@ -878,7 +878,10 @@ class DayZPlayerImplementMeleeCombat
 	protected void CleanupDebugShapes(array<Shape> shapes)
 	{
 		for ( int it = 0; it < shapes.Count(); ++it )
-			Debug.RemoveShape( shapes[it] );
+		{
+			Shape shape = shapes[it];
+			Debug.RemoveShape( shape );
+		}
 
 		shapes.Clear();
 	}

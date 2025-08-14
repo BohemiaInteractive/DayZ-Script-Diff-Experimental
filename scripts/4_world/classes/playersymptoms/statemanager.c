@@ -147,7 +147,7 @@ class SymptomManager
 	
 	void RegisterSymptom(SymptomBase Symptom)
 	{
-		Symptom.Init(this, m_Player,0);
+		Symptom.Init(this, m_Player, 0);
 		int id = Symptom.GetType();
 		
 		if (m_AvailableSymptoms.Contains(id))
@@ -319,37 +319,40 @@ class SymptomManager
 			}
 		}
 	}
-	
+
 	void UpdateActiveSymptoms(float deltatime)
-	{	
-		//if( GetGame().IsClient() && !m_Player.IsPlayer() ) return;
-		//primary
-		if ( GetCurrentPrimaryActiveSymptom() )
-		{ 
-			if ( !GetCurrentPrimaryActiveSymptom().IsActivated() )
-			{
-				if ( GetCurrentPrimaryActiveSymptom().CanActivate() ) 
-					GetCurrentPrimaryActiveSymptom().Activate();
-			}
-			if ( GetCurrentPrimaryActiveSymptom().IsActivated() )
-			{
-				GetCurrentPrimaryActiveSymptom().Update(deltatime);
-			}
-		}
-		//secondary
-		for (int i = 0; i < m_SymptomQueueSecondary.Count(); i++)
+	{
+		array<SymptomBase> symptomsToDestroy = new array<SymptomBase>();
+		SymptomBase primarySymptom = GetCurrentPrimaryActiveSymptom();
+		if (primarySymptom)
 		{
-			if ( m_SymptomQueueSecondary.Get(i) && !m_SymptomQueueSecondary.Get(i).IsActivated() )
+			if (!primarySymptom.IsActivated())
 			{
-				m_SymptomQueueSecondary.Get(i).Activate();
+				if (primarySymptom.CanActivate())
+					primarySymptom.Activate();
 			}
+
+			if (primarySymptom.IsActivated() && CanUpdateSymptom(primarySymptom))
+				primarySymptom.Update(deltatime);
 			else
-			{
-				if (m_SymptomQueueSecondary.Get(i)) m_SymptomQueueSecondary.Get(i).Update(deltatime);
-			}
+				symptomsToDestroy.Insert(primarySymptom);
 		}
+
+		foreach (SymptomBase secondarySymptom : m_SymptomQueueSecondary)
+		{
+			if (secondarySymptom && !secondarySymptom.IsActivated())
+				secondarySymptom.Activate();
+
+			if (secondarySymptom.IsActivated() && CanUpdateSymptom(secondarySymptom))
+				secondarySymptom.Update(deltatime);
+			else
+				symptomsToDestroy.Insert(secondarySymptom);
+		}
+		
+		foreach (SymptomBase symptom : symptomsToDestroy)
+			symptom.Destroy();
+		
 	}
-	
 	
 	void OnSymptomExit(SymptomBase Symptom, int uid)
 	{
@@ -521,7 +524,7 @@ class SymptomManager
 		if (m_Player.IsUnconscious() && !m_AvailableSymptoms.Get(symptom_id).AllowInUnconscious())
 			return null;
 		
-		SymptomBase Symptom = SpawnSymptom( symptom_id, uid);
+		SymptomBase Symptom = SpawnSymptom(symptom_id, uid);
 		
 		m_SymptomQueueSecondary.Insert(Symptom);
 		return Symptom;
@@ -668,6 +671,14 @@ class SymptomManager
 		{
 			return false;
 		}				
+	}
+	
+	protected bool CanUpdateSymptom(SymptomBase symptom)
+	{
+		if (m_Player.IsUnconscious() && !symptom.AllowInUnconscious())
+			return false;
+		
+		return true;
 	}
 	
 #ifdef DIAG_DEVELOPER

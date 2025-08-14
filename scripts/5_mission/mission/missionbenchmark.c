@@ -389,7 +389,7 @@ class MissionBenchmark : MissionGameplay
 		if (m_Config.m_DoDevPrints)
 			Print("Benchmark .csv created");
 		
-		FPrintln(m_CSVLog, "Location,FPS,Time");
+		FPrintln(m_CSVLog, "location,FPS,time");
 	}
 	
 	protected void FPSLog( string position, float frames )

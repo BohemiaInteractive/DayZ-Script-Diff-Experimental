@@ -304,8 +304,9 @@ class IntroSceneCharacter extends Managed
 		
 		if (!default_char && m_CharacterDta.GetLastPlayedCharacter() > -1 )
 		{
-			m_CharacterId = m_CharacterDta.GetLastPlayedCharacter();
-			m_CharacterDta.GetCharacterName(m_CharacterId, g_Game.GetPlayerGameName());
+			string characterName = g_Game.GetPlayerGameName();
+			m_CharacterDta.GetCharacterName(m_CharacterId, characterName);
+			g_Game.SetPlayerGameName(characterName);
 		}
 		
 		// Load all avalible options for character creation; mostly legacy stuff

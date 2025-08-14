@@ -962,7 +962,7 @@ class Weapon_Base extends Weapon
 					
 				if (chamber)
 				{
-					if (FillSpecificChamber(m))
+					if (FillSpecificChamber(m, 0, ammoType))
 					{
 						didSomething = true;
 						amountToChamber--;	

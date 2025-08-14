@@ -1409,8 +1409,7 @@ class Object extends IEntity
 		return false;
 	}
 	
-	void OnSpawnByObjectSpawner(ITEM_SpawnerObject item)
-	{}
+	void OnSpawnByObjectSpawner(ITEM_SpawnerObject item);
 
 	bool Gizmo_IsSupported()
 	{

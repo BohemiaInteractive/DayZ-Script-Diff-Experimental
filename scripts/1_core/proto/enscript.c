@@ -906,21 +906,19 @@ class map<Class TKey,Class TValue>
 	
 	array<TKey> GetKeyArray()
 	{
-		array<TKey> keys = new array<TKey>;
-		for (int i = 0; i < Count(); i++)
-		{
-			keys.Insert( GetKey( i ) );
-		}
+		array<TKey> keys = new array<TKey>();
+		for (int i = 0; i < Count(); ++i)
+			keys.Insert(GetKey(i));
+
 		return keys;
 	}
 	
 	array<TValue> GetValueArray()
 	{
-		array<TValue> elements = new array<TValue>;
-		for (int i = 0; i < Count(); i++)
-		{
-			elements.Insert( GetElement( i ) );
-		}
+		array<TValue> elements = new array<TValue>();
+		for (int i = 0; i < Count(); ++i)
+			elements.Insert(GetElement(i));
+
 		return elements;
 	}
 	

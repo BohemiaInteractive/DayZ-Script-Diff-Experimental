@@ -315,26 +315,28 @@ class MissionGameplay extends MissionBase
 		ActionBase runningAction;
 		bool manualInputUnlockProcessed = false;
 		
-		if ( playerPB )
+		Hologram localPlacingHologram;
+		if (playerPB)
 		{
 			#ifdef DIAG_DEVELOPER
-			if ( DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM) )
+			if (DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM))
 			{
 				DbgUI.Begin("Hologram Debug", 5, 5);
 			}
 			#endif
 			
-			if ( playerPB.GetHologramLocal() )
+			localPlacingHologram = playerPB.GetHologramLocal();
+			if (localPlacingHologram)
 			{
-				playerPB.GetHologramLocal().UpdateHologram( timeslice );
+				localPlacingHologram.UpdateHologram(timeslice);
 			}
 			#ifdef DIAG_DEVELOPER
-			else if ( DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM) )
+			else if (DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM))
 			{	
 				DbgUI.Text("No active Hologram");
 			}
 			
-			if ( DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM) )
+			if (DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM))
 			{		
 				DbgUI.End();
 			}
@@ -376,7 +378,6 @@ class MissionGameplay extends MissionBase
 				if ( !GetUIManager().IsMenuOpen( MENU_RADIAL_QUICKBAR ) )
 				{
 					RadialQuickbarMenu.OpenMenu();
-					m_Hud.ShowHudUI( false );
 				}	
 			}
 		}
@@ -386,7 +387,6 @@ class MissionGameplay extends MissionBase
 		if (GetUIManager().IsMenuOpen( MENU_RADIAL_QUICKBAR ) && (!RadialQuickbarMenu.GetMenuInstance().GetParentMenu() || RadialQuickbarMenu.GetMenuInstance().GetParentMenu() != inventory) && (GetUApi().GetInputByID(UAUIQuickbarRadialOpen).LocalRelease() || !GetUApi().GetInputByID(UAUIQuickbarRadialOpen).LocalValue()))
 		{
 			RadialQuickbarMenu.CloseMenu();
-			m_Hud.ShowHudUI( true );
 		}
 		
 		//Radial Quickbar from inventory
@@ -580,16 +580,17 @@ class MissionGameplay extends MissionBase
 			}
 			
 			//hologram rotation
-			if (menu == NULL && playerPB.IsPlacingLocal() && playerPB.GetHologramLocal().GetParentEntity().PlacementCanBeRotated())
+			localPlacingHologram = playerPB.GetHologramLocal();
+			if (menu == null && playerPB.IsPlacingLocal() && localPlacingHologram && localPlacingHologram.GetParentEntity() && localPlacingHologram.GetParentEntity().PlacementCanBeRotated())
 			{
 				if (GetUApi().GetInputByID(UANextAction).LocalRelease())
 				{
-					playerPB.GetHologramLocal().SubtractProjectionRotation(15);
+					localPlacingHologram.SubtractProjectionRotation(15);
 				}
 				
 				if (GetUApi().GetInputByID(UAPrevAction).LocalRelease())
 				{
-					playerPB.GetHologramLocal().AddProjectionRotation(15);
+					localPlacingHologram.AddProjectionRotation(15);
 				}
 			}
 			

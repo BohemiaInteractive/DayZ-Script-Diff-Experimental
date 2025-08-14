@@ -259,6 +259,12 @@ class SymptomBase
 		GetPlayer().RequestSoundEvent(id);
 		m_PlayedSound = true;
 	}
+	
+	void StopSound(EPlayerSoundEventID id)
+	{
+		GetPlayer().RequestSoundEventStop(id);
+		m_PlayedSound = false;
+	}
 
 	void SyncToClientActivated( int SYMPTOM_id, int uid )
 	{

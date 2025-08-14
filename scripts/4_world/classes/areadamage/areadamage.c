@@ -260,7 +260,8 @@ class AreaDamageBase : AreaDamageManager
 	{
 		for ( int it = 0; it < shapesArr.Count(); ++it )
 		{
-			Debug.RemoveShape( shapesArr[it] );
+			Shape shape = shapesArr[it];
+			Debug.RemoveShape( shape );
 		}
 		
 		shapesArr.Clear();

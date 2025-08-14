@@ -1642,6 +1642,7 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 		InventoryValidation validation = new InventoryValidation();
 		validation.m_IsJuncture = isJuncture;
 		validation.m_IsRemote = isRemote;
+		validation.m_Mode = InventoryMode.JUNCTURE;
 
 		//! Serializer can be updated and re-written to when we may want to only correct the client instead of denying the inventory command
 		Serializer serializer = ctx;
@@ -2405,6 +2406,7 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 			il.SetHands(GetInventoryOwner(), itemInHands);
 			
 			InventoryValidation validation = new InventoryValidation();
+			validation.m_Mode = mode;
 			if (e.CanPerformEventEx(validation))
 			{
 				m_DeferredEvent = new DeferredHandEvent(mode, e);
@@ -2436,6 +2438,14 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 		return false;
 	}
 	
+	void SyncDeferredEventToRemotes()
+	{
+		DeferredHandEvent deferred_hand_event = DeferredHandEvent.Cast(m_DeferredEvent);
+		if (!deferred_hand_event)
+			return;
+
+		SyncHandEventToRemote(deferred_hand_event.m_event);
+	}
 	
 	void HandleHandEvent(DeferredEvent deferred_event)
 	{
@@ -2456,6 +2466,8 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 			{
 				hndDebugPrint("[inv] HumanInventory::HandEvent(" + typename.EnumToString(InventoryMode, deferred_hand_event.m_mode) + ") ev=" + deferred_hand_event.m_event.DumpToString());
 			}
+
+			validation.m_Mode = deferred_hand_event.m_mode;
 
 			switch (deferred_hand_event.m_mode)
 			{
@@ -2745,7 +2757,7 @@ class DayZPlayerInventory : HumanInventoryWithFSM
 		return !failed;
 	}
 	
-	//! DEPRECATED
+	[Obsolete("No replacement")]
 	bool ValidateDestroy(inout Serializer ctx, InventoryValidation validation)
 	{
 		InventoryCommandType type = InventoryCommandType.DESTROY;

@@ -301,7 +301,7 @@ class PluginDeveloper extends PluginBase
 	void SetupSpawnedEntity(PlayerBase player, EntityAI entity, float health, float quantity = -1, bool special = false, string presetName = "")
 	{
 		#ifdef DEVELOPER
-		if (presetName && player.m_PresetSpawned)//this is how we ascertain this is the first item being spawned from a new preset after a previous preset was already spawned in
+		if (presetName && player && player.m_PresetSpawned)//this is how we ascertain this is the first item being spawned from a new preset after a previous preset was already spawned in
 		{
 			player.m_PresetItems.Clear();
 			player.m_PresetSpawned = false;//is set to 'true' elsewhere after all the items have been spawned in
@@ -323,15 +323,23 @@ class PluginDeveloper extends PluginBase
 			vector ori = GetGame().GetSurfaceOrientation(pos[0], pos[2]);
 			entity.SetOrientation(ori);
 		}
-		if (presetName)
+		if (player && presetName)
 		{
 			player.m_PresetItems.Insert(entity);
 		}
 
-		if ( special )
+		if (special)
 		{
-			auto debugParams = DebugSpawnParams.WithPlayer(player);
-			entity.OnDebugSpawnEx(debugParams);
+			if (player)
+			{
+				auto debugParamsPlayer = DebugSpawnParams.WithPlayer(player);
+				entity.OnDebugSpawnEx(debugParamsPlayer);
+			}
+			else
+			{
+				auto debugParamsNone = DebugSpawnParams.None();
+				entity.OnDebugSpawnEx(debugParamsNone);
+			}
 		}
 		#endif
 	}
@@ -348,8 +356,11 @@ class PluginDeveloper extends PluginBase
 			float rowDist = 0;	
 			float columnDist = 0;
 			
-			vector playerPos = player.GetPosition();
-			vector camDirForward = player.GetDirection();
+			vector playerPos;
+			vector camDirForward;
+
+			GetCameraDirections(player, false, playerPos, camDirForward);
+
 			vector camDirRight = camDirForward.Perpend() * -1;
 			int countLoop = 0;
 			for (int i = 0; i < rows; i++)
@@ -386,19 +397,72 @@ class PluginDeveloper extends PluginBase
 		}
 	}
 	
-	void SpawnItemOnCrosshair(notnull PlayerBase player, string itemName, float health, float quantity, float maxDist = 100, bool allowFreeflight = false, bool special = false, bool withPhysics = false)
+	EntityAI SpawnAI(string object_name, vector pos)
 	{
-		vector from, to;
-		if (allowFreeflight && FreeDebugCamera.GetInstance().IsActive())
+		bool is_ai = GetGame().IsKindOf(object_name, "DZ_LightAI");
+		if (is_ai)
 		{
-			from = FreeDebugCamera.GetInstance().GetPosition();
-			to = from + FreeDebugCamera.GetInstance().GetDirection() * maxDist;
+			return EntityAI.Cast(GetGame().CreateObjectEx(object_name, pos, ECE_PLACE_ON_SURFACE|ECE_INITAI|ECE_EQUIP_ATTACHMENTS));
+		}
+		return NULL;
+	}
+
+	void GetCameraDirections(Man player, bool allowFreeflight, out vector position, out vector direction)
+	{
+		position = GetGame().GetCurrentCameraPosition();
+		direction = GetGame().GetCurrentCameraDirection();
+
+		if ((GetGame().IsDedicatedServer() || allowFreeflight) && FreeDebugCamera.GetInstance().IsActive())
+		{
+			position = FreeDebugCamera.GetInstance().GetPosition();
+			direction = FreeDebugCamera.GetInstance().GetDirection();
+			return;
+		}
+
+		if (player && !allowFreeflight)
+		{			
+			position = player.GetPosition();
+			direction = player.GetDirection();
+		}
+	}
+
+	EntityAI SpawnEntityOnGroundPos(PlayerBase player, string object_name, vector pos)
+	{
+		if (player)
+		{
+			return player.SpawnEntityOnGroundPos(object_name, pos);
+		}
+
+		bool is_AI = GetGame().IsKindOf(object_name, "DZ_LightAI");
+		if (is_AI)
+		{
+			return SpawnAI(object_name, pos);
 		}
 		else
 		{
-			from = GetGame().GetCurrentCameraPosition();
-			to = from + GetGame().GetCurrentCameraDirection() * maxDist;	
+			InventoryLocation inv_loc = new InventoryLocation;
+			vector mtx[4];
+			Math3D.MatrixIdentity4(mtx);
+			mtx[3] = pos;
+			inv_loc.SetGround(null, mtx);
+			
+			int flags = ECE_PLACE_ON_SURFACE;
+			#ifdef DEVELOPER
+			if (g_Game.IsKindOf(object_name, "Boat"))
+				flags = ECE_KEEPHEIGHT;
+			#endif
+
+			return EntityAI.Cast(GetGame().CreateObjectEx(object_name, inv_loc.GetPos(), flags));
 		}
+
+		return null;
+	}
+
+	void SpawnItemOnCrosshair(PlayerBase player, string itemName, float health, float quantity, float maxDist = 100, bool allowFreeflight = false, bool special = false, bool withPhysics = false)
+	{
+		vector from, to, dir;
+		GetCameraDirections(player, true, from, dir);
+		to = from + (dir * maxDist);
 		
 		float hitFraction;
 		vector start, end;
@@ -429,7 +493,7 @@ class PluginDeveloper extends PluginBase
 	{
 		if ( GetGame().IsServer() )
 		{		
-			EntityAI entity = player.SpawnEntityOnGroundPos(item_name, pos);
+			EntityAI entity = SpawnEntityOnGroundPos(player, item_name, pos);
 			if (entity)
 				SetupSpawnedEntity(player, entity, health, quantity, special);
 			else
@@ -684,14 +748,14 @@ class PluginDeveloper extends PluginBase
 		if ( menu_curr == NULL )
 		{			
 			PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
-			if ( player )
-			{
-				if ( !GetGame().GetWorld().Is3rdPersonDisabled() )
+
+				if ( player && !GetGame().GetWorld().Is3rdPersonDisabled() )
 				{
 					player.SetIsInThirdPerson(!player.IsInThirdPerson());//this counters the effect of switching camera through pressing the 'V' key
 				}
 
-					vector pos_player = player.GetPosition();
+				vector pos_player, pos_direction;
+				GetCameraDirections(player, false, pos_player, pos_direction);
 					
 					// Get item from clipboard
 					string		clipboard;
@@ -719,7 +783,6 @@ class PluginDeveloper extends PluginBase
 						}
 					}
 				
-			}
 		}
 		
 		return NULL;

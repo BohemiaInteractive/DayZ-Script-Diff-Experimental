@@ -269,6 +269,11 @@ class ClaymoreMine : ExplosivesBase
 		return "claymore_disarm_SoundSet";
 	}
 	
+	override string GetDisarmSoundsetUnpaired()
+	{
+		return "claymore_disarm_long_SoundSet";
+	}
+	
 	override void OnDebugSpawn()
 	{
 		RemoteDetonatorTrigger rdt = RemoteDetonatorTrigger.Cast(SpawnEntityOnGroundPos("RemoteDetonatorTrigger", GetPosition() + GetDirection() * 0.5));

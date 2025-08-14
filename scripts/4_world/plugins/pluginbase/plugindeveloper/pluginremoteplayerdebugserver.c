@@ -38,6 +38,9 @@ class PluginRemotePlayerDebugServer extends PluginBase
 	
 	void GatherPlayerInfo()
 	{
+		if (!GetGame().IsDedicatedServer())
+			return;
+		
 		array<Man> players = new array<Man>;
 		GetGame().GetPlayers(players);
 		m_PlayerDebugStats.Clear();

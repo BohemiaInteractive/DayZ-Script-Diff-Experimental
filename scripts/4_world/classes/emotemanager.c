@@ -48,18 +48,8 @@ class EmoteCB : HumanCommandActionCallback
 					m_Manager.CreateBleedingEffect(m_callbackID);
 			break;
 			
-			case EmoteConstants.EMOTE_SUICIDE_SIMULATION_END :
-				if (GetGame().IsServer())
-				{
-					EntityAI itemInHands = m_player.GetHumanInventory().GetEntityInHands();
-					if (itemInHands)
-					{
-						vector m4[4];
-						itemInHands.GetTransform(m4);
-						m_player.GetInventory().DropEntityWithTransform(InventoryMode.SERVER, m_player, itemInHands, m4);
-					}
-				}
-				
+			case EmoteConstants.EMOTE_SUICIDE_SIMULATION_END:
+				m_player.DeathDropHandEntity();
 				m_player.StartDeath();
 			break;
 		}
@@ -602,6 +592,26 @@ class EmoteManager
 			pCtx.Read(cancelID);
 			pCtx.Read(forced);
 			pCtx.Read(guaranteed);
+			
+			if (gestureID != 0) 
+			{
+				// Check if player's state has changed since request was sent
+				if (m_Player.IsSwimming())
+				{
+					// Player is now in water - reject the emote
+					gestureID = CALLBACK_CMD_INVALID;
+					cancelID = CALLBACK_CMD_INSTACANCEL;
+					m_InstantCancelEmote = true;
+					m_DeferredEmoteExecution = CALLBACK_CMD_INVALID;
+					m_DeferredGuaranteedEmoteId = CALLBACK_CMD_INVALID;
+					// Notify server about it
+					if (GetGame().IsClient())
+					{
+						SendEmoteRequestSync(CALLBACK_CMD_INSTACANCEL); // Tell server we're cancelling
+					}
+					return;
+				}
+			}
 			
 			EmoteBase emoteData;
 			if ((m_Callback || m_IsSurrendered) && (forced == EmoteLauncher.FORCE_ALL || (forced == EmoteLauncher.FORCE_DIFFERENT && m_CurrentGestureID != gestureID)))
@@ -1334,7 +1344,7 @@ class EmoteManager
 	{
 		float waterLevel = m_Player.GetCurrentWaterLevel();
 		
-		if (m_Player.IsPlayerInStance(DayZPlayerConstants.STANCEMASK_PRONE | DayZPlayerConstants.STANCEMASK_PRONE) && waterLevel >= m_HumanSwimSettings.m_fToCrouchLevel)
+		if (m_Player.IsPlayerInStance(DayZPlayerConstants.STANCEMASK_PRONE | DayZPlayerConstants.STANCEMASK_RAISEDPRONE) && waterLevel >= m_HumanSwimSettings.m_fToCrouchLevel)
 		{
 			return true;
 		}

@@ -139,9 +139,11 @@ class ScriptConsole extends UIScriptedMenu
 		RegisterTab(new ScriptConsoleGeneralTab(layoutRoot.FindAnyWidget("GeneralPanel"),this,ButtonWidget.Cast(layoutRoot.FindAnyWidget("GeneralButtonWidget"))));
 		RegisterTab(new ScriptConsoleOutputTab(layoutRoot.FindAnyWidget("OutputPanel"),this,ButtonWidget.Cast(layoutRoot.FindAnyWidget("OutputButtonWidget"))));
 		RegisterTab(new ScriptConsoleVicinityTab(layoutRoot.FindAnyWidget("VicinityPanel"),this,ButtonWidget.Cast(layoutRoot.FindAnyWidget("VicinityWidget"))));
-		RegisterTab(new ScriptConsoleSoundsTab(layoutRoot.FindAnyWidget("SoundsPanel"),this,ButtonWidget.Cast(layoutRoot.FindAnyWidget("SoundsWidget"))));
+		if (!GetGame().IsDedicatedServer()) // TODO(kumarjac): actually hide the panel - not important though since this is an internal tool
+			RegisterTab(new ScriptConsoleSoundsTab(layoutRoot.FindAnyWidget("SoundsPanel"),this,ButtonWidget.Cast(layoutRoot.FindAnyWidget("SoundsWidget"))));
 		RegisterTab(new ScriptConsoleWeatherTab(layoutRoot.FindAnyWidget("WeatherPanel"),this,ButtonWidget.Cast(layoutRoot.FindAnyWidget("WeatherButtonWidget"))));
-		RegisterTab(new ScriptConsoleCameraTab(layoutRoot.FindAnyWidget("CameraPanel"),this,ButtonWidget.Cast(layoutRoot.FindAnyWidget("CameraButtonWidget"))));
+		if (!GetGame().IsDedicatedServer()) // TODO(kumarjac): actually hide the panel - not important though since this is an internal tool
+			RegisterTab(new ScriptConsoleCameraTab(layoutRoot.FindAnyWidget("CameraPanel"),this,ButtonWidget.Cast(layoutRoot.FindAnyWidget("CameraButtonWidget"))));
 
 		m_CloseConsoleButton = ButtonWidget.Cast(layoutRoot.FindAnyWidget("CloseConsoleButtonWidget"));
 
@@ -203,6 +205,13 @@ class ScriptConsole extends UIScriptedMenu
 		m_HoverTime = 0;
 		m_HintEditMode = false;
 		HideHint();
+	}
+
+	override void OnHide()
+	{
+		super.OnHide();
+		
+		HoverInterrupt();
 	}
 
 	override bool OnKeyPress(Widget w, int x, int y, int key)

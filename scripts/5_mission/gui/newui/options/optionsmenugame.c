@@ -360,6 +360,12 @@ class OptionsMenuGame extends ScriptedWidgetEventHandler
 				m_PauseSelector.SetValue(m_PauseOption.GetIndex(), false);
 			}
 		#endif
+		
+		if (m_LanguageSelector)
+		{
+			m_LanguageOption.SetIndex(m_PauseOption.GetDefaultIndex());
+			m_LanguageSelector.SetValue(m_PauseOption.GetIndex(), false);
+		}
 	}
 	
 	void ReloadOptions()

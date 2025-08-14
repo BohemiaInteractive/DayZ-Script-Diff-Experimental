@@ -49,7 +49,9 @@ class DayZIntroSceneXbox: Managed
 		
 		if ( m_LastPlayedCharacterID > -1 )
 		{
-			m_MenuData.GetCharacterName(m_LastPlayedCharacterID, g_Game.GetPlayerGameName());
+			string characterName = g_Game.GetPlayerGameName();
+			m_MenuData.GetCharacterName(m_LastPlayedCharacterID, characterName);
+			g_Game.SetPlayerGameName(characterName);
 		}
 	
 		// Camera Setup
