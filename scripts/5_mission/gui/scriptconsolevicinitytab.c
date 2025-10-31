@@ -40,8 +40,8 @@ class ScriptConsoleVicinityTab : ScriptConsoleTabBase
 		array<Object> objects = new array<Object>();
 		array<CargoBase> cargo = new array<CargoBase>();
 		
-		vector playerPos = GetGame().GetCurrentCameraPosition();
-		GetGame().GetObjectsAtPosition3D(playerPos, radius, objects,cargo);
+		vector playerPos = g_Game.GetCurrentCameraPosition();
+		g_Game.GetObjectsAtPosition3D(playerPos, radius, objects,cargo);
 		m_VicinityListbox.ClearItems();
 		m_VicinityItems.Clear();
 
@@ -155,7 +155,7 @@ class ScriptConsoleVicinityTab : ScriptConsoleTabBase
 		if (!ent || ent.IsSetForDeletion())
 			return;
 		
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player)
 		{
 			player.GetActionManager().OnInstantAction(ActionDebug, new Param2<EntityAI, int>(ent, actionId));

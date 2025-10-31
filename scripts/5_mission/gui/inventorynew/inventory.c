@@ -121,7 +121,7 @@ class Inventory: LayoutHolder
 		
 		#ifdef PLATFORM_CONSOLE
 		PluginDiagMenu plugin_diag_menu = PluginDiagMenu.Cast(GetPlugin(PluginDiagMenu));
-		GetGame().GetUIManager().ShowUICursor(false);
+		g_Game.GetUIManager().ShowUICursor(false);
 		ResetFocusedContainers();
 		GetMainWidget().FindAnyWidget("CursorCharacter").Show(false);
 
@@ -142,8 +142,9 @@ class Inventory: LayoutHolder
 		
 		m_NeedUpdateConsoleToolbar = false;
 		
-		GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-		GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+		Mission mission = g_Game.GetMission();
+		mission.GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+		mission.GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		
 		UpdateConsoleToolbar();
 		InitInputWrapperData();
@@ -182,7 +183,7 @@ class Inventory: LayoutHolder
 				break;
 	
 			default:
-				if (GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer())
+				if (g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer())
 				{
 					m_BottomConsoleToolbar.Show(false);
 					m_TopConsoleToolbarVicinity.Show(false);
@@ -202,7 +203,7 @@ class Inventory: LayoutHolder
 	{
 		ItemManager.GetInstance().SerializeDefaultOpenStates();
 		ItemManager.GetInstance().SerializeDefaultHeaderOpenStates();
-		GetGame().SaveProfile();
+		g_Game.SaveProfile();
 	}
 
 	void Deserialize()
@@ -228,7 +229,7 @@ class Inventory: LayoutHolder
 		
 		m_PlayerAttachmentsIndexes = new map<string, int>();
 
-		if (GetGame().GetProfileString("INV_AttIndexes", data))
+		if (g_Game.GetProfileString("INV_AttIndexes", data))
 		{
 			if (!JsonFileLoader<map<string, int>>.LoadData(data, m_PlayerAttachmentsIndexes, errorMessage))
 				ErrorEx(errorMessage);
@@ -236,7 +237,7 @@ class Inventory: LayoutHolder
 		
 		string configPathGhostSlots = "CfgVehicles SurvivorBase InventoryEquipment playerSlots";
 		array<string> playerGhostSlots = new array<string>();
-		GetGame().ConfigGetTextArray(configPathGhostSlots, playerGhostSlots);
+		g_Game.ConfigGetTextArray(configPathGhostSlots, playerGhostSlots);
 		
 		foreach (string slotName : playerGhostSlots)
 		{
@@ -250,7 +251,7 @@ class Inventory: LayoutHolder
 		if (!JsonFileLoader<map<string, int>>.MakeData(m_PlayerAttachmentsIndexes, data, errorMessage))
 			ErrorEx(errorMessage);
 
-		GetGame().SetProfileString("INV_AttIndexes", data);
+		g_Game.SetProfileString("INV_AttIndexes", data);
 	}
 	
 	static void MoveAttachmentUp(int slot_id)
@@ -266,7 +267,7 @@ class Inventory: LayoutHolder
 		{
 			next_item		= m_PlayerAttachmentsIndexes.GetKeyByValue(curr + --next_offset);
 		 	next_id			= InventorySlots.GetSlotIdFromString(next_item);
-			next_ent		= GetGame().GetPlayer().GetInventory().FindAttachment(next_id);
+			next_ent		= g_Game.GetPlayer().GetInventory().FindAttachment(next_id);
 			if (next_ent && !m_Instance.m_RightArea.HasEntityContainerVisible(next_ent))
 				next_ent	= null;
 		}
@@ -294,7 +295,7 @@ class Inventory: LayoutHolder
 		{
 			next_item		= m_PlayerAttachmentsIndexes.GetKeyByValue(curr + ++next_offset);
 		 	next_id			= InventorySlots.GetSlotIdFromString(next_item);
-			next_ent		= GetGame().GetPlayer().GetInventory().FindAttachment(next_id);
+			next_ent		= g_Game.GetPlayer().GetInventory().FindAttachment(next_id);
 			if (next_ent && !m_Instance.m_RightArea.HasEntityContainerVisible(next_ent))
 				next_ent	= null;
 		}
@@ -411,7 +412,7 @@ class Inventory: LayoutHolder
 			EntityAI item = ipw.GetItem();
 			if (item)
 			{
-				PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+				PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 				InventoryLocation il = new InventoryLocation;
 				if (player && player.GetInventory().FindFreeLocationFor(item, FindInventoryLocationType.CARGO | FindInventoryLocationType.ATTACHMENT, il))
 				{
@@ -446,7 +447,7 @@ class Inventory: LayoutHolder
 			{
 				if (!item.GetInventory().CanRemoveEntity())
 					return;
-				PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+				PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 				
 				bool found = false;
 				
@@ -547,7 +548,7 @@ class Inventory: LayoutHolder
 			}
 			
 			EntityAI item = ipw.GetItem();
-			PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+			PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 			
 			if (player && item)
 			{
@@ -680,7 +681,7 @@ class Inventory: LayoutHolder
 	UAInput m_InpInp = null;
 	override void UpdateInterval()
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		InventoryItem item;
 		InventoryItem handsItem
 		if (GetUApi().GetInputByID(UAUIRotateInventory).LocalPress())
@@ -689,7 +690,7 @@ class Inventory: LayoutHolder
 			if (item)
 			{
 				int size_x, size_y;
-				GetGame().GetInventoryItemSize(item, size_x, size_y);
+				g_Game.GetInventoryItemSize(item, size_x, size_y);
 				if (size_x != size_y)
 				{
 					item.GetInventory().FlipCargo();
@@ -826,7 +827,7 @@ class Inventory: LayoutHolder
 					{
 						if (m_HandsArea.TransferItemToVicinity())
 						{
-							handsItem = InventoryItem.Cast(player.GetHumanInventory().GetEntityInHands());
+							handsItem = InventoryItem.Cast(player.GetEntityInHands());
 							if (handsItem && handsItem == item)
 							{
 								m_HandsArea.SetActive(false);
@@ -902,7 +903,7 @@ class Inventory: LayoutHolder
 					item = InventoryItem.Cast(m_HandsArea.GetFocusedItem());
 					if (item && item.GetInventory().CanRemoveEntity())
 					{
-						handsItem = InventoryItem.Cast(player.GetHumanInventory().GetEntityInHands());
+						handsItem = InventoryItem.Cast(player.GetEntityInHands());
 						if (m_HandsArea.TransferItem() && handsItem && handsItem == item)
 						{
 							m_HandsArea.SetActive(false);
@@ -966,7 +967,7 @@ class Inventory: LayoutHolder
 						
 			if (m_HandsArea.IsActive())
 			{
-				player = PlayerBase.Cast(GetGame().GetPlayer());
+				player = PlayerBase.Cast(g_Game.GetPlayer());
 				item_to_assign = m_HandsArea.GetFocusedItem();
 				m_HandsArea.AddItemToQuickbarRadial(item_to_assign);
 			}
@@ -978,7 +979,7 @@ class Inventory: LayoutHolder
 		}
 		#endif
 		
-		MissionGameplay mission = MissionGameplay.Cast(GetGame().GetMission());
+		MissionGameplay mission = MissionGameplay.Cast(g_Game.GetMission());
 		if (!m_HadInspected && GetUApi().GetInputByID(UAUICombine).LocalPress())
 		{
 			if (GetMainWidget().IsVisible())
@@ -1010,7 +1011,7 @@ class Inventory: LayoutHolder
 		}
 		
 		// controller close inventory using back action
-		if (!m_HadInspected && GetUApi().GetInputByID(UAUIBack).LocalPress() && GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER)
+		if (!m_HadInspected && GetUApi().GetInputByID(UAUIBack).LocalPress() && g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER)
 		{
 			mission.HideInventory();
 		}
@@ -1044,14 +1045,14 @@ class Inventory: LayoutHolder
 	
 	void AddQuickbarItem(InventoryItem item, int index)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 			
 		if (item && item.GetInventory().CanRemoveEntity())
 		{
 			player.SetQuickBarEntityShortcut(item, index) ;
 		}
 		
-		InventoryMenu menu = InventoryMenu.Cast(GetGame().GetUIManager().FindMenu(MENU_INVENTORY));
+		InventoryMenu menu = InventoryMenu.Cast(g_Game.GetUIManager().FindMenu(MENU_INVENTORY));
 		if (menu)
 		{
 			menu.RefreshQuickbar();
@@ -1150,13 +1151,13 @@ class Inventory: LayoutHolder
 		SetFocus(GetMainWidget());
 		Deserialize();
 		
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player && player.IsPlacingLocal())
 		{
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(player.TogglePlacingLocal);
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(player.TogglePlacingLocal);
 		}
 
-		Mission mission = GetGame().GetMission();
+		Mission mission = g_Game.GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
@@ -1181,7 +1182,7 @@ class Inventory: LayoutHolder
 	{
 		Serialize();
 		HideOwnedTooltip();
-		Mission mission = GetGame().GetMission();
+		Mission mission = g_Game.GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
@@ -1210,13 +1211,13 @@ class Inventory: LayoutHolder
 		#ifndef PLATFORM_CONSOLE
 		m_QuickbarWidget.Show(true);
 		#else
-		m_QuickbarWidget.Show(GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer());
+		m_QuickbarWidget.Show(g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer());
 		#endif
 		
 		#ifndef PLATFORM_CONSOLE
 		if (m_Quickbar)
 		#else
-		if (m_Quickbar && GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer())
+		if (m_Quickbar && g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer())
 		#endif
 		{
 			m_Quickbar.UpdateItems(m_QuickbarWidget);
@@ -1307,7 +1308,7 @@ class Inventory: LayoutHolder
 	{
 		if ( m_NeedUpdateConsoleToolbar )
 		{
-			PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+			PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 			if (player.GetInventory().GetAnyInventoryReservationCount() == 0)
 			{
 				m_NeedUpdateConsoleToolbar = false;
@@ -1345,7 +1346,7 @@ class Inventory: LayoutHolder
 					PlayerBase player;
 					PlayerBase itemPlayerOwner;
 					
-					player = PlayerBase.Cast(GetGame().GetPlayer());
+					player = PlayerBase.Cast(g_Game.GetPlayer());
 					
 					m_NeedUpdateConsoleToolbar = player.GetInventory().GetAnyInventoryReservationCount() > 0;
 					
@@ -1511,7 +1512,7 @@ class Inventory: LayoutHolder
 	void MoveFocusByArea(int direction)
 	{
 		HideOwnedTooltip();
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		
 		if (direction == Direction.LEFT)
 		{
@@ -1533,7 +1534,7 @@ class Inventory: LayoutHolder
 					m_RightArea.UnfocusGrid();
 				}
 				m_RightArea.SetActive(false);
-				player = PlayerBase.Cast(GetGame().GetPlayer());
+				player = PlayerBase.Cast(g_Game.GetPlayer());
 				EntityAI item_in_hands = player.GetItemInHands();
 				m_HandsArea.SetActive(true);
 
@@ -1557,7 +1558,7 @@ class Inventory: LayoutHolder
 					m_LeftArea.UnfocusGrid();
 				}
 				m_LeftArea.SetActive(false);
-				player = PlayerBase.Cast(GetGame().GetPlayer());
+				player = PlayerBase.Cast(g_Game.GetPlayer());
 				item_in_hands = player.GetItemInHands();
 				m_HandsArea.SetActive(true);
 				

@@ -37,7 +37,7 @@ class OffroadHatchback extends CarScript
 	{		
 		super.EEInit();
 		
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_ManualUpdate 		= true;
@@ -55,7 +55,7 @@ class OffroadHatchback extends CarScript
 	{
 		super.OnEngineStart();
 
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource)
 				m_UTSource.SetDefferedActive(true, 20.0);
@@ -66,7 +66,7 @@ class OffroadHatchback extends CarScript
 	{
 		super.OnEngineStop();
 
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource)
 				m_UTSource.SetDefferedActive(false, 10.0);
@@ -75,7 +75,7 @@ class OffroadHatchback extends CarScript
 	
 	override void EOnPostSimulate(IEntity other, float timeSlice)
 	{
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource && m_UTSource.IsActive())
 			{
@@ -460,19 +460,20 @@ class OffroadHatchback extends CarScript
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel" );
-		GetInventory().CreateInInventory("HatchbackWheel");
+		GameInventory inventory = GetInventory();
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel" );
+		inventory.CreateInInventory("HatchbackWheel");
 
-		GetInventory().CreateInInventory("HatchbackDoors_Driver");
-		GetInventory().CreateInInventory("HatchbackDoors_CoDriver");
-		GetInventory().CreateInInventory("HatchbackHood");
-		GetInventory().CreateInInventory("HatchbackTrunk");
+		inventory.CreateInInventory("HatchbackDoors_Driver");
+		inventory.CreateInInventory("HatchbackDoors_CoDriver");
+		inventory.CreateInInventory("HatchbackHood");
+		inventory.CreateInInventory("HatchbackTrunk");
 
 		//-----IN CAR CARGO
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
 	}
 }
 
@@ -484,19 +485,20 @@ class OffroadHatchback_White extends OffroadHatchback
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
+		GameInventory inventory = GetInventory();
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
 
-		GetInventory().CreateInInventory("HatchbackDoors_Driver_White");
-		GetInventory().CreateInInventory("HatchbackDoors_CoDriver_White");
-		GetInventory().CreateInInventory("HatchbackHood_White");
-		GetInventory().CreateInInventory("HatchbackTrunk_White");
+		inventory.CreateInInventory("HatchbackDoors_Driver_White");
+		inventory.CreateInInventory("HatchbackDoors_CoDriver_White");
+		inventory.CreateInInventory("HatchbackHood_White");
+		inventory.CreateInInventory("HatchbackTrunk_White");
 
 		//-----IN CAR CARGO
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
 	}
 }
 
@@ -508,18 +510,19 @@ class OffroadHatchback_Blue extends OffroadHatchback
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
+		GameInventory inventory = GetInventory();
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
 	
-		GetInventory().CreateInInventory("HatchbackDoors_Driver_Blue");
-		GetInventory().CreateInInventory("HatchbackDoors_CoDriver_Blue");
-		GetInventory().CreateInInventory("HatchbackHood_Blue");
-		GetInventory().CreateInInventory("HatchbackTrunk_Blue");
+		inventory.CreateInInventory("HatchbackDoors_Driver_Blue");
+		inventory.CreateInInventory("HatchbackDoors_CoDriver_Blue");
+		inventory.CreateInInventory("HatchbackHood_Blue");
+		inventory.CreateInInventory("HatchbackTrunk_Blue");
 	
 		//-----IN CAR CARGO
-		GetInventory().CreateInInventory("HatchbackWheel");
-		GetInventory().CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
+		inventory.CreateInInventory("HatchbackWheel");
 	}
 }

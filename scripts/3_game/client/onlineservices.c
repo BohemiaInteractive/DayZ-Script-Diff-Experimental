@@ -56,7 +56,7 @@ class OnlineServices
 	
 	static void GetClientServices()
 	{
-		BiosUserManager user_manager = GetGame().GetUserManager();
+		BiosUserManager user_manager = g_Game.GetUserManager();
 		if ( user_manager )
 		{
 			BiosUser selected_user = user_manager.GetSelectedUser();
@@ -397,7 +397,7 @@ class OnlineServices
 			{
 				string addr;
 				int port;
-				if ( GetGame().GetHostAddress( addr, port ) )
+				if ( g_Game.GetHostAddress( addr, port ) )
 				{
 					ErrorCaught( m_ClientServices.GetSessionService().ShowInviteToGameplaySessionAsync( addr, port ) );
 				}
@@ -464,9 +464,9 @@ class OnlineServices
 		if ( g_Game.GetGameState() == DayZGameState.IN_GAME )
 		{
 			#ifdef PLATFORM_PS4
-			GetGame().GetWorld().DisableReceiveVoN( ErrorCaught( err ) );
+			g_Game.GetWorld().DisableReceiveVoN( ErrorCaught( err ) );
 			#endif
-			GetGame().GetWorld().DisableTransmitVoN( ErrorCaught( err ) );
+			g_Game.GetWorld().DisableTransmitVoN( ErrorCaught( err ) );
 		}
 	}
 	
@@ -529,7 +529,7 @@ class OnlineServices
 	{
 		string addr;
 		int port;
-		if ( GetGame().GetHostAddress( addr, port ) )
+		if ( g_Game.GetHostAddress( addr, port ) )
 		{
 			GetClientServices();
 			if ( m_ClientServices )
@@ -564,7 +564,7 @@ class OnlineServices
 	{
 		string addr;
 		int port;
-		if ( GetGame().GetHostAddress( addr, port ) )
+		if ( g_Game.GetHostAddress( addr, port ) )
 		{
 			GetClientServices();
 			if ( m_ClientServices )
@@ -578,7 +578,7 @@ class OnlineServices
 	{
 		string addr;
 		int port;
-		if ( GetGame().GetHostAddress( addr, port ) )
+		if ( g_Game.GetHostAddress( addr, port ) )
 		{
 			GetClientServices();
 			if ( m_ClientServices )
@@ -664,7 +664,7 @@ class OnlineServices
 			}
 			else
 			{
-				GetGame().GetUIManager().ShowDialog( "#str_xbox_authentification_fail_title", "#str_xbox_authentification_fail", 232, DBT_OK, DBB_NONE, DMT_INFO, GetGame().GetUIManager().GetMenu() );
+				g_Game.GetUIManager().ShowDialog( "#str_xbox_authentification_fail_title", "#str_xbox_authentification_fail", 232, DBT_OK, DBB_NONE, DMT_INFO, g_Game.GetUIManager().GetMenu() );
 			}
 		}
 		
@@ -677,7 +677,7 @@ class OnlineServices
 		}
 		else
 		{
-			GetGame().GetUIManager().ShowDialog( "#str_xbox_authentification_fail_title", "#xbox_authentification_fail", 232, DBT_OK, DBB_NONE, DMT_INFO, GetGame().GetUIManager().GetMenu() );
+			g_Game.GetUIManager().ShowDialog( "#str_xbox_authentification_fail_title", "#xbox_authentification_fail", 232, DBT_OK, DBB_NONE, DMT_INFO, g_Game.GetUIManager().GetMenu() );
 		}
 	}
 	

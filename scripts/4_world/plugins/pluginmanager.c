@@ -30,7 +30,7 @@ class PluginManager
 			}
 		}
 		
-		GetGame().GetUpdateQueue(CALL_CATEGORY_GAMEPLAY).Remove(this.MainOnUpdate);
+		g_Game.GetUpdateQueue(CALL_CATEGORY_GAMEPLAY).Remove(this.MainOnUpdate);
 	}
 	
 	//=================================
@@ -95,8 +95,12 @@ class PluginManager
 		//RegisterPluginDebug( "PluginSoundDebug",						false,	false );
 		RegisterPluginDebug( "PluginCameraTools",						true, 	true );
 		RegisterPluginDebug( "PluginNutritionDumper",					true, 	false );
+#ifdef DIAG_DEVELOPER
+		RegisterPluginDebug( "PluginInventoryDebug",					true, 	true );
+#endif
+		RegisterPluginDebug( "PluginInventoryRepair",					true, 	false );
 		
-		GetGame().GetUpdateQueue(CALL_CATEGORY_GAMEPLAY).Insert(MainOnUpdate);
+		g_Game.GetUpdateQueue(CALL_CATEGORY_GAMEPLAY).Insert(MainOnUpdate);
 	}
 	
 	//=================================
@@ -137,7 +141,8 @@ class PluginManager
 	//=================================
 	void MainOnUpdate(float delta_time)
 	{
-		for ( int i = 0; i < m_PluginsPtrs.Count(); ++i)
+		int nPlugins = m_PluginsPtrs.Count();
+		for (int i = 0; i < nPlugins; ++i)
 		{
 			PluginBase plugin = m_PluginsPtrs.GetElement(i);
 			if ( plugin != NULL )
@@ -188,7 +193,7 @@ class PluginManager
 	{
 		if ( !reg_on_client )
 		{
-			if ( GetGame().IsMultiplayer() && GetGame().IsClient() )
+			if ( g_Game.IsMultiplayer() && g_Game.IsClient() )
 			{
 				return;
 			}
@@ -196,9 +201,9 @@ class PluginManager
 		
 		if ( !reg_on_server )
 		{
-			if ( GetGame().IsMultiplayer() )
+			if ( g_Game.IsMultiplayer() )
 			{
-				if ( GetGame().IsServer() )
+				if ( g_Game.IsServer() )
 				{
 					return;
 				}
@@ -207,7 +212,7 @@ class PluginManager
 		
 		if ( !reg_on_release )
 		{
-			if ( !GetGame().IsDebug() )
+			if ( !g_Game.IsDebug() )
 			{
 				return;
 			}

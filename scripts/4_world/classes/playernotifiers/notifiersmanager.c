@@ -25,21 +25,22 @@ enum eNotifiers
 
 class NotifiersManager
 {
-	static const int 				MAX_COUNT = 64;
+	static const int 					MAX_COUNT = 64;
 	ref array<ref NotifierBase> 	m_Notifiers;
-	ref NotifierBase 				m_NotifiersStatic[MAX_COUNT];//introduced as a seperate array to allow for fast lookup, keeping the old one for quick looping through but also to keep modding compatibility
-	PlayerBase						m_Player;
-	ref VirtualHud					m_VirtualHud;
-	int								m_MinTickTime;
-	string 							m_System = "Notifiers";
+	ref NotifierBase 					m_NotifiersStatic[MAX_COUNT]; //introduced as a seperate array to allow for fast lookup, keeping the old one for quick looping through but also to keep modding compatibility
+	PlayerBase								m_Player;
+	ref VirtualHud						m_VirtualHud;
+	int										m_MinTickTime;
+	string 									m_System = "Notifiers";
+	private int 							m_LastPolledIndex = 0;
 	
 	void NotifiersManager(PlayerBase player)
 	{
 		m_Player = player;
-
 		m_Notifiers = new array<ref NotifierBase>;
-
 		m_MinTickTime = MIN_TICK_NOTIFIERS;
+		m_LastPolledIndex = 0;
+		
 		Init();
 	}
 
@@ -64,7 +65,7 @@ class NotifiersManager
 	void RegisterItself(int notifier_id, NotifierBase modifier)
 	{
 		if (notifier_id >= MAX_COUNT)
-			Error("out of bounds for notifier id: " + notifier_id);
+			ErrorEx("Out of bounds for notifier id: " + notifier_id, ErrorExSeverity.ERROR);
 		else
 			m_NotifiersStatic[notifier_id] = modifier;
 	}
@@ -101,17 +102,36 @@ class NotifiersManager
 		
 		TickNotifiers();
 	}
-
+	
 	void TickNotifiers()
 	{
-		int currentTime = GetGame().GetTime();
-
-		foreach (NotifierBase notifier: m_Notifiers)
+		int notifierCount = m_Notifiers.Count();
+	#ifdef DIAG_DEVELOPER
+		if (notifierCount == 0)
 		{
-			if (notifier.IsActive() && notifier.IsTimeToTick(currentTime))
-				notifier.OnTick(currentTime);
-		}		
-
+			ErrorEx("Notifier count is 0", ErrorExSeverity.ERROR);
+			return;
+		}
+	#endif
+		
+		// Wrap around if we've reached the end
+		if (m_LastPolledIndex >= notifierCount)
+			m_LastPolledIndex = 0;
+		
+		// Get current notifier to process
+		NotifierBase currentNotifier = m_NotifiersStatic[m_LastPolledIndex];
+		if (currentNotifier && currentNotifier.IsActive())
+		{
+			int currentTime = g_Game.GetTime();
+			
+			// Only tick if it's time (using the notifier's own interval)
+			if (currentNotifier.IsTimeToTick(currentTime))
+			{
+				currentNotifier.OnTick(currentTime);
+			}
+		}
+		
+		// Move to next notifier for next tick
+		m_LastPolledIndex++;
 	}
-
 }

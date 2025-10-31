@@ -11,7 +11,8 @@ class PluginDiagMenuClient : PluginDiagMenu
 	// Cheats
 	bool m_ModifiersEnabled = true;
 	int m_IsInvincible;	
-	bool m_StaminaDisabled;	
+	bool m_StaminaDisabled;
+	bool m_ClientInventoryDesync = false;
 	
 	// Misc
 	float m_Playtime;
@@ -35,6 +36,12 @@ class PluginDiagMenuClient : PluginDiagMenu
 	
 	protected void BindCallbacks()
 	{	
+		//---------------------------------------------------------------
+		// LEVEL 2 - Script > Inventory
+		//---------------------------------------------------------------
+		DiagMenu.BindCallback(DiagMenuIDs.INVENTORY_USE_ACK_MOVE_HANDS, CBInventoryHandsAckMove);
+		DiagMenu.BindCallback(DiagMenuIDs.INVENTORY_ENABLE_DESYNC_REPAIR, CBEnableDesyncRepair);
+		
 		//---------------------------------------------------------------
 		// LEVEL 2 - Script > Crafting
 		//---------------------------------------------------------------
@@ -61,6 +68,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 		DiagMenu.BindCallback(DiagMenuIDs.CHEATS_FIX_ITEMS, CBCheatsFixItems);
 		DiagMenu.BindCallback(DiagMenuIDs.CHEATS_CREATE_HIT, CBCreateHit);
 		DiagMenu.BindCallback(DiagMenuIDs.CHEATS_CREATE_HIT_LIGHT, CBCreateHitLight);
+		DiagMenu.BindCallback(DiagMenuIDs.CHEATS_CLIENT_DESYNC_INVENTORY, CBClientDesync);
 		
 		//---------------------------------------------------------------
 		// LEVEL 2 - Script > Player Agents
@@ -312,7 +320,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 			InitTimeAccel();
 		}
 		
-		if (GetGame() && GetGame().GetPlayer()) 
+		if (g_Game && g_Game.GetPlayer()) 
 		{
 			TimeAccelParam param = GetTimeAccelMenuState();
 
@@ -321,11 +329,29 @@ class PluginDiagMenuClient : PluginDiagMenu
 				int timeAccelBig = param.param2;
 				float timeAccelSmall = param.param2 - timeAccelBig;
 				FeatureTimeAccel.CopyTimeAccelClipboard(param.param1, timeAccelBig, timeAccelSmall, param.param3 );
-				FeatureTimeAccel.SendTimeAccel(GetGame().GetPlayer(), param);
+				FeatureTimeAccel.SendTimeAccel(g_Game.GetPlayer(), param);
 				FeatureTimeAccel.m_CurrentTimeAccel = param;
 			}		
 		}
 	
+	}
+	
+	static void CBInventoryHandsAckMove(bool enable, int id)
+	{
+		PluginInventoryDebug pluginInventoryDebug = PluginInventoryDebug.Cast(GetPlugin(PluginInventoryDebug));	
+		DiagToggleRPCServer(enable, pluginInventoryDebug.m_IsHandAckEnable, ERPCs.DIAG_INVENTORY_ACK_HANDS);
+	}
+	
+	static void CBEnableDesyncRepair(bool enable, int id)
+	{
+		PluginInventoryDebug pluginInventoryDebug = PluginInventoryDebug.Cast(GetPlugin(PluginInventoryDebug));	
+		DiagToggleRPCServer(enable, pluginInventoryDebug.m_IsDesyncRepairEnable, ERPCs.DIAG_INVENTORY_REPAIR_DESYNC);
+	}
+
+	static void CBClientDesync(bool enable, int id)
+	{
+		PluginInventoryDebug pluginInventoryDebug = PluginInventoryDebug.Cast(GetPlugin(PluginInventoryDebug));
+		pluginInventoryDebug.SetLocalOnlyMoveEnable(enable);
 	}
 	
 	//---------------------------------------------
@@ -372,7 +398,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------
 	static void CBCheatsStaminaDisable(bool enabled)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player)
 			player.SetStaminaDisabled(enabled);
 
@@ -383,7 +409,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------
 	static void CBCheatsResetPlayer(bool enabled, int id)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player)
 			player.ResetPlayer(false);
 		DiagButtonRPC(enabled, id, ERPCs.DIAG_CHEATS_RESET_PLAYER, true);
@@ -392,7 +418,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------
 	static void CBCheatsResetPlayerMax(bool enabled, int id)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player)
 			player.ResetPlayer(true);
 		DiagButtonRPC(enabled, id, ERPCs.DIAG_CHEATS_RESET_PLAYER_MAX, true);
@@ -457,7 +483,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------
 	static void CBLifespanBloodyHands(bool enabled)
 	{		
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player)
 		{
 			bool hasBloodyHands = player.HasBloodyHands();
@@ -516,7 +542,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 				m_VehicleFreeAreaBox = null;
 			}
 			
-			HumanCommandVehicle hcv = GetGame().GetPlayer().GetCommand_Vehicle();
+			HumanCommandVehicle hcv = g_Game.GetPlayer().GetCommand_Vehicle();
 			if (!hcv)
 				return;
 			
@@ -532,7 +558,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------	
 	static void CBMiscToggleHud(bool enabled)
 	{
-		Mission mission = GetGame().GetMission();
+		Mission mission = g_Game.GetMission();
 		mission.GetHud().Show(!enabled);
 		if (enabled)
 		{
@@ -602,7 +628,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	void MatGhostDebug()
 	{
 		string materialPath = "Graphics/Materials/postprocess/ghost";
-		Material material = GetGame().GetWorld().GetMaterial(materialPath);
+		Material material = g_Game.GetWorld().GetMaterial(materialPath);
 		if (!material)
 		{
 			DiagMenu.SetValue(DiagMenuIDs.MATERIALDIAG_GHOSTPP, 0);
@@ -743,14 +769,14 @@ class PluginDiagMenuClient : PluginDiagMenu
 	static void CBMiscDisplayPlayerInfo(int value)
 	{
 		PluginRemotePlayerDebugClient prpdc = PluginRemotePlayerDebugClient.Cast(GetPlugin(PluginRemotePlayerDebugClient));
-		prpdc.RequestPlayerInfo(PlayerBase.Cast(GetGame().GetPlayer()), value);
+		prpdc.RequestPlayerInfo(PlayerBase.Cast(g_Game.GetPlayer()), value);
 	}
 	
 	//---------------------------------------------	
 	static void CBMiscUniversalTemperatureSources(bool enabled)
 	{
 		PluginUniversalTemperatureSourceClient client = PluginUniversalTemperatureSourceClient.Cast(GetPlugin(PluginUniversalTemperatureSourceClient));
-		client.RequestUniversalTemperatureSources(PlayerBase.Cast(GetGame().GetPlayer()), enabled);
+		client.RequestUniversalTemperatureSources(PlayerBase.Cast(g_Game.GetPlayer()), enabled);
 	}
 
 	//---------------------------------------------	
@@ -777,7 +803,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------	
 	static void CBMiscQuickRestrain(bool enabled)
 	{	
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		DiagToggleRPC(enabled, player.IsQuickRestrain(), ERPCs.DIAG_MISC_QUICK_RESTRAIN);
 	}
 	
@@ -800,14 +826,14 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------		
 	static void CBMiscCamShake(bool enabled, int id)
 	{
-		DayZPlayerCamera cam = GetGame().GetPlayer().GetCurrentCamera();
+		DayZPlayerCamera cam = g_Game.GetPlayer().GetCurrentCamera();
 		DiagButtonAction(enabled, id, ScriptCaller.Create(cam.SpawnDiagCameraShake));
 	}
 	
 	//---------------------------------------------	
 	static void CBMiscQuickFishing(bool enabled)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		DiagToggleRPC(enabled, player.IsQuickFishing(), ERPCs.DIAG_MISC_QUICK_FISHING);
 	}
 	
@@ -823,14 +849,14 @@ class PluginDiagMenuClient : PluginDiagMenu
 		intensity += 0.25;
 		intensity = Math.WrapFloat(intensity, 0.25, 1);
 		
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		player.SpawnShockEffect(intensity);
 	}
 	
 	//---------------------------------------------
 	static void CBMiscPlugArrows(bool enabled)
 	{
-		GetGame().EnableEMPlugs(enabled);
+		g_Game.EnableEMPlugs(enabled);
 	}
 	
 	//---------------------------------------------
@@ -879,8 +905,8 @@ class PluginDiagMenuClient : PluginDiagMenu
 	
 	static void SpawnHitDirEffect()
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
-		GetGame().GetMission().GetHud().SpawnHitDirEffect(player, DiagMenu.GetRangeValue(DiagMenuIDs.MISC_HIT_INDICATION_SPAWN_HIT_DIRECTION), 1.0);
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
+		g_Game.GetMission().GetHud().SpawnHitDirEffect(player, DiagMenu.GetRangeValue(DiagMenuIDs.MISC_HIT_INDICATION_SPAWN_HIT_DIRECTION), 1.0);
 	}
 	
 	//---------------------------------------------
@@ -889,9 +915,9 @@ class PluginDiagMenuClient : PluginDiagMenu
 		SendDiagRPC(enabled, ERPCs.DIAG_MISC_DEBUG_MONITOR, true);
 		
 		if (enabled)
-			GetGame().GetMission().CreateDebugMonitor();
+			g_Game.GetMission().CreateDebugMonitor();
 		else
-			GetGame().GetMission().HideDebugMonitor();
+			g_Game.GetMission().HideDebugMonitor();
 	}
 	
 	static void CBPRADrawAll(bool enabled, int id)
@@ -904,7 +930,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	{
 		if (enabled)
 		{
-			DayZPlayer player = GetGame().GetPlayer();
+			DayZPlayer player = g_Game.GetPlayer();
 			PlayerRestrictedAreaInstance pra;
 			bool res = CfgPlayerRestrictedAreaHandler.IsPointInPlayerRestrictedArea(player.GetPosition(),pra);
 			if (res)
@@ -953,7 +979,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	
 	static void FreezePlayer()
 	{
-		EntityAI player = GetGame().GetPlayer();
+		EntityAI player = g_Game.GetPlayer();
 		if (player)
 			player.DisableSimulation(!player.GetIsSimulationDisabled());
 	}
@@ -1161,7 +1187,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------
 	static void CBBleedingReload(bool enabled, int id)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		BleedingSourcesManagerRemote bsMngrRem = player.GetBleedingManagerRemote();
 		DiagButtonAction(enabled, id, ScriptCaller.Create(bsMngrRem.Reload));
 	}
@@ -1173,7 +1199,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 		if (diagEnable != DbgBleedingIndicationStaticInfo.m_DbgEnableBleedingIndication)
 		{
 			DbgBleedingIndicationStaticInfo.m_DbgEnableBleedingIndication = diagEnable;
-			PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+			PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 			if (player && player.GetBleedingManagerRemote())
 			{
 				player.GetBleedingManagerRemote().Reload();
@@ -1288,7 +1314,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------
 	static void CBFinishersFinisherForced(int value)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		DiagToggleRPC(value - 1, player.GetMeleeCombat().DebugGetForcedFinisherType(), ERPCs.DIAG_FINISHERS_FORCE_FINISHER);
 	}
 	
@@ -1305,8 +1331,8 @@ class PluginDiagMenuClient : PluginDiagMenu
 			player.m_CameraToolsMenuClient.DelayedDestroy();
 		}
 		
-		auto param = new Param2<bool, EntityAI>(enabled, GetGame().GetPlayer());
-		GetGame().RPCSingleParam( null, ERPCs.DIAG_CAMERATOOLS_CAM_SUBSCRIBE, param, true );
+		auto param = new Param2<bool, EntityAI>(enabled, g_Game.GetPlayer());
+		g_Game.RPCSingleParam( null, ERPCs.DIAG_CAMERATOOLS_CAM_SUBSCRIBE, param, true );
 	}
 	
 	//---------------------------------------------
@@ -1314,16 +1340,16 @@ class PluginDiagMenuClient : PluginDiagMenu
 	//---------------------------------------------
 	static PlayerBase GetPlayer()
 	{
-		if (!GetGame())
+		if (!g_Game)
 			return null;
 
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 
 		if (DiagMenu.GetBool(DiagMenuIDs.MISC_ACTION_ON_CURSOR))
 		{
 			float hitFraction;
-			vector start = GetGame().GetCurrentCameraPosition();
-			vector end = start + (GetGame().GetCurrentCameraDirection() * 5.0);	
+			vector start = g_Game.GetCurrentCameraPosition();
+			vector end = start + (g_Game.GetCurrentCameraDirection() * 5.0);	
 
 			vector hitPos, hitNormal;
 			Object hitObj;
@@ -1373,7 +1399,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 		if (mask != m_SystemsMask)
 		{
 			CachedObjectsParams.PARAM1_INT.param1 = mask;
-			GetGame().RPCSingleParam( GetGame().GetPlayer(), ERPCs.DEV_DIAGMENU_SUBSCRIBE, CachedObjectsParams.PARAM1_INT, true, GetGame().GetPlayer().GetIdentity() );
+			g_Game.RPCSingleParam( g_Game.GetPlayer(), ERPCs.DEV_DIAGMENU_SUBSCRIBE, CachedObjectsParams.PARAM1_INT, true, g_Game.GetPlayer().GetIdentity() );
 			m_SystemsMask = mask;
 		}
 	}
@@ -1509,7 +1535,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 		PlayerBase player = GetPlayer();
 		if (player) 
 		{
-			GetGame().RPCSelfSingleParam(player, rpc, value);
+			g_Game.RPCSelfSingleParam(player, rpc, value);
 		}
  	}
 	
@@ -1532,14 +1558,14 @@ class PluginDiagMenuClient : PluginDiagMenu
 		if (player) 
 		{
 			PlayerIdentity playerIdentity = player.GetIdentity();
-			if (GetGame().IsMultiplayer() && playerIdentity)
+			if (g_Game.IsMultiplayer() && playerIdentity)
 			{
-				GetGame().RPCSingleParam(player, rpc, value, true, playerIdentity);
+				g_Game.RPCSingleParam(player, rpc, value, true, playerIdentity);
 			}
 			
-			if (!GetGame().IsMultiplayer() || !serverOnly)
+			if (!g_Game.IsMultiplayer() || !serverOnly)
 			{
-				GetGame().RPCSelfSingleParam(player, rpc, value);
+				g_Game.RPCSelfSingleParam(player, rpc, value);
 			}
 		}
  	}

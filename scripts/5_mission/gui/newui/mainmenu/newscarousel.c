@@ -46,7 +46,7 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 	
 	void NewsCarousel(Widget parent, UIScriptedMenu mainMenu)
 	{
-		m_Root = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/news_carousel.layout", parent);
+		m_Root = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/news_carousel.layout", parent);
 		
 		m_TitleText = TextWidget.Cast(m_Root.FindAnyWidget("nf_title"));
 		
@@ -88,13 +88,13 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 		UpdateCarouselInfo();
 		
 		#ifdef PLATFORM_CONSOLE
-		if (GetGame().GetMission())
+		if (g_Game.GetMission())
 		{
-			GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+			g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		}
 		#endif
 		
-		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
 	}
 
 	void ~NewsCarousel()
@@ -102,9 +102,9 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 		if (m_NewsSwitchTimer)
 			m_NewsSwitchTimer.Stop();
 		
-		if (GetGame().GetMission())
+		if (g_Game.GetMission())
 		{
-			GetGame().GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
+			g_Game.GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
 		}
 	}
 	
@@ -382,7 +382,7 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 			#endif
 			default:
 			{
-				if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
+				if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
 				{
 					m_NextPageBtnIcon.Show(state);
 				}
@@ -404,7 +404,7 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 			#endif
 			default:
 			{
-				if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
+				if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
 				{
 					m_PrevPageBtnIcon.Show(state);
 				}
@@ -430,7 +430,7 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 		{
 			if (article.fullUrl != "")
 			{
-				GetGame().OpenURL(article.fullUrl);
+				g_Game.OpenURL(article.fullUrl);
 			}
 		}
 	}
@@ -506,7 +506,7 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 		bool showNext = m_ArticleIndex < m_NewsArticles.Count() - 1;
 		bool showPrevious = m_ArticleIndex > 0;
 		
-		if (pInputDeviceType == EInputDeviceType.UNKNOWN && GetGame().GetInput().IsActiveGamepadSelected())
+		if (pInputDeviceType == EInputDeviceType.UNKNOWN && g_Game.GetInput().IsActiveGamepadSelected())
 			pInputDeviceType = EInputDeviceType.CONTROLLER;
 		
 		switch (pInputDeviceType)
@@ -525,7 +525,7 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 			}
 			default:
 			{
-				if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
+				if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
 				{
 					m_CurrentInputDevice = pInputDeviceType;
 					m_HotlinkButtonLabel.SetText(GetButtonLabel("255, 255, 255, 255"));

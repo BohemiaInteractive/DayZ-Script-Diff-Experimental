@@ -91,7 +91,7 @@ class MissionMainMenu extends MissionBase
 	{
 		if ( m_mainmenu )
 			m_mainmenu.Cleanup();
-		GetGame().GetUIManager().CloseAll();
+		g_Game.GetUIManager().CloseAll();
 		m_mainmenu = NULL;
 		
 		m_IntroScenePC = null;
@@ -127,7 +127,7 @@ class MissionMainMenu extends MissionBase
 		{
 			case MENU_CREDITS:
 			{
-				m_CreditsMenu = CreditsMenu.Cast(GetGame().GetUIManager().GetMenu());
+				m_CreditsMenu = CreditsMenu.Cast(g_Game.GetUIManager().GetMenu());
 			}
 		}
 	}
@@ -200,7 +200,7 @@ class MissionMainMenu extends MissionBase
 			SoundObjectBuilder soundBuilder	= new SoundObjectBuilder( soundParams );
 			SoundObject soundObject			= soundBuilder.BuildSoundObject();
 			soundObject.SetKind( WaveKind.WAVEMUSIC );
-			m_MenuMusic = GetGame().GetSoundScene().Play2D(soundObject, soundBuilder);
+			m_MenuMusic = g_Game.GetSoundScene().Play2D(soundObject, soundBuilder);
 			m_MenuMusic.Loop( true );
 			m_MenuMusic.Play();
 		}

@@ -85,7 +85,7 @@ class FirearmActionBase : ActionBase
 				InventoryLocation magIl = new InventoryLocation();
 				mag.GetInventory().GetCurrentInventoryLocation(magIl);
 			
-				if (!GetGame().AddInventoryJunctureEx(action_data.m_Player, mag, magIl, true, 10000, action_data))
+				if (!g_Game.AddInventoryJunctureEx(action_data.m_Player, mag, magIl, true, 10000, action_data))
 				{
 					accepted = false;
 					ClearActionJuncture(action_data);

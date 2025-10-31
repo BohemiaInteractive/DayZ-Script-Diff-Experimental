@@ -40,11 +40,11 @@ class UniversalTemperatureSourceTimer : Timer
 	{
 		if (m_params)
 		{
-			GetGame().GameScript.CallFunctionParams(m_target, m_function, null, m_params);
+			g_Game.GameScript.CallFunctionParams(m_target, m_function, null, m_params);
 		}
 		else
 		{
-			GetGame().GameScript.CallFunction(m_target, m_function, null, 0);
+			g_Game.GameScript.CallFunction(m_target, m_function, null, 0);
 		}
 	}
 	
@@ -187,7 +187,7 @@ class UniversalTemperatureSource
 	void SetDefferedActive(bool pActive, float pSeconds)
 	{
 		if (m_Settings)
-			GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLaterByName(this, "SetActive", pSeconds * 1000, false, new Param1<bool>(pActive));
+			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLaterByName(this, "SetActive", pSeconds * 1000, false, new Param1<bool>(pActive));
 	}
 	
 	void ChangeSettings(UniversalTemperatureSourceSettings pSettings)

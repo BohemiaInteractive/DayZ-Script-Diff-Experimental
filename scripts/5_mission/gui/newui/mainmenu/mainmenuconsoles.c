@@ -38,7 +38,7 @@ class MainMenuConsole extends UIScriptedMenu
 
 	override Widget Init()
 	{
-		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/main_menu_console.layout");
+		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/main_menu_console.layout");
 		
 		m_MainMenuPanel = layoutRoot.FindAnyWidget("main_menu_panel");
 		m_PlayerName = TextWidget.Cast(layoutRoot.FindAnyWidget("character_name_xbox"));
@@ -53,7 +53,7 @@ class MainMenuConsole extends UIScriptedMenu
 		
 		m_DlcFrame = layoutRoot.FindAnyWidget("dlc_Frame");
 		m_Version = TextWidget.Cast(layoutRoot.FindAnyWidget("version"));
-		m_Mission = MissionMainMenu.Cast(GetGame().GetMission());
+		m_Mission = MissionMainMenu.Cast(g_Game.GetMission());
 		m_ShowFeedback = layoutRoot.FindAnyWidget("feedback");
 		m_FeedbackQRCode = ImageWidget.Cast(layoutRoot.FindAnyWidget("qr_image"));
 		m_FeedbackClose = ButtonWidget.Cast(layoutRoot.FindAnyWidget("close_button"));
@@ -63,14 +63,14 @@ class MainMenuConsole extends UIScriptedMenu
 		
 		m_LastFocusedButton	= m_Play;
 				
-		GetGame().GetUIManager().ScreenFadeOut(1);
+		g_Game.GetUIManager().ScreenFadeOut(1);
 
 		string launch_done;
-		if (!GetGame().GetProfileString("FirstLaunchDone", launch_done) || launch_done != "true")
+		if (!g_Game.GetProfileString("FirstLaunchDone", launch_done) || launch_done != "true")
 		{
-			GetGame().SetProfileString("FirstLaunchDone", "true");
-			GetGame().GetUIManager().ShowDialog("#main_menu_tutorial", "#main_menu_tutorial_desc", 555, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
-			GetGame().SaveProfile();
+			g_Game.SetProfileString("FirstLaunchDone", "true");
+			g_Game.GetUIManager().ShowDialog("#main_menu_tutorial", "#main_menu_tutorial_desc", 555, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
+			g_Game.SaveProfile();
 		}
 		
 		UpdateControlsElementVisibility();
@@ -80,19 +80,19 @@ class MainMenuConsole extends UIScriptedMenu
 		CheckWidth();
 		m_NewsCarousel = new NewsCarousel(m_NewsCarouselFrame, this);
 		
-		if (GetGame().GetMission())
+		if (g_Game.GetMission())
 		{
-			GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-			GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+			g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+			g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		}
 		
-		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
 		
-		GetGame().GetContentDLCService().m_OnChange.Insert(OnDLCChange);
+		g_Game.GetContentDLCService().m_OnChange.Insert(OnDLCChange);
 		
 		#ifdef PLATFORM_CONSOLE
 		#ifndef PLATFORM_PS4
-		m_ChangeAccount.Show(GetGame().GetInput().IsEnabledMouseAndKeyboard());
+		m_ChangeAccount.Show(g_Game.GetInput().IsEnabledMouseAndKeyboard());
 		m_FeedbackQRCode.LoadImageFile(0, "gui/textures/feedback_qr_xbox.edds");
 		#else
 		m_FeedbackQRCode.LoadImageFile(0, "gui/textures/feedback_qr_ps.edds");
@@ -106,14 +106,14 @@ class MainMenuConsole extends UIScriptedMenu
 	
 	void ~MainMenuConsole()
 	{
-		if (GetGame().GetMission())
+		if (g_Game.GetMission())
 		{
-			GetGame().GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
-			GetGame().GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
+			g_Game.GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
+			g_Game.GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
 		}
 		
-		if (GetGame().GetContentDLCService())
-			GetGame().GetContentDLCService().m_OnChange.Remove(OnDLCChange);
+		if (g_Game.GetContentDLCService())
+			g_Game.GetContentDLCService().m_OnChange.Remove(OnDLCChange);
 	}
 	
 	void OnDLCChange(EDLCId dlcId)
@@ -147,9 +147,9 @@ class MainMenuConsole extends UIScriptedMenu
 		switch (pInputDeviceType)
 		{
 		case EInputDeviceType.CONTROLLER:
-			if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
+			if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
 			{
-				GetGame().GetUIManager().ShowUICursor(false);
+				g_Game.GetUIManager().ShowUICursor(false);
 				#ifdef PLATFORM_CONSOLE
 				if (m_LastFocusedButton == m_ShowFeedback || !GetFocus() || GetFocus() == m_FeedbackClose)
 				{
@@ -170,9 +170,9 @@ class MainMenuConsole extends UIScriptedMenu
 		break;
 
 		default:
-			if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
+			if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
 			{
-				GetGame().GetUIManager().ShowUICursor(true);
+				g_Game.GetUIManager().ShowUICursor(true);
 				#ifdef PLATFORM_CONSOLE
 				m_ShowFeedback.Show(true);
 				m_FeedbackClose.Show(true);
@@ -291,9 +291,9 @@ class MainMenuConsole extends UIScriptedMenu
 	{
 		string name;
 		
-		if (GetGame().GetUserManager() && GetGame().GetUserManager().GetSelectedUser())
+		if (g_Game.GetUserManager() && g_Game.GetUserManager().GetSelectedUser())
 		{
-			name = GetGame().GetUserManager().GetSelectedUser().GetName();
+			name = g_Game.GetUserManager().GetSelectedUser().GetName();
 			if (name.LengthUtf8() > 18)
 			{
 				name = name.SubstringUtf8(0, 18);
@@ -303,7 +303,7 @@ class MainMenuConsole extends UIScriptedMenu
 		m_PlayerName.SetText(name);		
 		
 		string version;
-		GetGame().GetVersion(version);
+		g_Game.GetVersion(version);
 		m_Version.SetText("#main_menu_version" + " " + version + " (" + g_Game.GetDatabaseID() + ")");
 		
 		if (m_DisplayedDlcHandler)
@@ -328,8 +328,8 @@ class MainMenuConsole extends UIScriptedMenu
 		
 		super.OnShow();
 		#ifdef PLATFORM_CONSOLE
-		layoutRoot.FindAnyWidget("ButtonHolderCredits").Show(GetGame().GetInput().IsEnabledMouseAndKeyboard());
-		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
+		layoutRoot.FindAnyWidget("ButtonHolderCredits").Show(g_Game.GetInput().IsEnabledMouseAndKeyboard());
+		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
 		#endif
 	}
 	
@@ -346,12 +346,12 @@ class MainMenuConsole extends UIScriptedMenu
 		
 		CheckWidth();
 		
-		if (g_Game.GetLoadState() != DayZGameState.CONNECTING && !GetGame().GetUIManager().IsDialogVisible())
+		if (g_Game.GetLoadState() != DayZGameState.CONNECTING && !g_Game.GetUIManager().IsDialogVisible())
 		{
 		#ifndef PLATFORM_CONSOLE
 			if (GetUApi().GetInputByID(UAUIBack).LocalPress())
 			{
-				if (!GetGame().GetUIManager().IsDialogHiding())
+				if (!g_Game.GetUIManager().IsDialogHiding())
 					Exit();
 			}
 		#else
@@ -476,20 +476,20 @@ class MainMenuConsole extends UIScriptedMenu
 
 	void ChangeAccount()
 	{
-		BiosUserManager user_manager = GetGame().GetUserManager();
+		BiosUserManager user_manager = g_Game.GetUserManager();
 		if (user_manager)
 		{
 			g_Game.SetLoadState(DayZLoadState.MAIN_MENU_START);
 			#ifndef PLATFORM_WINDOWS
 			user_manager.SelectUserEx(null);
 			#endif
-			GetGame().GetUIManager().Back();
+			g_Game.GetUIManager().Back();
 		}
 	}
 	
 	void Exit()
 	{
-		GetGame().GetUIManager().ShowDialog("#main_menu_exit", "#main_menu_exit_desc", IDC_MAIN_QUIT, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
+		g_Game.GetUIManager().ShowDialog("#main_menu_exit", "#main_menu_exit_desc", IDC_MAIN_QUIT, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
 	}
 		
 	//Coloring functions (Until WidgetStyles are useful)
@@ -525,7 +525,7 @@ class MainMenuConsole extends UIScriptedMenu
 		{
 			if (result == 2)
 			{
-				GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.RequestExit, IDC_MAIN_QUIT);
+				g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.RequestExit, IDC_MAIN_QUIT);
 			}
 			
 			return true;
@@ -630,7 +630,7 @@ class MainMenuConsole extends UIScriptedMenu
 	{
 		bool toolbarShow = false;
 		#ifdef PLATFORM_CONSOLE
-		toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboard() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboard() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		#endif
 		
 		layoutRoot.FindAnyWidget("toolbar_bg").Show(toolbarShow);

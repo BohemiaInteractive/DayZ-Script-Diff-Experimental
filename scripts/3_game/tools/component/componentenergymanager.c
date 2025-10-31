@@ -104,7 +104,7 @@ class ComponentEnergyManager : Component
 			return;
 		
 		m_ThisEntityAI.m_EM = this;
-		GetGame().GameScript.CallFunction(m_ThisEntityAI, "OnInitEnergy", NULL, 0);
+		g_Game.GameScript.CallFunction(m_ThisEntityAI, "OnInitEnergy", NULL, 0);
 	}
 	
 	// Update debug arrows
@@ -112,7 +112,7 @@ class ComponentEnergyManager : Component
 	{
 		if ( GetDebugPlugs() )
 		{
-			if ( GetGame().IsMultiplayer()  &&  GetGame().IsServer() )
+			if ( g_Game.IsMultiplayer()  &&  g_Game.IsServer() )
 			{
 				if (m_DebugUpdate)
 					m_DebugUpdate.Stop();
@@ -184,32 +184,32 @@ class ComponentEnergyManager : Component
 		string cfg_energy_manager = cfg_item + " EnergyManager ";
 		
 		// Read all config parameters
-		m_EnergyUsage					= GetGame().ConfigGetFloat(cfg_energy_manager + "energyUsagePerSecond");
-		bool switch_on					= GetGame().ConfigGetFloat(cfg_energy_manager + "switchOnAtSpawn");
-		m_AutoSwitchOff					= GetGame().ConfigGetFloat(cfg_energy_manager + "autoSwitchOff");
-		m_HasElectricityIcon			= GetGame().ConfigGetFloat(cfg_energy_manager + "hasIcon");
-		m_AutoSwitchOffWhenInCargo 		= GetGame().ConfigGetFloat(cfg_energy_manager + "autoSwitchOffWhenInCargo");
+		m_EnergyUsage					= g_Game.ConfigGetFloat(cfg_energy_manager + "energyUsagePerSecond");
+		bool switch_on					= g_Game.ConfigGetFloat(cfg_energy_manager + "switchOnAtSpawn");
+		m_AutoSwitchOff					= g_Game.ConfigGetFloat(cfg_energy_manager + "autoSwitchOff");
+		m_HasElectricityIcon			= g_Game.ConfigGetFloat(cfg_energy_manager + "hasIcon");
+		m_AutoSwitchOffWhenInCargo 		= g_Game.ConfigGetFloat(cfg_energy_manager + "autoSwitchOffWhenInCargo");
 		
-		m_EnergyAtSpawn					= GetGame().ConfigGetFloat(cfg_energy_manager + "energyAtSpawn");
+		m_EnergyAtSpawn					= g_Game.ConfigGetFloat(cfg_energy_manager + "energyAtSpawn");
 		m_Energy = m_EnergyAtSpawn;
-		m_EnergyStorageMax				= GetGame().ConfigGetFloat(cfg_energy_manager + "energyStorageMax");
-		m_ReduceMaxEnergyByDamageCoef	= GetGame().ConfigGetFloat(cfg_energy_manager + "reduceMaxEnergyByDamageCoef");
-		m_SocketsCount					= GetGame().ConfigGetFloat(cfg_energy_manager + "powerSocketsCount");
+		m_EnergyStorageMax				= g_Game.ConfigGetFloat(cfg_energy_manager + "energyStorageMax");
+		m_ReduceMaxEnergyByDamageCoef	= g_Game.ConfigGetFloat(cfg_energy_manager + "reduceMaxEnergyByDamageCoef");
+		m_SocketsCount					= g_Game.ConfigGetFloat(cfg_energy_manager + "powerSocketsCount");
 		
-		m_IsPassiveDevice				= GetGame().ConfigGetFloat(cfg_energy_manager + "isPassiveDevice");
-		m_CordLength 					= GetGame().ConfigGetFloat(cfg_energy_manager + "cordLength");
-		m_PlugType 						= GetGame().ConfigGetFloat(cfg_energy_manager + "plugType");
+		m_IsPassiveDevice				= g_Game.ConfigGetFloat(cfg_energy_manager + "isPassiveDevice");
+		m_CordLength 					= g_Game.ConfigGetFloat(cfg_energy_manager + "cordLength");
+		m_PlugType 						= g_Game.ConfigGetFloat(cfg_energy_manager + "plugType");
 		
-		m_AttachmentActionType			= GetGame().ConfigGetFloat(cfg_energy_manager + "attachmentAction");
-		m_WetnessExposure				= GetGame().ConfigGetFloat(cfg_energy_manager + "wetnessExposure");
+		m_AttachmentActionType			= g_Game.ConfigGetFloat(cfg_energy_manager + "attachmentAction");
+		m_WetnessExposure				= g_Game.ConfigGetFloat(cfg_energy_manager + "wetnessExposure");
 		
-		float update_interval			= GetGame().ConfigGetFloat(cfg_energy_manager + "updateInterval");
+		float update_interval			= g_Game.ConfigGetFloat(cfg_energy_manager + "updateInterval");
 		
-		m_ConvertEnergyToQuantity		= GetGame().ConfigGetFloat(cfg_energy_manager + "convertEnergyToQuantity");
+		m_ConvertEnergyToQuantity		= g_Game.ConfigGetFloat(cfg_energy_manager + "convertEnergyToQuantity");
 		
 		
 		// Check if energy->quantity converion is configured properly
-		float cfg_max_quantity = GetGame().ConfigGetFloat (cfg_item + " varQuantityMax");
+		float cfg_max_quantity = g_Game.ConfigGetFloat (cfg_item + " varQuantityMax");
 		
 		if (m_ConvertEnergyToQuantity  &&  cfg_max_quantity <= 0)
 		{
@@ -237,7 +237,7 @@ class ComponentEnergyManager : Component
 		// If energyAtSpawn is present, then use its value for energyStorageMax if that cfg param is not present (for convenience's sake)
 		string cfg_check_energy_limit = cfg_energy_manager + "energyStorageMax";
 		
-		if ( !GetGame().ConfigIsExisting (cfg_check_energy_limit)  &&  m_Energy > 0 )
+		if ( !g_Game.ConfigIsExisting (cfg_check_energy_limit)  &&  m_Energy > 0 )
 		{
 			m_EnergyStorageMax = m_Energy;
 		}
@@ -245,10 +245,10 @@ class ComponentEnergyManager : Component
 		// Fill m_CompatiblePlugTypes
 		string cfg_check_plug_types = cfg_energy_manager + "compatiblePlugTypes";
 		
-		if ( GetGame().ConfigIsExisting (cfg_check_plug_types) )
+		if ( g_Game.ConfigIsExisting (cfg_check_plug_types) )
 		{
 			m_CompatiblePlugTypes = new TIntArray;
-			GetGame().ConfigGetIntArray(cfg_check_plug_types, m_CompatiblePlugTypes);	
+			g_Game.ConfigGetIntArray(cfg_check_plug_types, m_CompatiblePlugTypes);	
 		}
 		
 		if (GetSocketsCount() > 0)
@@ -266,13 +266,13 @@ class ComponentEnergyManager : Component
 			m_DeviceByPlugSelection = new map<string,EntityAI>;
 			// Prepare the m_DeviceByPlugSelection
 			string cfg_animation_sources = "cfgVehicles " + m_ThisEntityAI.GetType() + " " + "AnimationSources ";
-			int animation_sources_count = GetGame().ConfigGetChildrenCount(cfg_animation_sources);
+			int animation_sources_count = g_Game.ConfigGetChildrenCount(cfg_animation_sources);
 			
 			for (int i_selection = 0; i_selection < animation_sources_count; i_selection++)
 			{
 				// TO DO: This could be optimized so not all selections on item are considered as plug/socket selections.
 				string selection;
-				GetGame().ConfigGetChildName(cfg_animation_sources, i_selection, selection);
+				g_Game.ConfigGetChildName(cfg_animation_sources, i_selection, selection);
 				m_DeviceByPlugSelection.Set(selection, NULL);
 			}
 		}
@@ -289,7 +289,7 @@ class ComponentEnergyManager : Component
 		
 		m_Sockets[MAX_SOCKETS_COUNT]; // Handles selections for plugs in the sockets. Feel free to change the limit if needed.
 		
-		GetGame().ConfigGetText(cfg_energy_manager + "cordTextureFile", m_CordTextureFile); 
+		g_Game.ConfigGetText(cfg_energy_manager + "cordTextureFile", m_CordTextureFile); 
 		
 		if ( switch_on )
 		{
@@ -314,7 +314,7 @@ class ComponentEnergyManager : Component
 		
 		
 		#ifdef DIAG_DEVELOPER
-		GetGame().m_EnergyManagerArray.Insert( this );
+		g_Game.m_EnergyManagerArray.Insert( this );
 		#endif
 	}
 
@@ -385,7 +385,7 @@ class ComponentEnergyManager : Component
 	{
 		m_IsSwichedOnPreviousState = m_IsSwichedOn;
 		
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (CanSwitchOn() && m_ThisEntityAI)
 			{
@@ -401,13 +401,13 @@ class ComponentEnergyManager : Component
 				UpdateCanWork();
 				
 				// Call event
-				GetGame().GameScript.CallFunction(m_ThisEntityAI, "OnSwitchOn", NULL, 0);
+				g_Game.GameScript.CallFunction(m_ThisEntityAI, "OnSwitchOn", NULL, 0);
 			}
 		}
 		
-		if ( !GetGame().IsServer()  &&  GetGame().IsMultiplayer()/*  &&  CanSwitchOn() */) // I want the CanSwitchOn() check, but when it's here, the OnSwitchOn() event is never called on client-side due to engine's synchronization system changing the m_IsSwichedOn to true without any specific event beign called. (Yes there is OnVariablesSynchronized() but that is called also when m_CanWork is synchronized, so I need to write a method of knowing when was this specific value changed.)
+		if ( !g_Game.IsServer()  &&  g_Game.IsMultiplayer()/*  &&  CanSwitchOn() */) // I want the CanSwitchOn() check, but when it's here, the OnSwitchOn() event is never called on client-side due to engine's synchronization system changing the m_IsSwichedOn to true without any specific event beign called. (Yes there is OnVariablesSynchronized() but that is called also when m_CanWork is synchronized, so I need to write a method of knowing when was this specific value changed.)
 		{
-			GetGame().GameScript.CallFunction(m_ThisEntityAI, "OnSwitchOn", NULL, 0);
+			g_Game.GameScript.CallFunction(m_ThisEntityAI, "OnSwitchOn", NULL, 0);
 		}
 	}
 
@@ -416,7 +416,7 @@ class ComponentEnergyManager : Component
 	{
 		m_IsSwichedOnPreviousState = m_IsSwichedOn;
 		
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (CanSwitchOff() && m_ThisEntityAI)
 			{
@@ -435,14 +435,14 @@ class ComponentEnergyManager : Component
 				UpdateCanWork();
 								
 				// Call event
-				GetGame().GameScript.CallFunction(m_ThisEntityAI, "OnSwitchOff", NULL, 0);
+				g_Game.GameScript.CallFunction(m_ThisEntityAI, "OnSwitchOff", NULL, 0);
 			}
 		}
 		
-		if ( !GetGame().IsServer()  &&  GetGame().IsMultiplayer() )
+		if ( !g_Game.IsServer()  &&  g_Game.IsMultiplayer() )
 		{
 			m_IsSwichedOn = false;
-			GetGame().GameScript.CallFunction(m_ThisEntityAI, "OnSwitchOff", NULL, 0);
+			g_Game.GameScript.CallFunction(m_ThisEntityAI, "OnSwitchOff", NULL, 0);
 		}
 	}
 
@@ -459,7 +459,7 @@ class ComponentEnergyManager : Component
 	//! Energy manager: Unplugs the given device from this one.
 	void UnplugDevice(EntityAI device_to_unplug)
 	{
-		if (GetGame())
+		if (g_Game)
 		{
 			int indexStart	= GetPluggedDevicesCount() - 1;
 			bool deviceFound = false;
@@ -502,7 +502,7 @@ class ComponentEnergyManager : Component
 	//! Energy manager: Unplugs this device from its power source
 	void UnplugThis()
 	{
-		if (GetGame())
+		if (g_Game)
 		{
 			if (GetEnergySource() && m_ThisEntityAI)
 			{
@@ -533,7 +533,7 @@ class ComponentEnergyManager : Component
 	//! Energy manager: Sets stored energy for this device. It ignores the min/max limit!
 	void SetEnergy(float new_energy)
 	{
-		if (m_ThisEntityAI && (GetGame().IsServer() || !GetGame().IsMultiplayer())) // Client can't change energy value.
+		if (m_ThisEntityAI && (g_Game.IsServer() || !g_Game.IsMultiplayer())) // Client can't change energy value.
 		{
 			m_ThisEntityAI.SetWeightDirty();
 			float old_energy = m_Energy;
@@ -675,7 +675,7 @@ class ComponentEnergyManager : Component
 			return;
 		
 		string cfg_energy_usage = "CfgVehicles " + m_ThisEntityAI.GetType() + " EnergyManager ";
-		m_EnergyUsage = GetGame().ConfigGetFloat (cfg_energy_usage + "energyUsagePerSecond");
+		m_EnergyUsage = g_Game.ConfigGetFloat (cfg_energy_usage + "energyUsagePerSecond");
 	}
 	
 	// Sets path to the cord texture file.
@@ -706,7 +706,7 @@ class ComponentEnergyManager : Component
 	// Checks whenever this device can work or not and updates this information on all clients. Can be called many times per frame because synchronization happens only once if a change has occured.
 	void UpdateCanWork()
 	{
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			bool current_state = CanWork();
 			if (current_state != m_CanWork)
@@ -780,7 +780,7 @@ class ComponentEnergyManager : Component
 	*/
 	bool CanWork( float test_energy = -1)
 	{
-		if ( GetGame().IsMultiplayer()  &&  GetGame().IsClient() )
+		if ( g_Game.IsMultiplayer()  &&  g_Game.IsClient() )
 		{
 			return m_CanWork;
 		}
@@ -991,7 +991,8 @@ class ComponentEnergyManager : Component
 		
 		if ( m_CompatiblePlugTypes )
 		{
-			for ( int i = 0; i < m_CompatiblePlugTypes.Count(); i++ )
+			int nCompatiblePlugTypes = m_CompatiblePlugTypes.Count();
+			for ( int i = 0; i < nCompatiblePlugTypes; ++i )
 			{
 				int plug_ID_to_Check = m_CompatiblePlugTypes.Get(i);
 				
@@ -1062,7 +1063,7 @@ class ComponentEnergyManager : Component
 		\param add_tolerance \p float parameter will add to the cord's length in meters (optional)
 		\return \p bool True if the power source will be at reach for the plug, or if config param cordLength is absent or 0. False if not, or is not plugged, or this device lacks Energy Manager component.
 		@code
-			vector position_player = GetGame().GetPlayer().GetPosition();
+			vector position_player = g_Game.GetPlayer().GetPosition();
 			
 			if ( my_device.GetCompEM().IsEnergySourceAtReach( position_player )  )
 			{
@@ -1307,7 +1308,7 @@ class ComponentEnergyManager : Component
 		
 		float health = 100;
 		
-		if (m_ThisEntityAI && (GetGame().IsServer() || !GetGame().IsMultiplayer())) // TO DO: Remove this IF when method GetHealth can be called on client!
+		if (m_ThisEntityAI && (g_Game.IsServer() || !g_Game.IsMultiplayer())) // TO DO: Remove this IF when method GetHealth can be called on client!
 			health = m_ThisEntityAI.GetHealth("","");
 		
 		float damage_coef = 1 - (health / max_health);
@@ -1696,7 +1697,7 @@ class ComponentEnergyManager : Component
 			device_to_plug.GetCompEM().OnIsPlugged(m_ThisEntityAI);
 			WakeUpWholeBranch( m_ThisEntityAI );
 			
-			if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+			if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 			{
 				device_to_plug.HideSelection(SEL_CORD_FOLDED);
 				device_to_plug.ShowSelection(SEL_CORD_PLUGGED);
@@ -1803,7 +1804,7 @@ class ComponentEnergyManager : Component
 	
 	float GetCurrentUpdateTime()
 	{
-		return GetGame().GetTime();
+		return g_Game.GetTime();
 	}
 	
 	// Updates the device's state of power. This function is visualized in the diagram at DayZ Confluence >> Camping & Squatting >> Electricity >> Energy Manager functionalities
@@ -1818,7 +1819,7 @@ class ComponentEnergyManager : Component
 		if ( !m_IsPassiveDevice )
 		{
 			// 'm_ThisEntityAI' and 'this' must be checked because this method is caled from a timer
-			if (m_ThisEntityAI && this && IsSwitchedOn() && !m_ThisEntityAI.IsRuined() && CheckWetness() && m_CanWork && !GetGame().IsMissionMainMenu())
+			if (m_ThisEntityAI && this && IsSwitchedOn() && !m_ThisEntityAI.IsRuined() && CheckWetness() && m_CanWork && !g_Game.IsMissionMainMenu())
 			{
 				bool was_powered = IsWorking();
 				float consumed_energy_coef;
@@ -1842,7 +1843,7 @@ class ComponentEnergyManager : Component
 					float consume_energy = GetEnergyUsage() * consumed_energy_coef;
 					bool has_consumed_enough = true;
 					
-					if (GetGame().IsServer() || !GetGame().IsMultiplayer()) // single player or server side multiplayer
+					if (g_Game.IsServer() || !g_Game.IsMultiplayer()) // single player or server side multiplayer
 						has_consumed_enough = ConsumeEnergy( consume_energy );
 					
 					SetPowered( has_consumed_enough );
@@ -1853,7 +1854,7 @@ class ComponentEnergyManager : Component
 						{
 							m_CanStopWork = true;
 							WakeUpWholeBranch(m_ThisEntityAI);
-							GetGame().GameScript.CallFunction(m_ThisEntityAI, "OnWorkStart", NULL, 0);
+							g_Game.GameScript.CallFunction(m_ThisEntityAI, "OnWorkStart", NULL, 0);
 							UpdateCanWork();
 						}
 						
@@ -1867,7 +1868,7 @@ class ComponentEnergyManager : Component
 							{
 								m_CanStopWork = false;
 								ClearLastUpdateTime();
-								GetGame().GameScript.CallFunction(m_ThisEntityAI, "OnWorkStop", NULL, 0); // This event is called only once when the device STOPS being powered
+								g_Game.GameScript.CallFunction(m_ThisEntityAI, "OnWorkStop", NULL, 0); // This event is called only once when the device STOPS being powered
 								UpdateCanWork();
 								
 								if (m_AutoSwitchOff)
@@ -1894,7 +1895,7 @@ class ComponentEnergyManager : Component
 				{
 					m_CanStopWork = false;
 					ClearLastUpdateTime();
-					GetGame().GameScript.CallFunction(m_ThisEntityAI, "OnWorkStop", NULL, 0); // This event is called only once when the device STOPS being powered
+					g_Game.GameScript.CallFunction(m_ThisEntityAI, "OnWorkStop", NULL, 0); // This event is called only once when the device STOPS being powered
 					UpdateCanWork();
 					
 					if (m_AutoSwitchOff)

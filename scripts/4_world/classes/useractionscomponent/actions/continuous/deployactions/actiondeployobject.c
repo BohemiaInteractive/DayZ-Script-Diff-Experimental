@@ -35,7 +35,7 @@ class ActionDeployObject : ActionDeployBase
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
 	{
 		//Client
-		if (!GetGame().IsDedicatedServer())
+		if (!g_Game.IsDedicatedServer())
 		{
 			if (player.IsPlacingLocal())
 			{
@@ -55,11 +55,11 @@ class ActionDeployObject : ActionDeployBase
 	override bool ActionConditionContinue(ActionData action_data)
 	{
 		//Server
-		if (GetGame().IsDedicatedServer())
+		if (g_Game.IsDedicatedServer())
 		{
 			if (action_data.m_Player.IsPlacingServer())
 			{
-				if (GetGame().IsMultiplayer())
+				if (g_Game.IsMultiplayer())
 					action_data.m_Player.GetHologramServer().EvaluateCollision(action_data.m_MainItem);
 				
 				if (!action_data.m_Player.GetHologramServer().IsColliding())
@@ -84,7 +84,7 @@ class ActionDeployObject : ActionDeployBase
 			
 			poActionData.m_AlreadyPlaced = false;
 			
-			if (!GetGame().IsDedicatedServer())
+			if (!g_Game.IsDedicatedServer())
 			{
 				Hologram hologram = player.GetHologramLocal();
 				hologram.SetUpdatePosition(false);
@@ -118,7 +118,7 @@ class ActionDeployObject : ActionDeployBase
 		if (!poActionData)
 			return;
 		
-		if (GetGame().IsMultiplayer())
+		if (g_Game.IsMultiplayer())
 			poActionData.m_Player.PlacingCompleteLocal();
 	}
 	
@@ -130,7 +130,7 @@ class ActionDeployObject : ActionDeployBase
 		if (!poActionData)
 			return;
 		
-		if (GetGame().IsMultiplayer())
+		if (g_Game.IsMultiplayer())
 		{
 			poActionData.m_Player.SetLocalProjectionPosition(poActionData.m_Position);
 			poActionData.m_Player.SetLocalProjectionOrientation(poActionData.m_Orientation);
@@ -214,7 +214,7 @@ class ActionDeployObject : ActionDeployBase
 		{
 			poActionData.m_MainItem.SetIsBeingPlaced(false);
 		
-			if (GetGame().IsMultiplayer())
+			if (g_Game.IsMultiplayer())
 			{	
 				poActionData.m_Player.PlacingCancelServer();
 			}
@@ -242,7 +242,7 @@ class ActionDeployObject : ActionDeployBase
 		// if object has no progress, it is moved directly when action finishes
 		if (HasProgress())
 		{
-			if (!GetGame().IsDedicatedServer())
+			if (!g_Game.IsDedicatedServer())
 			{
 				// Clear reservation as we put the main item from hands on ground
 				ClearInventoryReservationEx(action_data);

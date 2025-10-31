@@ -517,7 +517,7 @@ class DynamicMusicPlayer
 			SoundObject soundObject			= soundBuilder.BuildSoundObject();
 			soundObject.SetKind(WaveKind.WAVEMUSIC);
 	
-			m_SoundPlaying = GetGame().GetSoundScene().Play2D(soundObject, soundBuilder);
+			m_SoundPlaying = g_Game.GetSoundScene().Play2D(soundObject, soundBuilder);
 			if (m_SoundPlaying)
 			{
 				m_SoundPlaying.Loop(false);
@@ -726,9 +726,10 @@ class DynamicMusicPlayer
 	
 	private void SetTimeOfDate()
 	{
-		if (g_Game.GetMission())
+		Mission mission = g_Game.GetMission();
+		if (mission)
 		{
-			m_ActualTimeOfDay = g_Game.GetMission().GetWorldData().GetDaytime();
+			m_ActualTimeOfDay = mission.GetWorldData().GetDaytime();
 			return;
 		}
 

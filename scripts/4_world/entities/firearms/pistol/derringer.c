@@ -15,6 +15,11 @@ class Derringer_Base : DoubleBarrel_Base
 			entity.SpawnEntityOnGroundPos("Ammo_357", entity.GetPosition());
 		}
 	}
+	
+	override int GetAnimationForChamberingWithEjection()
+	{
+		return WeaponActionChamberingTypes.CHAMBERING_DOUBLE_FIREOUT_EJECT;
+	}
 };
 
 class Derringer : Derringer_Base {};

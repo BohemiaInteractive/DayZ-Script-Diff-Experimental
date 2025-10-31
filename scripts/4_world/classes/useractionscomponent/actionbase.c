@@ -190,7 +190,7 @@ class ActionBase : ActionBase_Basic
 		if ( !Post_SetupAction( action_data ) )
 			return false;
 		
-		if ( !GetGame().IsServer() && !IsInstant() )
+		if ( !g_Game.IsDedicatedServer() && !IsInstant() )
 		{
 			if (!InventoryReservation(action_data))
 			{
@@ -745,7 +745,7 @@ class ActionBase : ActionBase_Basic
 		
 		OnStart(action_data);
 		
-		if ( GetGame().IsServer() )
+		if ( g_Game.IsServer() )
 		{
 			OnStartServer(action_data);
 			
@@ -767,7 +767,7 @@ class ActionBase : ActionBase_Basic
 		{
 			OnEnd(action_data);
 			
-			if ( GetGame().IsServer() )
+			if ( g_Game.IsServer() )
 			{
 				OnEndServer(action_data);
 			}
@@ -978,7 +978,7 @@ class ActionBase : ActionBase_Basic
 	// return if has successfuly reserved inventory
 	bool InventoryReservation(ActionData action_data)
 	{
-		if (GetGame().IsServer())
+		if (g_Game.IsDedicatedServer())
 			return true;
 
 		if ((IsLocal() || !UseAcknowledgment()) && IsInstant())
@@ -1086,7 +1086,7 @@ class ActionBase : ActionBase_Basic
 					targetEntity.GetInventory().GetCurrentInventoryLocation(targetIl);
 					
 					//Lock target
-					if (!GetGame().AddInventoryJunctureEx(action_data.m_Player, targetEntity, targetIl, true, 10000, action_data))
+					if (!g_Game.AddInventoryJunctureEx(action_data.m_Player, targetEntity, targetIl, true, 10000, action_data))
 					{
 						accepted = false;
 					}
@@ -1114,7 +1114,7 @@ class ActionBase : ActionBase_Basic
 					EntityAI entity = il.GetItem();
 					if (entity)
 					{
-						GetGame().ClearJunctureEx(action_data.m_Player, entity);
+						g_Game.ClearJunctureEx(action_data.m_Player, entity);
 					}
 				}
 	
@@ -1136,7 +1136,7 @@ class ActionBase : ActionBase_Basic
 				EntityAI entity = il.GetItem();
 				if (entity)
 				{
-					GetGame().ExtendActionJuncture(action_data.m_Player, entity, 10000);
+					g_Game.ExtendActionJuncture(action_data.m_Player, entity, 10000);
 				}
 			}
 		}
@@ -1154,10 +1154,10 @@ class ActionBase : ActionBase_Basic
 	void SendMessageToClient( Object reciever, string message ) //sends given string to client, don't use if not nescessary
 	{
 		PlayerBase man;
-		if (GetGame().IsServer() && Class.CastTo(man, reciever) && m_MessageParam && reciever.IsAlive() && message != "")
+		if (g_Game.IsServer() && Class.CastTo(man, reciever) && m_MessageParam && reciever.IsAlive() && message != "")
 		{
 			m_MessageParam.param1 = message;
-			GetGame().RPCSingleParam(man, ERPCs.RPC_USER_ACTION_MESSAGE, m_MessageParam, true, man.GetIdentity());
+			g_Game.RPCSingleParam(man, ERPCs.RPC_USER_ACTION_MESSAGE, m_MessageParam, true, man.GetIdentity());
 		}
 	}
 	
@@ -1218,16 +1218,16 @@ class ActionBase : ActionBase_Basic
 	// SOUNDS ------------------------------------------------------
 	SoundOnVehicle PlayActionSound( PlayerBase player )
 	{
-		if ( GetGame().IsServer() && player )
+		if ( g_Game.IsServer() && player )
 		{
 			if ( m_Sound != "" )
 			{
-				return GetGame().CreateSoundOnObject(player, m_Sound, 6, false);
+				return g_Game.CreateSoundOnObject(player, m_Sound, 6, false);
 			}
 			else if ( m_Sounds && m_Sounds.Count() > 0 )
 			{
 				int rand_num =  Math.RandomInt(0, m_Sounds.Count());
-				return GetGame().CreateSoundOnObject(player, m_Sounds.Get(rand_num), 6, false);
+				return g_Game.CreateSoundOnObject(player, m_Sounds.Get(rand_num), 6, false);
 			}
 		}
 
@@ -1250,7 +1250,7 @@ class ActionBase : ActionBase_Basic
 	
 	void OnUpdateClient(ActionData action_data)
 	{
-		if ( !GetGame().IsDedicatedServer() )
+		if ( !g_Game.IsDedicatedServer() )
 		{
 			if (action_data.m_RefreshReservationTimer > 0)
 			{

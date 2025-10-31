@@ -137,6 +137,11 @@ class BoxDraw
 
 	void BoxDraw()
 	{
+		if (!GetGizmoApi())
+		{
+			ErrorEx("Gizmo API not created, crash imminent", ErrorExSeverity.ERROR);
+		}
+
 		m_Player = PlayerBase.Cast(g_Game.GetPlayer());
 		vector position = m_Player.GetPosition();
 		
@@ -144,9 +149,9 @@ class BoxDraw
 		m_BB = new BoxDrawGizmo(position + "1 1 1");
 		m_Global = new BoxDrawGizmo(Math3D.BoxCenter(m_AA.GetPosition(), m_BB.GetPosition()));
 		
-		g_Game.GizmoSelectUser(m_AA);
-		g_Game.GizmoSelectUser(m_BB);
-		g_Game.GizmoSelectUser(m_Global);
+		GetGizmoApi().SelectUser(m_AA);
+		GetGizmoApi().SelectUser(m_BB);
+		GetGizmoApi().SelectUser(m_Global);
 		
 		m_Global.m_OnRotationChanged.Insert(OnGlobalRotationChanged);
 	}
@@ -155,9 +160,9 @@ class BoxDraw
 	{
 		m_Global.m_OnRotationChanged.Remove(OnGlobalRotationChanged);
 
-		g_Game.GizmoClear(g_Game.GizmoFindByTracker(m_AA));
-		g_Game.GizmoClear(g_Game.GizmoFindByTracker(m_BB));
-		g_Game.GizmoClear(g_Game.GizmoFindByTracker(m_Global));
+		GetGizmoApi().DeselectTracker(m_AA);
+		GetGizmoApi().DeselectTracker(m_BB);
+		GetGizmoApi().DeselectTracker(m_Global);
 	}
 	
 	void Update()

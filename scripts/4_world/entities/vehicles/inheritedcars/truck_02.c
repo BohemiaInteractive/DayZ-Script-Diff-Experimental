@@ -21,7 +21,7 @@ class Truck_02 extends CarScript
 	{
 		super.EEInit();
 		
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_ManualUpdate 		= true;
@@ -39,7 +39,7 @@ class Truck_02 extends CarScript
 	{
 		super.OnEngineStart();
 
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource)
 				m_UTSource.SetDefferedActive(true, 20.0);
@@ -50,7 +50,7 @@ class Truck_02 extends CarScript
 	{
 		super.OnEngineStop();
 
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource)
 				m_UTSource.SetDefferedActive(false, 10.0);
@@ -59,7 +59,7 @@ class Truck_02 extends CarScript
 	
 	override void EOnPostSimulate(IEntity other, float timeSlice)
 	{
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource && m_UTSource.IsActive())
 			{
@@ -291,19 +291,20 @@ class Truck_02 extends CarScript
 		
 		if ( Class.CastTo(entity, this) )
 		{
-			entity.GetInventory().CreateInInventory( "Truck_02_Wheel" );
-			entity.GetInventory().CreateInInventory( "Truck_02_Wheel" );
-			entity.GetInventory().CreateInInventory( "Truck_02_Wheel" );
-			entity.GetInventory().CreateInInventory( "Truck_02_Wheel" );
+			GameInventory inventory = entity.GetInventory();
+			inventory.CreateInInventory( "Truck_02_Wheel" );
+			inventory.CreateInInventory( "Truck_02_Wheel" );
+			inventory.CreateInInventory( "Truck_02_Wheel" );
+			inventory.CreateInInventory( "Truck_02_Wheel" );
 
-			entity.GetInventory().CreateInInventory( "TruckBattery" );
-			entity.GetInventory().CreateInInventory( "SparkPlug" );
+			inventory.CreateInInventory( "TruckBattery" );
+			inventory.CreateInInventory( "SparkPlug" );
 
-			entity.GetInventory().CreateInInventory( "Truck_02_Door_1_1" );
-			entity.GetInventory().CreateInInventory( "Truck_02_Door_2_1" );
+			inventory.CreateInInventory( "Truck_02_Door_1_1" );
+			inventory.CreateInInventory( "Truck_02_Door_2_1" );
 
-			entity.GetInventory().CreateInInventory( "HeadlightH7" );
-			entity.GetInventory().CreateInInventory( "HeadlightH7" );
+			inventory.CreateInInventory( "HeadlightH7" );
+			inventory.CreateInInventory( "HeadlightH7" );
 		}
 
 		Fill( CarFluid.FUEL, 50 );

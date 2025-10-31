@@ -77,26 +77,26 @@ class ActionActivateTrap : ActionContinuousBase
 	{
 		super.OnStartAnimationLoop( action_data );
 
-		if ( !GetGame().IsMultiplayer() || GetGame().IsServer() )
+		if ( !g_Game.IsMultiplayer() || g_Game.IsServer() )
 		{
 			TrapBase trap = TrapBase.Cast( action_data.m_Target.GetObject() );
 			if ( trap )
 			{
 				Param1<bool> play = new Param1<bool>( true );
-				GetGame().RPCSingleParam( trap, SoundTypeTrap.ACTIVATING, play, true );
+				g_Game.RPCSingleParam( trap, SoundTypeTrap.ACTIVATING, play, true );
 			}
 		}
 	}
 	
 	override void OnEnd( ActionData action_data )
 	{
-		if ( !GetGame().IsMultiplayer() || GetGame().IsServer() )
+		if ( !g_Game.IsMultiplayer() || g_Game.IsServer() )
 		{
 			TrapBase trap = TrapBase.Cast( action_data.m_Target.GetObject());
 			if ( trap )
 			{
 				Param1<bool> play = new Param1<bool>( false );
-				GetGame().RPCSingleParam( trap, SoundTypeTrap.ACTIVATING, play, true );
+				g_Game.RPCSingleParam( trap, SoundTypeTrap.ACTIVATING, play, true );
 			}
 		}
 	}
@@ -105,11 +105,11 @@ class ActionActivateTrap : ActionContinuousBase
 	{
 		super.OnEndAnimationLoop(action_data);
 
-		if (!GetGame().IsMultiplayer() || GetGame().IsServer())
+		if (!g_Game.IsMultiplayer() || g_Game.IsServer())
 		{
 			TrapBase trap = TrapBase.Cast( action_data.m_Target.GetObject());
 			Param1<bool> play = new Param1<bool>(false);
-			GetGame().RPCSingleParam(trap, SoundTypeTrap.ACTIVATING, play, true);
+			g_Game.RPCSingleParam(trap, SoundTypeTrap.ACTIVATING, play, true);
 		}
 	}
 	

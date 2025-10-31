@@ -38,7 +38,7 @@ class HeatComfortAnimHandler
 
 		if (m_TimeSinceLastTick > TICK_INTERVAL)
 		{
-			if (GetGame().IsServer())
+			if (g_Game.IsServer())
 				Process(m_TimeSinceLastTick);
 			
 			m_TimeSinceLastTick = 0;

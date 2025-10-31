@@ -36,7 +36,7 @@ class MainMenuData
 		
 		m_AllMods = new array<ref ModInfo>;
 
-		GetGame().GetModInfos(m_AllMods);
+		g_Game.GetModInfos(m_AllMods);
 		if (m_AllMods.Count() > 0)
 		{
 			m_AllMods.Remove(m_AllMods.Count() - 1);

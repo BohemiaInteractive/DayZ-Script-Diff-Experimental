@@ -294,7 +294,7 @@ class StaminaHandler
 	
 	void StaminaHandler(PlayerBase player)
 	{
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 			m_StaminaParams = new Param3<float,float,bool>(0, 0, false);		
 
 		m_State 						= new HumanMovementState();
@@ -429,7 +429,7 @@ class StaminaHandler
 
 		if (m_Player)
 		{
-			bool isServerOrSingleplayer = GetGame().IsServer() || !GetGame().IsMultiplayer();
+			bool isServerOrSingleplayer = g_Game.IsServer() || !g_Game.IsMultiplayer();
 			// Calculates actual max stamina based on player's load
 			if (isServerOrSingleplayer)
 			{

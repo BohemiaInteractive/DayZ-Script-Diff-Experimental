@@ -50,7 +50,7 @@ class HudDebugWinHealth : HudDebugWinBase
 			CleanupEntries();
 			
 			if (m_IsModeSelf)
-				m_TargetEntity = GetGame().GetPlayer();
+				m_TargetEntity = g_Game.GetPlayer();
 			#ifdef DEVELOPER
 			else 
 				m_TargetEntity = EntityAI.Cast(_item);
@@ -91,9 +91,9 @@ class HudDebugWinHealth : HudDebugWinBase
 	
 	override void SetUpdate( bool state )
 	{
-		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
 		
-		if (GetGame().IsClient())
+		if (g_Game.IsClient())
 		{
 			Param1<bool> params = new Param1<bool>( state );
 			if (player)
@@ -196,7 +196,7 @@ class HudDebugWinHealth : HudDebugWinBase
 		else 
 			params = new Param3<int , string, string>( buttonID, "", "");
 		
-		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
 		if ( player )
 			player.RPCSingleParam( ERPCs.DEV_RPC_HEALTH_SET, params, true );
 	}
@@ -242,7 +242,7 @@ class HudDebugWinHealth : HudDebugWinBase
 	void InitEntry(SyncedValue data)
 	{	
 		HudDebugWinHealthEntry entry = new HudDebugWinHealthEntry();
-		entry.m_EntryRootW = GetGame().GetWorkspace().CreateWidgets( "gui/layouts/debug/day_z_hud_debug_health.layout", m_WgtPanel );
+		entry.m_EntryRootW = g_Game.GetWorkspace().CreateWidgets( "gui/layouts/debug/day_z_hud_debug_health.layout", m_WgtPanel );
 		entry.m_EntryZoneW = TextWidget.Cast(entry.m_EntryRootW.FindAnyWidget("Name"));
 		
 		if (data.m_ValueNorm == 1)

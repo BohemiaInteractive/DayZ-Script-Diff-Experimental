@@ -5,7 +5,11 @@ enum TriggerShape
 	CYLINDER,
 }
 
-class ScriptedEntity extends EntityAI
+class ScriptedEntityType : EntityAIType
+{
+};
+
+class ScriptedEntity : EntityAI
 {
 	/**
 	\brief Sets collision properties for object

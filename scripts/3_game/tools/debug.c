@@ -44,7 +44,7 @@ class Debug
 	{
 		if (!m_DebugLayoutCanvas)
 		{
-			m_DebugLayoutCanvas = GetGame().GetWorkspace().CreateWidgets("gui/layouts/debug/day_z_debugcanvas.layout");
+			m_DebugLayoutCanvas = g_Game.GetWorkspace().CreateWidgets("gui/layouts/debug/day_z_debugcanvas.layout");
 			m_CanvasDebug = CanvasWidget.Cast( m_DebugLayoutCanvas.FindAnyWidget( "CanvasWidget" ) );
 		}
 	}
@@ -114,7 +114,8 @@ class Debug
 		if (!shape)
 			return;
 
-		for (int i = 0; i < m_DebugShapes.Count(); ++i)
+		int nDebugShapes = m_DebugShapes.Count();
+		for (int i = 0; i < nDebugShapes; ++i)
 		{
 			Shape foundShape = m_DebugShapes.Get(i);
 			
@@ -133,7 +134,8 @@ class Debug
 		if (!text)
 			return;
 
-		for (int i = 0; i < m_DebugTextsSS.Count(); ++i)
+		int nDebugTextsSS = m_DebugTextsSS.Count();
+		for (int i = 0; i < nDebugTextsSS; ++i)
 		{
 			DebugTextScreenSpace foundText = m_DebugTextsSS.Get(i);
 			
@@ -152,7 +154,8 @@ class Debug
 		if (!text)
 			return;
 
-		for (int i = 0; i < m_DebugTextsWS.Count(); ++i)
+		int nDebugTextsWS = m_DebugTextsWS.Count();
+		for (int i = 0; i < nDebugTextsWS; ++i)
 		{
 			DebugTextWorldSpace foundText = m_DebugTextsWS.Get(i);
 			
@@ -308,7 +311,9 @@ class Debug
 	{
 		if (arr == null)
 			return;
-		for (int i = 0; i < arr.Count(); i++)
+		
+		int nArr = arr.Count();
+		for (int i = 0; i < nArr; ++i)
 		{
 			LogMessage(LOG_DEBUG, plugin, entity, author, label, arr.Get(i).ToString());
 		}
@@ -319,7 +324,8 @@ class Debug
 		if (arr == null)
 			return;
 
-		for (int i = 0; i < arr.Count(); i++)
+		int nArr = arr.Count();
+		for (int i = 0; i < nArr; ++i)
 		{
 			LogMessage(LOG_DEBUG, plugin, entity, author, label, arr.Get(i));
 		}
@@ -535,19 +541,20 @@ class Debug
 		
 		search_string.ToLower();
 		
-		for ( int s = 0; s < searching_in.Count(); ++s )
+		int nSearchingIn = searching_in.Count();
+		for ( int s = 0; s < nSearchingIn; ++s )
 		{
 			string config_path = searching_in.Get(s);
 			
-			int objects_count = GetGame().ConfigGetChildrenCount(config_path);
+			int objects_count = g_Game.ConfigGetChildrenCount(config_path);
 			for (int i = 0; i < objects_count; i++)
 			{
 				string childName;
-				GetGame().ConfigGetChildName(config_path, i, childName);
+				g_Game.ConfigGetChildName(config_path, i, childName);
 	
 				if ( only_public )
 				{
-					int scope = GetGame().ConfigGetInt( config_path + " " + childName + " scope" );
+					int scope = g_Game.ConfigGetInt( config_path + " " + childName + " scope" );
 					if ( scope == 0 )
 					{
 						continue;
@@ -572,10 +579,10 @@ class Debug
 		
 	private static string LogMessage(string level, string plugin, string entity, string author, string label, string message)
 	{
-		if (GetGame() == null || !LogManager.IsLogsEnable())
+		if (g_Game == null || !LogManager.IsLogsEnable())
 			return string.Empty;
 		
-		bool is_server_log = ( GetGame().IsServer() && GetGame().IsMultiplayer() );
+		bool is_server_log = ( g_Game.IsServer() && g_Game.IsMultiplayer() );
 		
 		
 		// Formation output to external file
@@ -870,12 +877,14 @@ class WeightDebug
 			return;
 		array<EntityAI> items = new array<EntityAI>;
 		inv.EnumerateInventory(InventoryTraversalType.PREORDER, items);
-		for(int i = 0; i < items.Count(); i++)
+		int nItems = items.Count();
+		for(int i = 0; i < nItems; ++i)
 		{
 			EntityAI item = items.Get(i);
-			if (m_WeightDebugData.Get(item))
+			WeightDebugData data = m_WeightDebugData.Get(item);
+			if (data)
 			{
-				m_WeightDebugData.Get(item).Output();
+				data.Output();
 			}
 		}
 	}

@@ -2,7 +2,12 @@ typedef Param1<int> DoorStartParams;
 typedef Param2<int, bool> DoorFinishParams;
 typedef Param1<int> DoorLockParams;
 
-class Building extends EntityAI
+class BuildingType : EntityAIType
+{
+
+};
+
+class Building : EntityAI
 {
 	proto native int GetLaddersCount();
 	proto native vector GetLadderPosTop(int ladderIndex);
@@ -190,12 +195,13 @@ class Building extends EntityAI
 		if (super.OnAction(action_id, player, ctx))
 			return true;
 
-		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
+		if (g_Game.IsClient() || !g_Game.IsMultiplayer())
 		{
 			switch (action_id)
 			{
 				case EActions.GIZMO_OBJECT:
-					GetGame().GizmoSelectObject(this);
+					if (GetGizmoApi())
+						GetGizmoApi().SelectObject(this);
 					return true;
 			}
 		}
@@ -207,7 +213,7 @@ class Building extends EntityAI
 			return true;
 		}
 
-		if (!GetGame().IsServer())
+		if (!g_Game.IsServer())
 			return false;
 
 		switch (action_id)
@@ -265,3 +271,15 @@ class Building extends EntityAI
 		return EMeleeTargetType.NONALIGNABLE;
 	}
 };
+
+//-----------------------------------------------------------------------------
+class WindSockType : EntityType
+{
+};
+
+//-----------------------------------------------------------------------------
+/*
+class WindSock : Entity
+{
+};
+*/

@@ -14,7 +14,7 @@ class UndergroundTriggerCarrier : UndergroundTriggerCarrierBase
 	
 	void ~UndergroundTriggerCarrier()
 	{
-		if (m_Trigger && !m_Trigger.IsSetForDeletion() && GetGame())
+		if (m_Trigger && !m_Trigger.IsSetForDeletion() && g_Game)
 		{
 			m_Trigger.Delete();
 		}
@@ -38,7 +38,7 @@ class UndergroundTriggerCarrier : UndergroundTriggerCarrierBase
 	
 	void RequestDelayedTriggerSpawn()
 	{
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(SpawnTrigger, 100);
+		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(SpawnTrigger, 100);
 	}
 	
 	void SpawnTrigger()
@@ -52,7 +52,7 @@ class UndergroundTriggerCarrier : UndergroundTriggerCarrierBase
 		if (UndergroundAreaLoader.m_JsonData.Triggers && UndergroundAreaLoader.m_JsonData.Triggers.IsValidIndex(m_TriggerIndex))
 		{
 			JsonUndergroundAreaTriggerData data = UndergroundAreaLoader.m_JsonData.Triggers[m_TriggerIndex];
-			UndergroundTrigger trigger = UndergroundTrigger.Cast(GetGame().CreateObjectEx("UndergroundTrigger", GetPosition(), ECE_LOCAL));
+			UndergroundTrigger trigger = UndergroundTrigger.Cast(g_Game.CreateObjectEx("UndergroundTrigger", GetPosition(), ECE_LOCAL));
 			if (trigger)
 			{
 				#ifdef DIAG_DEVELOPER

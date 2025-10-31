@@ -35,7 +35,7 @@ class ControlsXbox extends UIScriptedMenu
 	
 	void Back()
 	{
-		GetGame().GetUIManager().Back();
+		g_Game.GetUIManager().Back();
 	}
 	
 	void DrawConnectingLines(int index)
@@ -309,7 +309,7 @@ class ControlsXbox extends UIScriptedMenu
 	//============================================
 	override Widget Init()
 	{
-		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/xbox/control_mapping_info_screen.layout");
+		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/xbox/control_mapping_info_screen.layout");
 		
 		layoutRoot.FindAnyWidget("Tabber").GetScript(m_TabScript);
 		
@@ -350,7 +350,7 @@ class ControlsXbox extends UIScriptedMenu
 	{
 		super.OnShow();
 		#ifdef PLATFORM_CONSOLE
-		//layoutRoot.FindAnyWidget("toolbar_bg").Show(!GetGame().GetInput().IsEnabledMouseAndKeyboard());
+		//layoutRoot.FindAnyWidget("toolbar_bg").Show(!g_Game.GetInput().IsEnabledMouseAndKeyboard());
 		layoutRoot.FindAnyWidget("toolbar_bg").Show(true);//TODO: temporarily always on for preset switching
 		
 		string preset_text;
@@ -440,8 +440,8 @@ class ControlsXbox extends UIScriptedMenu
 			nameWidget.SetText(preset_text);
 		}
 		
-		GetGame().GetInput().SetProfile(index);		
+		g_Game.GetInput().SetProfile(index);		
 		GetUApi().Export();
-		GetGame().GetMission().GetOnInputPresetChanged().Invoke();
+		g_Game.GetMission().GetOnInputPresetChanged().Invoke();
 	}
 }

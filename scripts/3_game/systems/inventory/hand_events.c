@@ -78,6 +78,8 @@ class HandEventBase
 	}
 
 	InventoryLocation GetSrc () { return m_Src; }
+	InventoryLocation GetSecondSrc () { return null; }
+
 	EntityAI GetSrcEntity ()
 	{
 		if (m_Src)
@@ -86,6 +88,7 @@ class HandEventBase
 	}
 	EntityAI GetSecondSrcEntity () { return null; }
 	InventoryLocation GetDst () { return null; }
+	InventoryLocation GetSecondDst () { return null; }
 	int GetAnimationID () { return m_AnimationID; }
 	bool AcquireInventoryJunctureFromServer (notnull Man player) { return false; }
 	bool CheckRequest () { return true; }
@@ -299,7 +302,10 @@ class HandEventMoveTo extends HandEventBase
 	
 	override bool CheckRequest ()
 	{
-		return GameInventory.CheckMoveToDstRequest(m_Player, GetSrc(), GetDst(), GameInventory.c_MaxItemDistanceRadius);
+		if(m_Src && m_Dst && m_Src.GetItem() != m_Dst.GetItem())
+			return false;
+
+		return GameInventory.CheckMoveToDstRequest(m_Player, m_Src, m_Dst, GameInventory.c_MaxItemDistanceRadius);
 	}
 	
 	override bool CanPerformEvent ()
@@ -361,7 +367,10 @@ class HandEventRemove extends HandEventBase
 	
 	override bool CheckRequest ()
 	{
-		return GameInventory.CheckMoveToDstRequest(m_Player, GetSrc(), GetDst(), GameInventory.c_MaxItemDistanceRadius);
+		if(m_Src && m_Dst && m_Src.GetItem() != m_Dst.GetItem())
+			return false;
+
+		return GameInventory.CheckMoveToDstRequest(m_Player, m_Src, m_Dst, GameInventory.c_MaxItemDistanceRadius);
 	}
 	
 	override bool CanPerformEvent ()
@@ -469,7 +478,7 @@ class HandEventDrop extends HandEventRemove
 	override bool CanPerformEventEx(InventoryValidation validation)
 	{
 		//! On multiplayer client, if this is the initial call then we are waiting for the server to setup this event still
-		if (validation.m_Mode == InventoryMode.JUNCTURE && !validation.m_IsJuncture && !validation.m_IsRemote && GetGame().IsClient())
+		if (validation.m_Mode == InventoryMode.JUNCTURE && !validation.m_IsJuncture && !validation.m_IsRemote && g_Game.IsClient())
 		{
 			return true;
 		}
@@ -592,6 +601,16 @@ class HandEventSwap extends HandEventBase
 	{
 		return m_Dst;
 	}
+
+	override InventoryLocation GetSecondSrc()
+	{
+		return m_Src2;
+	}
+
+	override InventoryLocation GetSecondDst()
+	{
+		return m_Dst2;
+	}
 	
 	override EntityAI GetSecondSrcEntity()
 	{
@@ -617,6 +636,12 @@ class HandEventSwap extends HandEventBase
 				
 	override bool CheckRequest ()
 	{
+		if (m_Src && m_Dst && m_Src.GetItem() != m_Dst.GetItem())
+			return false;
+
+		if (m_Src2 && m_Dst2 && m_Src2.GetItem() != m_Dst2.GetItem())
+			return false;
+
 		if (!GameInventory.CheckSwapItemsRequest(m_Player, m_Src, m_Src2, m_Dst, m_Dst2, GameInventory.c_MaxItemDistanceRadius))
 		{	
 			#ifdef ENABLE_LOGGING
@@ -703,8 +728,14 @@ class HandEventForceSwap extends HandEventSwap
 	
 	override bool CheckRequest ()
 	{
+		if(m_Src && m_Dst && m_Src.GetItem() != m_Dst.GetItem())
+			return false;
+
+		if(m_Src2 && m_Dst2 && m_Src2.GetItem() != m_Dst2.GetItem())
+			return false;
+
 		bool test1 = false;
-		EntityAI inHands = m_Player.GetHumanInventory().GetEntityInHands();
+		EntityAI inHands = m_Player.GetEntityInHands();
 		if (GetSrcEntity() && inHands && m_Dst && m_Dst.IsValid())
 		{
 			test1 = GameInventory.CheckSwapItemsRequest(m_Player, m_Src, m_Src2, m_Dst, m_Dst2, GameInventory.c_MaxItemDistanceRadius);

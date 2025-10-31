@@ -40,12 +40,12 @@ class VONManagerImplementation : VONManagerBase
 	*/
 	override void HideVoiceNotification()
 	{
-		if (GetGame().IsMissionMainMenu())
+		if (g_Game.IsMissionMainMenu())
 		{
 			return;
 		}
 		
-		Mission mission = GetGame().GetMission();
+		Mission mission = g_Game.GetMission();
 		mission.GetMicrophoneIcon().Show(false);
 		mission.HideVoiceLevelWidgets();
 	}
@@ -57,12 +57,12 @@ class VONManagerImplementation : VONManagerBase
 	*/
 	override void ShowVoiceNotification(int level, bool fading)
 	{
-		if (GetGame().IsMissionMainMenu())
+		if (g_Game.IsMissionMainMenu())
 		{
 			return;
 		}
 		
-		Mission mission = GetGame().GetMission();
+		Mission mission = g_Game.GetMission();
 		ImageWidget micIcon = mission.GetMicrophoneIcon();
 		WidgetFadeTimer micTimer = mission.GetMicWidgetFadeTimer();
 		map<int,ImageWidget> voiceLeveWidgets = mission.GetVoiceLevelWidgets();
@@ -114,12 +114,12 @@ class VONManagerImplementation : VONManagerBase
 	{
 #ifdef PLATFORM_XBOX
 		// ignore VON-related input if user is in an xbox party
-		if (GetGame().IsInPartyChat())
+		if (g_Game.IsInPartyChat())
 		{
 			return;
 		}
 #endif
-		int oldLevel = GetGame().GetVoiceLevel();
+		int oldLevel = g_Game.GetVoiceLevel();
 		if (oldLevel == -1) //VoN system not initialized!
 			return;
 				
@@ -141,15 +141,14 @@ class VONManagerImplementation : VONManagerBase
 		
 		if (newLevel > -1)
 		{
-			CGame game = GetGame();
-			game.SetVoiceLevel(newLevel);
-			if (game.GetMission().IsVoNActive()) // icon is already visible, just update the range
+			g_Game.SetVoiceLevel(newLevel);
+			if (g_Game.GetMission().IsVoNActive()) // icon is already visible, just update the range
 			{
 				UpdateVoiceIcon();
 			}
 			else // Show the icon and let it fade out
 			{
-				int level = GetGame().GetVoiceLevel();
+				int level = g_Game.GetVoiceLevel();
 				ShowVoiceNotification(level, true);
 			}
 		}
@@ -157,8 +156,8 @@ class VONManagerImplementation : VONManagerBase
 	
 	private void UpdateVoiceIcon()
 	{
-		Mission mission = GetGame().GetMission();
-		int rangeLevel = GetGame().GetVoiceLevel();
+		Mission mission = g_Game.GetMission();
+		int rangeLevel = g_Game.GetVoiceLevel();
 			
 		if (mission.IsVoNActive())
 		{
@@ -199,7 +198,7 @@ class VONManagerImplementation : VONManagerBase
 	*/
 	override void OnEvent(EventType eventTypeId, Param params)
 	{
-		Mission mission = GetGame().GetMission();
+		Mission mission = g_Game.GetMission();
 		switch (eventTypeId)
 		{
 			case VONUserStartedTransmittingAudioEventTypeID:
@@ -209,7 +208,7 @@ class VONManagerImplementation : VONManagerBase
 				{
 					if (!VONManager.IsVoiceThresholdMinimum())
 					{
-						ShowVoiceNotification(GetGame().GetVoiceLevel(), false);
+						ShowVoiceNotification(g_Game.GetVoiceLevel(), false);
 					}
 				}
 				break;
@@ -331,6 +330,6 @@ class VONManager
 		NumericOptionsAccess noa;
 		Class.CastTo(noa, gameOptions.GetOptionByType( OptionAccessType.AT_OPTIONS_VON_THRESHOLD_SLIDER ));
 
-		return noa.ReadValue() <= GetGame().GetSoundScene().GetSilenceThreshold();
+		return noa.ReadValue() <= g_Game.GetSoundScene().GetSilenceThreshold();
 	}
 }

@@ -104,7 +104,7 @@ class KazuarOptic: ItemOptics
 			
 			case GameConstants.OPTICS_STATE_DAY:
 				ShowSelection("hide_cover");
-				if ( !GetGame().IsDedicatedServer() && !IsInOptics() ) //quick sanity check, just in case
+				if ( !g_Game.IsDedicatedServer() && !IsInOptics() ) //quick sanity check, just in case
 				{
 					ShowSelection("hide_cover_pilot");
 				}
@@ -177,7 +177,7 @@ class StarlightOptic: ItemOptics
 			
 			case GameConstants.OPTICS_STATE_DAY:
 				ShowSelection("hide_cover");
-				if ( !GetGame().IsDedicatedServer() && !IsInOptics() ) //quick sanity check, just in case
+				if ( !g_Game.IsDedicatedServer() && !IsInOptics() ) //quick sanity check, just in case
 				{
 					ShowSelection("hide_cover_pilot");
 				}

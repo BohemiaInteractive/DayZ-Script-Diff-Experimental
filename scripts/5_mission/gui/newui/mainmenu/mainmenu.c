@@ -52,7 +52,7 @@ class MainMenu extends UIScriptedMenu
 	
 	override Widget Init()
 	{
-		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/main_menu.layout");
+		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/main_menu.layout");
 		
 		m_Play						= layoutRoot.FindAnyWidget("play");
 		m_ChooseServer				= layoutRoot.FindAnyWidget("choose_server");
@@ -84,7 +84,7 @@ class MainMenu extends UIScriptedMenu
 		
 		m_Stats						= new MainMenuStats(layoutRoot.FindAnyWidget("character_stats_root"));
 		
-		m_Mission					= MissionMainMenu.Cast(GetGame().GetMission());
+		m_Mission					= MissionMainMenu.Cast(g_Game.GetMission());
 		
 		m_LastFocusedButton 		= m_Play;
 
@@ -101,10 +101,10 @@ class MainMenu extends UIScriptedMenu
 		
 		// Set Version
 		string version;
-		GetGame().GetVersion(version);
+		g_Game.GetVersion(version);
 		m_Version.SetText("#main_menu_version" + " " + version);
 		
-		GetGame().GetUIManager().ScreenFadeOut(0);
+		g_Game.GetUIManager().ScreenFadeOut(0);
 
 		SetFocus(null);
 		
@@ -118,7 +118,7 @@ class MainMenu extends UIScriptedMenu
 
 		ShowNewsCarousel(true);
 		
-		GetGame().GetMission().GetOnModMenuVisibilityChanged().Insert(ShowNewsCarousel);
+		g_Game.GetMission().GetOnModMenuVisibilityChanged().Insert(ShowNewsCarousel);
 		GetDayZGame().GetBacklit().MainMenu_OnShow();
 	
 		g_Game.SetLoadState(DayZLoadState.MAIN_MENU_CONTROLLER_SELECT);
@@ -128,9 +128,9 @@ class MainMenu extends UIScriptedMenu
 	
 	void ~MainMenu()
 	{
-		if (GetGame().GetMission())
+		if (g_Game.GetMission())
 		{
-			GetGame().GetMission().GetOnModMenuVisibilityChanged().Remove(ShowNewsCarousel);
+			g_Game.GetMission().GetOnModMenuVisibilityChanged().Remove(ShowNewsCarousel);
 		}
 	}
 	
@@ -148,7 +148,7 @@ class MainMenu extends UIScriptedMenu
 		if (m_ModsDetailed)
 			delete m_ModsDetailed;
 		
-		m_ModdedWarning.Show(GetGame().GetModToBeReported());
+		m_ModdedWarning.Show(g_Game.GetModToBeReported());
 		
 		MainMenuData.LoadMods();
 
@@ -361,7 +361,7 @@ class MainMenu extends UIScriptedMenu
 			OnChangeCharacter();
 		
 		string version;
-		GetGame().GetVersion(version);
+		g_Game.GetVersion(version);
 		m_Version.SetText("#main_menu_version" + " " + version);
 		
 		if (m_DisplayedDlcHandler)
@@ -394,9 +394,9 @@ class MainMenu extends UIScriptedMenu
 		
 		CheckWidth();
 		
-		if (GetGame() && GetUApi().GetInputByID(UAUIBack).LocalPress())
+		if (g_Game && GetUApi().GetInputByID(UAUIBack).LocalPress())
 		{
-			if (!GetGame().GetUIManager().IsDialogHiding())
+			if (!g_Game.GetUIManager().IsDialogHiding())
 			{
 				Exit();
 			}
@@ -410,11 +410,11 @@ class MainMenu extends UIScriptedMenu
 	{
 		if (!g_Game.IsNewCharacter())
 		{
-			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallByName(this, "ConnectLastSession");
+			g_Game.GetCallQueue(CALL_CATEGORY_GUI).CallByName(this, "ConnectLastSession");
 		}
 		else
 		{
-			GetGame().GetCallQueue(CALL_CATEGORY_GUI).CallByName(this, "ConnectBestServer");
+			g_Game.GetCallQueue(CALL_CATEGORY_GUI).CallByName(this, "ConnectBestServer");
 		}
 	}
 	
@@ -524,7 +524,7 @@ class MainMenu extends UIScriptedMenu
 	
 	protected void OpenFeedback()
 	{
-		GetGame().OpenURL("https://feedback.bistudio.com/project/view/2/");
+		g_Game.OpenURL("https://feedback.bistudio.com/project/view/2/");
 	}
 	
 	void OpenTutorials()
@@ -540,7 +540,7 @@ class MainMenu extends UIScriptedMenu
 	
 	void Exit()
 	{
-		GetGame().GetUIManager().ShowDialog("#main_menu_exit", "#main_menu_exit_desc", IDC_MAIN_QUIT, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
+		g_Game.GetUIManager().ShowDialog("#main_menu_exit", "#main_menu_exit_desc", IDC_MAIN_QUIT, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
 	}
 		
 	bool TryConnectLastSession(out string ip, out int port)
@@ -590,7 +590,7 @@ class MainMenu extends UIScriptedMenu
 		if (code == IDC_MAIN_QUIT)
 		{
 			if (result == 2)
-				GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.RequestExit, IDC_MAIN_QUIT);
+				g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.RequestExit, IDC_MAIN_QUIT);
 			if (result == 3)
 				ColorNormal(GetFocus());
 			return true;

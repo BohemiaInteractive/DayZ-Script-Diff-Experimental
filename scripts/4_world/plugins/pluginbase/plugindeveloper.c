@@ -31,13 +31,13 @@ class PluginDeveloper extends PluginBase
 	//! Enable / Disable Free camera (Fly mod)
 	void ToggleFreeCameraBackPos()
 	{
-		DeveloperFreeCamera.FreeCameraToggle( PlayerBase.Cast( GetGame().GetPlayer() ), false );
+		DeveloperFreeCamera.FreeCameraToggle( PlayerBase.Cast( g_Game.GetPlayer() ), false );
 	}
 	
 	//! Enable / Disable Free camera (Fly mod) - disable of camera will teleport player at current free camera position.
 	void ToggleFreeCamera()
 	{
-		DeveloperFreeCamera.FreeCameraToggle( PlayerBase.Cast( GetGame().GetPlayer() ), true );
+		DeveloperFreeCamera.FreeCameraToggle( PlayerBase.Cast( g_Game.GetPlayer() ), true );
 	}
 		
 	bool IsEnabledFreeCamera()
@@ -128,10 +128,10 @@ class PluginDeveloper extends PluginBase
 	// Server Log Synch: Server Side
 	void SendServerLogToClient(string msg)
 	{
-		if ( GetGame() )
+		if ( g_Game )
 		{
 			array<Man> players = new array<Man>;
-			GetGame().GetPlayers( players );
+			g_Game.GetPlayers( players );
 			
 			for ( int i = 0; i < players.Count(); ++i )
 			{
@@ -156,7 +156,7 @@ class PluginDeveloper extends PluginBase
 			SceneData	scene_data = module_scene_editor.GetLoadedScene();
 			SceneObject scene_object = scene_data.GetSceneObjectByEntityAI( par.param2 );
 			
-			GetGame().GetCallQueue( CALL_CATEGORY_SYSTEM ).CallByName( scene_object, par.param1, par.param3 );
+			g_Game.GetCallQueue( CALL_CATEGORY_SYSTEM ).CallByName( scene_object, par.param1, par.param3 );
 		}
 	}
 	
@@ -181,7 +181,7 @@ class PluginDeveloper extends PluginBase
 			int hour = p5.param4;
 			int minute = p5.param5;
 	
-			GetGame().GetWorld().SetDate(year,month, day, hour, minute);
+			g_Game.GetWorld().SetDate(year,month, day, hour, minute);
 		}		
 		#endif
 	}
@@ -320,7 +320,7 @@ class PluginDeveloper extends PluginBase
 		{
 			entity.PlaceOnSurface();
 			vector pos = entity.GetPosition();
-			vector ori = GetGame().GetSurfaceOrientation(pos[0], pos[2]);
+			vector ori = g_Game.GetSurfaceOrientation(pos[0], pos[2]);
 			entity.SetOrientation(ori);
 		}
 		if (player && presetName)
@@ -351,7 +351,7 @@ class PluginDeveloper extends PluginBase
 		{
 			return;
 		}
-		if ( GetGame().IsServer() )
+		if ( g_Game.IsServer() )
 		{	
 			float rowDist = 0;	
 			float columnDist = 0;
@@ -399,20 +399,20 @@ class PluginDeveloper extends PluginBase
 	
 	EntityAI SpawnAI(string object_name, vector pos)
 	{
-		bool is_ai = GetGame().IsKindOf(object_name, "DZ_LightAI");
+		bool is_ai = g_Game.IsKindOf(object_name, "DZ_LightAI");
 		if (is_ai)
 		{
-			return EntityAI.Cast(GetGame().CreateObjectEx(object_name, pos, ECE_PLACE_ON_SURFACE|ECE_INITAI|ECE_EQUIP_ATTACHMENTS));
+			return EntityAI.Cast(g_Game.CreateObjectEx(object_name, pos, ECE_PLACE_ON_SURFACE|ECE_INITAI|ECE_EQUIP_ATTACHMENTS));
 		}
 		return NULL;
 	}
 
 	void GetCameraDirections(Man player, bool allowFreeflight, out vector position, out vector direction)
 	{
-		position = GetGame().GetCurrentCameraPosition();
-		direction = GetGame().GetCurrentCameraDirection();
+		position = g_Game.GetCurrentCameraPosition();
+		direction = g_Game.GetCurrentCameraDirection();
 
-		if ((GetGame().IsDedicatedServer() || allowFreeflight) && FreeDebugCamera.GetInstance().IsActive())
+		if ((g_Game.IsDedicatedServer() || allowFreeflight) && FreeDebugCamera.GetInstance().IsActive())
 		{
 			position = FreeDebugCamera.GetInstance().GetPosition();
 			direction = FreeDebugCamera.GetInstance().GetDirection();
@@ -433,7 +433,7 @@ class PluginDeveloper extends PluginBase
 			return player.SpawnEntityOnGroundPos(object_name, pos);
 		}
 
-		bool is_AI = GetGame().IsKindOf(object_name, "DZ_LightAI");
+		bool is_AI = g_Game.IsKindOf(object_name, "DZ_LightAI");
 		if (is_AI)
 		{
 			return SpawnAI(object_name, pos);
@@ -452,7 +452,7 @@ class PluginDeveloper extends PluginBase
 				flags = ECE_KEEPHEIGHT;
 			#endif
 
-			return EntityAI.Cast(GetGame().CreateObjectEx(object_name, inv_loc.GetPos(), flags));
+			return EntityAI.Cast(g_Game.CreateObjectEx(object_name, inv_loc.GetPos(), flags));
 		}
 
 		return null;
@@ -491,7 +491,7 @@ class PluginDeveloper extends PluginBase
 	 **/
 	EntityAI SpawnEntityOnGroundPos( PlayerBase player, string item_name, float health, float quantity, vector pos, bool special = false, bool withPhysics = false)
 	{
-		if ( GetGame().IsServer() )
+		if ( g_Game.IsServer() )
 		{		
 			EntityAI entity = SpawnEntityOnGroundPos(player, item_name, pos);
 			if (entity)
@@ -523,7 +523,7 @@ class PluginDeveloper extends PluginBase
 	EntityAI SpawnEntityOnCursorDir( PlayerBase player, string item_name, float quantity, float distance, float health = -1, bool special = false, string presetName = "", bool withPhysics = false)
 	{
 
-		if ( GetGame().IsServer() )
+		if ( g_Game.IsServer() )
 		{		
 			// Client -> Server Spawning: Server Side
 			EntityAI entity = player.SpawnEntityOnGroundOnCursorDir(item_name, distance);
@@ -569,7 +569,7 @@ class PluginDeveloper extends PluginBase
 		{
 			return SpawnEntityInPlayerInventory(PlayerBase.Cast(target), className, health, quantity, special, presetName, locationType);
 		}
-		if ( GetGame().IsServer() )
+		if ( g_Game.IsServer() )
 		{
 			InventoryLocation il = new InventoryLocation;
 			if (target.GetInventory() && target.GetInventory().FindFirstFreeLocationForNewEntity(className, FindInventoryLocationType.ANY, il))
@@ -595,7 +595,7 @@ class PluginDeveloper extends PluginBase
 		else
 		{
 			DevSpawnItemParams params = new DevSpawnItemParams(target, className, health, quantity, special, presetName, 0 );
-				GetGame().GetPlayer().RPCSingleParam(ERPCs.DEV_RPC_SPAWN_ITEM_IN_INVENTORY, params, true, GetGame().GetPlayer().GetIdentity());
+				g_Game.GetPlayer().RPCSingleParam(ERPCs.DEV_RPC_SPAWN_ITEM_IN_INVENTORY, params, true, g_Game.GetPlayer().GetIdentity());
 		}
 		return null;
 	}
@@ -604,29 +604,29 @@ class PluginDeveloper extends PluginBase
 	{
 		if (player)
 		{
-			if (GetGame().IsServer())
+			if (g_Game.IsServer())
 			{
 				if (locationType == FindInventoryLocationType.HANDS && player.GetItemInHands())
 				{
-					if (!GetGame().IsMultiplayer())
+					if (!g_Game.IsMultiplayer())
 						player.DropItem(player.GetItemInHands());
 					else
 						player.ServerDropEntity(player.GetItemInHands());
 
-					GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(SpawnEntityInPlayerInventory, 500, false, player, item_name, health, quantity, special, presetName, locationType);
+					g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(SpawnEntityInPlayerInventory, 500, false, player, item_name, health, quantity, special, presetName, locationType);
 
 					return null;
 				}
 			
 				
 				#ifdef DEVELOPER
-				if (GetGame().IsKindOf(item_name, "Transport"))
+				if (g_Game.IsKindOf(item_name, "Transport"))
 				{
 					EntityAI vehicle = SpawnEntityOnGroundPos(player, item_name, 1, quantity, player.GetPosition());
 					auto debugParams = DebugSpawnParams.WithPlayer(player);
 					vehicle.OnDebugSpawnEx(debugParams);
 					
-					if (GetGame().IsMultiplayer())
+					if (g_Game.IsMultiplayer())
 					{
 						DayZPlayerSyncJunctures.SendGetInVehicle(player, vehicle);
 					}
@@ -697,7 +697,7 @@ class PluginDeveloper extends PluginBase
 	 **/
 	EntityAI SpawnEntityAsAttachment (PlayerBase player, EntityAI parent, string att_name, float health, float quantity)
 	{
-		if ( GetGame().IsServer() )
+		if ( g_Game.IsServer() )
 		{
 			Weapon_Base wpn = Weapon_Base.Cast(parent);
 			if (wpn)
@@ -743,13 +743,13 @@ class PluginDeveloper extends PluginBase
 	
 	EntityAI SpawnFromClipboard()
 	{
-		UIScriptedMenu menu_curr = GetGame().GetUIManager().GetMenu();
+		UIScriptedMenu menu_curr = g_Game.GetUIManager().GetMenu();
 
 		if ( menu_curr == NULL )
 		{			
-			PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
+			PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
 
-				if ( player && !GetGame().GetWorld().Is3rdPersonDisabled() )
+				if ( player && !g_Game.GetWorld().Is3rdPersonDisabled() )
 				{
 					player.SetIsInThirdPerson(!player.IsInThirdPerson());//this counters the effect of switching camera through pressing the 'V' key
 				}
@@ -759,7 +759,7 @@ class PluginDeveloper extends PluginBase
 					
 					// Get item from clipboard
 					string		clipboard;
-					GetGame().CopyFromClipboard(clipboard);
+					g_Game.CopyFromClipboard(clipboard);
 								
 					if (!clipboard.Contains(","))
 					{
@@ -791,7 +791,7 @@ class PluginDeveloper extends PluginBase
 	// Clear Entity Inventory
 	void ClearInventory(EntityAI entity)
 	{
-		if ( GetGame().IsServer() )
+		if ( g_Game.IsServer() )
 		{
 			entity.ClearInventory();
 		}
@@ -816,7 +816,7 @@ class PluginDeveloper extends PluginBase
 
 	void ToggleScriptConsole()
 	{
-		if (GetGame() != null && !g_Game.IsLoading() && GetGame().GetMission())
+		if (g_Game != null && !g_Game.IsLoading() && g_Game.GetMission())
 		{
 			if ( g_Game.GetUIManager().GetMenu() == NULL )
 			{
@@ -825,7 +825,7 @@ class PluginDeveloper extends PluginBase
 			else if ( g_Game.GetUIManager().IsMenuOpen(MENU_SCRIPTCONSOLE) )
 			{
 				g_Game.GetUIManager().Back();
-				GetGame().GetMission().RemoveActiveInputExcludes({"menu"},true);
+				g_Game.GetMission().RemoveActiveInputExcludes({"menu"},true);
 			}
 		}
 	}
@@ -836,7 +836,7 @@ class PluginDeveloper extends PluginBase
 		if ( g_Game.GetUIManager().IsMenuOpen(MENU_MISSION_LOADER) )
 		{
 			g_Game.GetUIManager().Back();
-			GetGame().GetMission().RemoveActiveInputExcludes({"menu"},true);
+			g_Game.GetMission().RemoveActiveInputExcludes({"menu"},true);
 			return;
 		}
 
@@ -844,7 +844,7 @@ class PluginDeveloper extends PluginBase
 			g_Game.GetUIManager().GetMenu().Close();
 		
 		g_Game.GetUIManager().EnterScriptedMenu(MENU_MISSION_LOADER, NULL);
-		GetGame().GetMission().AddActiveInputExcludes({"menu"});
+		g_Game.GetMission().AddActiveInputExcludes({"menu"});
 		
 		
 	}
@@ -870,7 +870,7 @@ class PluginDeveloper extends PluginBase
 	
 	private bool IsIngame()
 	{
-		UIScriptedMenu menu_curr = GetGame().GetUIManager().GetMenu();
+		UIScriptedMenu menu_curr = g_Game.GetUIManager().GetMenu();
 
 		if ( menu_curr == NULL )
 		{			
@@ -882,7 +882,7 @@ class PluginDeveloper extends PluginBase
 
 	private bool IsInConsole()
 	{
-		UIScriptedMenu menu_curr = GetGame().GetUIManager().GetMenu();
+		UIScriptedMenu menu_curr = g_Game.GetUIManager().GetMenu();
 
 		if ( menu_curr != NULL && menu_curr.GetID() == MENU_SCRIPTCONSOLE )
 		{			
@@ -956,25 +956,25 @@ class PluginDeveloper extends PluginBase
 	
 	void ResetGUI()
 	{
-		if ( GetGame() && GetGame().GetMission() )
+		if ( g_Game && g_Game.GetMission() )
 		{
-			GetGame().GetMission().ResetGUI();
+			g_Game.GetMission().ResetGUI();
 		}
 	}
 	
 	static void SetDeveloperItemClientEx(notnull Object entity, bool getFocus = false)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		
 		if (getFocus)
 		{
-			GetGame().GetInput().ChangeGameFocus(1);
-			GetGame().GetUIManager().ShowUICursor(true);
+			g_Game.GetInput().ChangeGameFocus(1);
+			g_Game.GetUIManager().ShowUICursor(true);
 		}
 
-		if (GetGame().IsMultiplayer())
+		if (g_Game.IsMultiplayer())
 		{
-			GetGame().RPCSingleParam(GetGame().GetPlayer(), ERPCs.DEV_SET_DEV_ITEM, new Param1<Object>(entity), true, GetGame().GetPlayer().GetIdentity());
+			g_Game.RPCSingleParam(g_Game.GetPlayer(), ERPCs.DEV_SET_DEV_ITEM, new Param1<Object>(entity), true, g_Game.GetPlayer().GetIdentity());
 		}
 		else
 		{
@@ -990,7 +990,7 @@ class PluginDeveloper extends PluginBase
 	{
 		#ifdef DEVELOPER
 		Object entity;
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 
 		FreeDebugCamera debugCam = FreeDebugCamera.GetInstance();
 		if (debugCam && debugCam.GetCurrentCamera())

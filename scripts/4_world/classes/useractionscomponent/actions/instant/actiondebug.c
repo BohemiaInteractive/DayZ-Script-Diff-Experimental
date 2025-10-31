@@ -38,7 +38,7 @@ class ActionDebug : ActionInstantBase
 		action_data_d.m_Action = this;
 		action_data_d.m_Player = player;
 		
-		if (!GetGame().IsDedicatedServer() )
+		if (!g_Game.IsDedicatedServer() )
 		{
 			ref Param2<EntityAI,int> ndata = Param2<EntityAI,int>.Cast( extra_data );
 			action_data_d.m_Entity = ndata.param1;

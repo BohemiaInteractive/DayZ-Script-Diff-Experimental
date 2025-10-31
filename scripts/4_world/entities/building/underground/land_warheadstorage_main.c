@@ -57,9 +57,9 @@ class Land_WarheadStorage_Main : House
 		
 	override void DeferredInit()
 	{
-		GetGame().RegisterNetworkStaticObject(this);
+		g_Game.RegisterNetworkStaticObject(this);
 		
-		if (GetGame().IsServer())
+		if (g_Game.IsServer())
 		{
 			UpdateDoorStateServer();	// init closed state - code randomization? of opened state messes with doors in general
 			for (int i = 0; i < 12; i++)
@@ -402,7 +402,7 @@ class Land_WarheadStorage_Main : House
 	{
 		string debug_output;
 		
-		if( GetGame().IsServer())
+		if( g_Game.IsServer())
 		{
 			debug_output = "IsDoorOpen(4) " + IsDoorOpen(4)+ "\n";
 			debug_output +=  "IsDoorOpen(5) " + IsDoorOpen(5)+ "\n";

@@ -6,9 +6,9 @@ class Land_WarheadStorage_Bunker_Facility : House
 	
 	override void DeferredInit()
 	{
-		GetGame().RegisterNetworkStaticObject(this);
+		g_Game.RegisterNetworkStaticObject(this);
 		
-		if (GetGame().IsServer())
+		if (g_Game.IsServer())
 		{
 			for (int i = 0; i < GetDoorCount(); ++i)
 				AutoCloseDoor(i);

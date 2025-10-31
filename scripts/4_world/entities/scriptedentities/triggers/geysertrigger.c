@@ -42,7 +42,7 @@ class GeyserTrigger : EffectTrigger
 		if (IsSubmerged())
 			RandomizeMouthPos();
 		
-		if (!GetGame().IsDedicatedServer())
+		if (!g_Game.IsDedicatedServer())
 			UpdateGeyserState();	
 	}
 	
@@ -186,7 +186,7 @@ class GeyserTrigger : EffectTrigger
 	protected vector GetAdjustedPosition(float height = 0)
 	{
 		vector pos = GetPosition();
-		pos[1] = GetGame().SurfaceRoadY(pos[0], pos[2], RoadSurfaceDetection.UNDER) + height;
+		pos[1] = g_Game.SurfaceRoadY(pos[0], pos[2], RoadSurfaceDetection.UNDER) + height;
 		
 		return pos;
 	}

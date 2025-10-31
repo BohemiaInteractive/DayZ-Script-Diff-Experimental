@@ -91,7 +91,7 @@ class PlayerSoundEventBase extends SoundEventBase
 	
 	bool IsDummyFinished()
 	{
-		return GetGame().GetTime() > (m_DummyStartTime + m_DummySoundLength);
+		return g_Game.GetTime() > (m_DummyStartTime + m_DummySoundLength);
 	}
 	
 	
@@ -193,7 +193,7 @@ class PlayerSoundEventBase extends SoundEventBase
 		}
 		else
 		{
-			m_DummyStartTime = GetGame().GetTime();
+			m_DummyStartTime = g_Game.GetTime();
 			return true;
 		}
 		return false;

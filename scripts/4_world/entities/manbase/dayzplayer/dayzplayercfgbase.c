@@ -333,7 +333,7 @@ class ModItemRegisterCallbacks
 
 void DayZPlayerTypeRegisterItems(DayZPlayerType pType)
 {
-	GetGame().ProfilerStart("DayZPlayerTypeRegisterItems");
+	g_Game.ProfilerStart("DayZPlayerTypeRegisterItems");
 	
 	ModItemRegisterCallbacks modCallbacks = new ModItemRegisterCallbacks();
 		
@@ -1556,7 +1556,7 @@ void DayZPlayerTypeRegisterItems(DayZPlayerType pType)
 	//
 	pType.DebugPreloadAnimationInstances();
 	
-	GetGame().ProfilerStop("DayZPlayerTypeRegisterItems");
+	g_Game.ProfilerStop("DayZPlayerTypeRegisterItems");
 
 }
 

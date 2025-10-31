@@ -23,7 +23,7 @@ class JsonUndergroundTriggers
 	
 	static void SpawnTriggerCarrier(EntityAI parent, int index, JsonUndergroundAreaTriggerData data)
 	{
-		UndergroundTriggerCarrierBase carrier = UndergroundTriggerCarrierBase.Cast(GetGame().CreateObjectEx("UndergroundTriggerCarrier", data.GetPosition(), ECE_NONE));
+		UndergroundTriggerCarrierBase carrier = UndergroundTriggerCarrierBase.Cast(g_Game.CreateObjectEx("UndergroundTriggerCarrier", data.GetPosition(), ECE_NONE));
 		if (carrier)
 		{
 			carrier.SetParent(parent);
@@ -113,7 +113,7 @@ class UndergroundAreaLoader
 			PrintToRPT("[WARNING] :: [UndergroundAreaLoader GetData()] :: file not found in MISSION folder, your path is " + m_Path + " Attempting DATA folder");
 			
 			string worldName;
-			GetGame().GetWorldName(worldName);
+			g_Game.GetWorldName(worldName);
 			m_Path = string.Format("dz/worlds/%1/ce/cfgundergroundtriggers.json", worldName);
 			
 			if (!FileExist(m_Path))
@@ -154,7 +154,7 @@ class UndergroundAreaLoader
 	
 	static UndergroundTriggerCarrierBase SpawnTriggerCarrierEx(int index, JsonUndergroundAreaTriggerData data)
 	{
-		UndergroundTriggerCarrierBase carrier = UndergroundTriggerCarrierBase.Cast(GetGame().CreateObjectEx("UndergroundTriggerCarrier", data.GetPosition(), ECE_NONE));
+		UndergroundTriggerCarrierBase carrier = UndergroundTriggerCarrierBase.Cast(g_Game.CreateObjectEx("UndergroundTriggerCarrier", data.GetPosition(), ECE_NONE));
 		if (carrier)
 		{
 			carrier.SetIndex(index);
@@ -172,7 +172,7 @@ class UndergroundAreaLoader
 	//---------------------------------------------------------------------------------------
 	static void SyncDataSend(PlayerIdentity identity)
 	{
-		GetGame().RPCSingleParam(null, ERPCs.RPC_UNDERGROUND_SYNC, new Param1<JsonUndergroundTriggers>(m_JsonData), true, identity);
+		g_Game.RPCSingleParam(null, ERPCs.RPC_UNDERGROUND_SYNC, new Param1<JsonUndergroundTriggers>(m_JsonData), true, identity);
 	}
 	
 	//---------------------------------------------------------------------------------------

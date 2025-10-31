@@ -153,7 +153,7 @@ class BiosSessionService
 			{
 				string addr;
 				int port;
-				bool found = GetGame().GetHostAddress( addr, port );
+				bool found = g_Game.GetHostAddress( addr, port );
 				if (addr != session_address || port != session_port )
 				{
 					if (found)
@@ -204,7 +204,7 @@ class BiosSessionService
 		m_GetSessionAttempts++;
 		
 		#ifdef PLATFORM_XBOX
-			GetGame().GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( TryGetSession, 100, false, "" );
+			g_Game.GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( TryGetSession, 100, false, "" );
 		#endif
 		#ifdef PLATFORM_PS4
 			g_Game.DisconnectSessionEx(DISCONNECT_SESSION_FLAGS_JOIN);

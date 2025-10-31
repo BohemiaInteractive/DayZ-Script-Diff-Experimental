@@ -141,7 +141,7 @@ class ExplosivesBase : ItemBase
 	{
 		super.OnPlacementComplete(player, position, orientation);
 		
-		if (GetGame().IsServer())
+		if (g_Game.IsServer())
 		{
 			SetOrientation(orientation);
 			SetPosition(position);
@@ -208,7 +208,7 @@ class ExplosivesBase : ItemBase
 
 	protected void OnExplode()
 	{
-		if (GetGame().IsServer())
+		if (g_Game.IsServer())
 		{
 			m_DeleteTimer.Run(0.25, this, "DeleteSafe");
 		}

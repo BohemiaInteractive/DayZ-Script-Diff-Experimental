@@ -20,7 +20,7 @@ class Van_01 extends CarScript
 	{		
 		super.EEInit();
 		
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_ManualUpdate 		= true;
@@ -38,7 +38,7 @@ class Van_01 extends CarScript
 	{
 		super.OnEngineStart();
 
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource)
 				m_UTSource.SetDefferedActive(true, 20.0);
@@ -49,7 +49,7 @@ class Van_01 extends CarScript
 	{
 		super.OnEngineStop();
 
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource)
 				m_UTSource.SetDefferedActive(false, 10.0);
@@ -58,7 +58,7 @@ class Van_01 extends CarScript
 	
 	override void EOnPostSimulate(IEntity other, float timeSlice)
 	{
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource && m_UTSource.IsActive())
 			{

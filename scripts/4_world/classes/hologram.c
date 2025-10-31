@@ -103,22 +103,22 @@ class Hologram
 		}
 
 		string configPathProjectionTypename = string.Format("CfgVehicles %1 projectionTypename", m_Parent.GetType());
-		if (GetGame().ConfigIsExisting(configPathProjectionTypename))
+		if (g_Game.ConfigIsExisting(configPathProjectionTypename))
 		{
-			m_ProjectionTypename = GetGame().ConfigGetTextOut(configPathProjectionTypename);
+			m_ProjectionTypename = g_Game.ConfigGetTextOut(configPathProjectionTypename);
 		}
 
 		EntityAI projectionEntity;
-		if (GetGame().IsMultiplayer() && GetGame().IsServer())
+		if (g_Game.IsMultiplayer() && g_Game.IsServer())
 		{	
-			projectionEntity = EntityAI.Cast(GetGame().CreateObjectEx(ProjectionBasedOnParent(), pos, ECE_PLACE_ON_SURFACE));
+			projectionEntity = EntityAI.Cast(g_Game.CreateObjectEx(ProjectionBasedOnParent(), pos, ECE_PLACE_ON_SURFACE));
 			projectionEntity.SetAllowDamage(false);
 			SetProjectionEntity(projectionEntity);
 			SetAnimations();
 		}
 		else
 		{
-			projectionEntity = EntityAI.Cast(GetGame().CreateObjectEx(ProjectionBasedOnParent(), pos, ECE_TRACE|ECE_LOCAL));
+			projectionEntity = EntityAI.Cast(g_Game.CreateObjectEx(ProjectionBasedOnParent(), pos, ECE_TRACE|ECE_LOCAL));
 			if (projectionEntity == null)
 			{
 				ErrorEx(string.Format("Cannot create hologram entity from config class %1", ProjectionBasedOnParent()), ErrorExSeverity.WARNING);
@@ -137,36 +137,36 @@ class Hologram
 		}
 		
 		string configPathSlope = string.Format("CfgVehicles %1 slopeTolerance", GetProjectionEntity().GetType());
-		if (GetGame().ConfigIsExisting(configPathSlope))
+		if (g_Game.ConfigIsExisting(configPathSlope))
 		{
-			m_SlopeTolerance = GetGame().ConfigGetFloat(configPathSlope);
+			m_SlopeTolerance = g_Game.ConfigGetFloat(configPathSlope);
 		}
 		
 		string configPathAlign = string.Format("CfgVehicles %1 alignHologramToTerain", GetProjectionEntity().GetType());
-		if (GetGame().ConfigIsExisting(configPathAlign))
+		if (g_Game.ConfigIsExisting(configPathAlign))
 		{
-			m_AlignToTerrain = GetGame().ConfigGetInt(configPathAlign);
+			m_AlignToTerrain = g_Game.ConfigGetInt(configPathAlign);
 		}
 		
 		string configPathOrientationLimit = string.Format("CfgVehicles %1 yawPitchRollLimit", GetProjectionEntity().GetType());
-		if (GetGame().ConfigIsExisting(configPathOrientationLimit))
+		if (g_Game.ConfigIsExisting(configPathOrientationLimit))
 		{
-			m_YawPitchRollLimit = GetGame().ConfigGetVector(configPathOrientationLimit);
+			m_YawPitchRollLimit = g_Game.ConfigGetVector(configPathOrientationLimit);
 		}
 	}
 	
 	void ~Hologram()
 	{
-		if (GetGame())
+		if (g_Game)
 		{
 			if (m_Projection)
 			{
-				GetGame().ObjectDelete(m_Projection);
+				g_Game.ObjectDelete(m_Projection);
 			}
 	
 			if (m_ProjectionTrigger)
 			{
-				GetGame().ObjectDelete(m_ProjectionTrigger);
+				g_Game.ObjectDelete(m_ProjectionTrigger);
 			}
 		}
 		
@@ -199,14 +199,14 @@ class Hologram
 	{
 		string cfg_access = "CfgVehicles " + m_Projection.GetType() + " AnimationSources ";
 		
-		if ( GetGame().ConfigIsExisting(cfg_access) )
+		if ( g_Game.ConfigIsExisting(cfg_access) )
 		{
 			int cfg_access_count = g_Game.ConfigGetChildrenCount(cfg_access);
 
 			for ( int i = 0; i < cfg_access_count; ++i )
 			{
 				string found_anim;
-				GetGame().ConfigGetChildName(cfg_access, i, found_anim);
+				g_Game.ConfigGetChildName(cfg_access, i, found_anim);
 				
 				float anim_phase = m_Parent.GetAnimationPhase(found_anim);
 				m_Projection.SetAnimationPhase(found_anim, anim_phase);
@@ -309,7 +309,7 @@ class Hologram
 			} 
 			else
 			{
-				normal = GetGame().SurfaceGetNormal( projection_position[0], projection_position[2] );
+				normal = g_Game.SurfaceGetNormal( projection_position[0], projection_position[2] );
 			}
 			
 			vector angles = normal.VectorToAngles();
@@ -476,13 +476,13 @@ class Hologram
 	{
 		if (CfgGameplayHandler.GetDisableIsClippingRoofCheck())
 			return false;
-		if (GetGame().IsServer() && GetGame().IsMultiplayer())
+		if (g_Game.IsServer() && g_Game.IsMultiplayer())
 			return false;
 		
 		//Some locations allow you to look up and attempt placing the hologram on the bottom side of a floor - most notably the floors of a watchtower
 		//This check also prevents some very unnatural placements
 
-		bool b1 = m_Projection.GetPosition()[1] > GetGame().GetCurrentCameraPosition()[1];
+		bool b1 = m_Projection.GetPosition()[1] > g_Game.GetCurrentCameraPosition()[1];
 		bool b2 = false;
 		#ifdef DIAG_DEVELOPER
 		vector from, to;
@@ -497,7 +497,7 @@ class Hologram
 		}
 		
 		#ifdef DIAG_DEVELOPER
-		DebugLog("IsClippingRoof: ", false, b1, " | (projection height) " + m_Projection.GetPosition()[1] + " > (camera height) " + GetGame().GetCurrentCameraPosition()[1]);
+		DebugLog("IsClippingRoof: ", false, b1, " | (projection height) " + m_Projection.GetPosition()[1] + " > (camera height) " + g_Game.GetCurrentCameraPosition()[1]);
 		DebugLog("IsClippingRoof: ", false, b2, " | (DoPlacingHeightCheck) " + m_Projection.DoPlacingHeightCheck() + " && (IsUnderRoof) " + MiscGameplayFunctions.IsUnderRoof(m_Projection) + " | from: " + from[1] + " | to: " + to[1]);
 		#endif
 		
@@ -563,7 +563,7 @@ class Hologram
 
 		//add is construction check
 		// Base building objects behave in a way that causes this test to generate false positives
-		bool isTrue = GetGame().IsBoxCollidingGeometry(center, orientation, edgeLength, ObjIntersectFire, ObjIntersectGeom, excludedObjects, collidedObjects);		
+		bool isTrue = g_Game.IsBoxCollidingGeometry(center, orientation, edgeLength, ObjIntersectFire, ObjIntersectGeom, excludedObjects, collidedObjects);		
 		#ifdef DIAG_DEVELOPER	
 		if ( DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM) )
 		{
@@ -587,7 +587,7 @@ class Hologram
 	bool IsBaseViable()
 	{	
 		//This function is not required to solve server-side fixes for clipping, saves calculations and potential false negatives
-		if (GetGame().IsServer() && GetGame().IsMultiplayer())
+		if (g_Game.IsServer() && g_Game.IsMultiplayer())
 			return true;
 
 		if (CfgGameplayHandler.GetDisableIsBaseViableCheck())
@@ -982,7 +982,7 @@ class Hologram
 			m_Parent.GetCompEM().UpdatePlugState();
 			
 			// Delete local hologram when plug is rippled out and advanced placement is active
-			if (GetGame().IsMultiplayer() && GetGame().IsClient())
+			if (g_Game.IsMultiplayer() && g_Game.IsClient())
 			{
 				if (!m_Parent.GetCompEM().IsPlugged())
 					m_Player.TogglePlacingLocal();
@@ -1000,14 +1000,14 @@ class Hologram
 		
 		if (m_Projection.IsInherited(GardenPlotPlacing))
 		{
-			Class.CastTo(entity_for_placing, GetGame().CreateObjectEx( "GardenPlot", m_Projection.GetPosition(), ECE_OBJECT_SWAP ));
+			Class.CastTo(entity_for_placing, g_Game.CreateObjectEx( "GardenPlot", m_Projection.GetPosition(), ECE_OBJECT_SWAP ));
 			return entity_for_placing;
 		}
 		
 		//inheritance comparison
 		if( !GetProjectionEntity().IsKindOf( m_Parent.GetType() ))
 		{
-			Class.CastTo(entity_for_placing, GetGame().CreateObjectEx( m_Projection.GetType(), m_Projection.GetPosition(), ECE_OBJECT_SWAP ));
+			Class.CastTo(entity_for_placing, g_Game.CreateObjectEx( m_Projection.GetType(), m_Projection.GetPosition(), ECE_OBJECT_SWAP ));
 		}
 		
 		return entity_for_placing;
@@ -1074,14 +1074,12 @@ class Hologram
 	// Replaced by IsUnderwater, currently unused
 	bool IsSurfaceWater( vector position )
 	{
-		CGame game = GetGame();
-		return game.SurfaceIsSea( position[0], position[2] ) || game.SurfaceIsPond( position[0], position[2] );
+		return g_Game.SurfaceIsSea( position[0], position[2] ) || g_Game.SurfaceIsPond( position[0], position[2] );
 	}
 	
 	bool IsSurfaceSea( vector position )
 	{
-		CGame game = GetGame();
-		return game.SurfaceIsSea( position[0], position[2] );
+		return g_Game.SurfaceIsSea( position[0], position[2] );
 	}
 
 	protected vector GetProjectionEntityPosition(PlayerBase player)
@@ -1091,7 +1089,7 @@ class Hologram
 		m_ContactDir = vector.Zero;
 		vector minMax[2];
 		float projectionRadius = GetProjectionRadius();
-		float cameraToPlayerDistance = vector.Distance(GetGame().GetCurrentCameraPosition(), player.GetPosition());
+		float cameraToPlayerDistance = vector.Distance(g_Game.GetCurrentCameraPosition(), player.GetPosition());
 
 		if (projectionRadius < SMALL_PROJECTION_RADIUS) // objects with radius smaller than 1m
 		{
@@ -1105,8 +1103,8 @@ class Hologram
 			maxProjectionDistance = Math.Clamp(maxProjectionDistance, SMALL_PROJECTION_RADIUS, LARGE_PROJECTION_DISTANCE_LIMIT);
 		}
 		
-		vector from = GetGame().GetCurrentCameraPosition();
-		vector to = from + (GetGame().GetCurrentCameraDirection() * (maxProjectionDistance + cameraToPlayerDistance));
+		vector from = g_Game.GetCurrentCameraPosition();
+		vector to = from + (g_Game.GetCurrentCameraDirection() * (maxProjectionDistance + cameraToPlayerDistance));
 		vector contactPosition;
 		set<Object> hitObjects = new set<Object>();
 
@@ -1134,7 +1132,7 @@ class Hologram
 		// Camera isn't correctly positioned in some cases, leading to raycasts hitting the object directly behind the camera
 		if ((hitObjects.Count() > 0) && (vector.DistanceSq(from, contactPosition) < minDistFromStart))
 		{
-			from = contactPosition + GetGame().GetCurrentCameraDirection() * raycastOriginOffsetOnFail;
+			from = contactPosition + g_Game.GetCurrentCameraDirection() * raycastOriginOffsetOnFail;
 			DayZPhysics.RaycastRV(from, to, contactPosition, m_ContactDir, m_ContactComponent, hitObjects, player, m_Projection, false, false, ObjIntersectFire);
 		}
 
@@ -1432,7 +1430,7 @@ class Hologram
 	vector HideWhenClose( vector pos )
 	{
 		//if the hologram is too close to player when he looks to the sky, send the projection to away
-		vector cam_dir = GetGame().GetCurrentCameraDirection();
+		vector cam_dir = g_Game.GetCurrentCameraDirection();
 
 		if( cam_dir[1] > LOOKING_TO_SKY )
 		{
@@ -1460,7 +1458,7 @@ class Hologram
 	
 	vector GetDefaultOrientation()
 	{
-		m_DefaultOrientation = GetGame().GetCurrentCameraDirection().VectorToAngles();
+		m_DefaultOrientation = g_Game.GetCurrentCameraDirection().VectorToAngles();
 		m_DefaultOrientation[1] = 0;
 		
 		if (!GetParentEntity().PlacementCanBeRotated())
@@ -1503,9 +1501,9 @@ class Hologram
 			int hidden_selection 			= 0;
 			string selection_to_refresh;
 			string config_material 			= string.Format("CfgVehicles %1 hologramMaterial", m_Projection.GetType());
-			string hologram_material 		= GetGame().ConfigGetTextOut(config_material);
+			string hologram_material 		= g_Game.ConfigGetTextOut(config_material);
 			string config_model 			= string.Format("CfgVehicles %1 hologramMaterialPath", m_Projection.GetType());
-			string hologram_material_path 	= string.Format("%1\\%2%3", GetGame().ConfigGetTextOut(config_model), hologram_material, CorrectMaterialPathName());
+			string hologram_material_path 	= string.Format("%1\\%2%3", g_Game.ConfigGetTextOut(config_model), hologram_material, CorrectMaterialPathName());
 			
 			for (int i = 0; i < m_SelectionsToRefresh.Count(); ++i)
 			{

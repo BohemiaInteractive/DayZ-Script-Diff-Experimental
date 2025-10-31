@@ -1,4 +1,3 @@
-
 //-----------------------------------------------------------------------------
 class ItemSuppressor extends InventoryItemSuper
 {
@@ -710,7 +709,7 @@ class CarRadiator extends InventoryItemSuper
 
 	override void EEKilled(Object killer)
 	{
-		if ( GetGame().IsServer() )
+		if ( g_Game.IsServer() )
 		{
 			Car car;
 			EntityAI parent = GetHierarchyParent();
@@ -972,9 +971,9 @@ class Clothing_Base extends ItemBase
 	void MutePlayer(PlayerBase player, bool state)
 	{
 		#ifdef SERVER
-		if (GetGame() && player.GetIdentity() != null)
+		if (g_Game && player.GetIdentity() != null)
 		{
-			GetGame().SetVoiceEffect(player, GetVoiceEffect(), state);
+			g_Game.SetVoiceEffect(player, GetVoiceEffect(), state);
 		}
 		#endif
 	}
@@ -1058,13 +1057,13 @@ class ItemMap extends InventoryItemSuper
 	
 	void InitMapState()
 	{
-		string path = "CfgWorlds " + GetGame().GetWorldName();
+		string path = "CfgWorlds " + g_Game.GetWorldName();
 		
-		GetGame().ConfigGetText(path + " mapDisplayNameKey",m_DisplayName);
-		GetGame().ConfigGetText(path + " mapDescriptionKey",m_Description);
-		GetGame().ConfigGetText(path + " mapTextureClosed",m_TextureClosed);
-		GetGame().ConfigGetText(path + " mapTextureOpened",m_TextureOpened);
-		GetGame().ConfigGetText(path + " mapTextureLegend",m_TextureLegend);
+		g_Game.ConfigGetText(path + " mapDisplayNameKey",m_DisplayName);
+		g_Game.ConfigGetText(path + " mapDescriptionKey",m_Description);
+		g_Game.ConfigGetText(path + " mapTextureClosed",m_TextureClosed);
+		g_Game.ConfigGetText(path + " mapTextureOpened",m_TextureOpened);
+		g_Game.ConfigGetText(path + " mapTextureLegend",m_TextureLegend);
 		
 		SetObjectTexture(0,m_TextureClosed);
 		SetObjectTexture(1,m_TextureOpened);
@@ -1072,7 +1071,7 @@ class ItemMap extends InventoryItemSuper
 		
 		//m_MarkerArray = new array<vector,int,int,string>;
 		m_MapMarkerArray = new array<ref MapMarker>;
-		if (GetGame().IsMultiplayer() && GetGame().IsServer())
+		if (g_Game.IsMultiplayer() && g_Game.IsServer())
 		{
 			SyncMapMarkers();
 		}
@@ -1123,7 +1122,7 @@ class ItemMap extends InventoryItemSuper
 		//Param1<ref array<vector,int,int,string>> params = new Param1<ref array<vector,int,int,string>>( m_MarkerArray );
 		Param1<ref array<ref MapMarker>> params = new Param1<ref array<ref MapMarker>>( m_MapMarkerArray );
 		
-		if (GetGame().IsServer() && GetHierarchyRootPlayer()) //TODO do we need PlayerIdentity here?
+		if (g_Game.IsServer() && GetHierarchyRootPlayer()) //TODO do we need PlayerIdentity here?
 		{
 			pid = GetHierarchyRootPlayer().GetIdentity();
 			RPCSingleParam(ERPCs.RPC_SEND_MAP_MARKERS,params,true,pid);

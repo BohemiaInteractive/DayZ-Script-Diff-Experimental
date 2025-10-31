@@ -84,7 +84,7 @@ class OptionsMenuVideo extends ScriptedWidgetEventHandler
 	
 	void OptionsMenuVideo( Widget parent, Widget details_root, GameOptions options, OptionsMenu menu )
 	{
-		m_Root							= GetGame().GetWorkspace().CreateWidgets( GetLayoutName(), parent );
+		m_Root							= g_Game.GetWorkspace().CreateWidgets( GetLayoutName(), parent );
 		
 		m_DetailsRoot					= details_root;
 		m_DetailsBodyDefault 			= m_DetailsRoot.FindAnyWidget("settings_details_body");
@@ -129,7 +129,7 @@ class OptionsMenuVideo extends ScriptedWidgetEventHandler
 		FillTextMap();
 		InitSelectors();
 		RefreshCustom();
-		GetGame().BeginOptionsVideo();
+		g_Game.BeginOptionsVideo();
 		
 		float x, y, y2;
 		m_Root.FindAnyWidget( "video_settings_scroll" ).GetScreenSize( x, y );
@@ -142,7 +142,7 @@ class OptionsMenuVideo extends ScriptedWidgetEventHandler
 	
 	void ~OptionsMenuVideo()
 	{
-		GetGame().EndOptionsVideo();
+		g_Game.EndOptionsVideo();
 	}
 	
 	void InitSelectors()
@@ -586,7 +586,7 @@ class OptionsMenuVideo extends ScriptedWidgetEventHandler
 	
 	override bool OnFocus( Widget w, int x, int y )
 	{
-		OptionsMenu menu = OptionsMenu.Cast( GetGame().GetUIManager().GetMenu() );
+		OptionsMenu menu = OptionsMenu.Cast( g_Game.GetUIManager().GetMenu() );
 		if ( menu )
 			menu.OnFocus( w, x, y );
 		if ( w )

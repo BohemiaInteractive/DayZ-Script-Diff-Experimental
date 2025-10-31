@@ -47,8 +47,8 @@ class InGameMenuXbox extends UIScriptedMenu
 	
 	void InGameMenuXbox()
 	{
-		GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-		GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+		g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+		g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 	}
 
 	void ~InGameMenuXbox()
@@ -56,7 +56,7 @@ class InGameMenuXbox extends UIScriptedMenu
 		ClientData.SyncEvent_OnPlayerListUpdate.Remove(SyncEvent_OnRecievedPlayerList);
 		OnlineServices.m_PermissionsAsyncInvoker.Remove(OnPermissionsUpdate);
 		
-		Mission mission = GetGame().GetMission();
+		Mission mission = g_Game.GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
@@ -81,8 +81,8 @@ class InGameMenuXbox extends UIScriptedMenu
 	
 	protected void OnInputDeviceChanged(EInputDeviceType pInputDeviceType)
 	{
-		bool mk = GetGame().GetInput().IsEnabledMouseAndKeyboard();
-		bool mkServer = GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
+		bool mk = g_Game.GetInput().IsEnabledMouseAndKeyboard();
+		bool mkServer = g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
 		
 		switch (pInputDeviceType)
 		{
@@ -90,7 +90,7 @@ class InGameMenuXbox extends UIScriptedMenu
 			{
 				if (mk && mkServer)
 				{
-					GetGame().GetUIManager().ShowUICursor(false);
+					g_Game.GetUIManager().ShowUICursor(false);
 					if (!GetFocus() || GetFocus() == m_FeedbackClose)
 					{
 						UpdateMenuFocus();
@@ -105,7 +105,7 @@ class InGameMenuXbox extends UIScriptedMenu
 			{
 				if (mk && mkServer)
 				{
-					GetGame().GetUIManager().ShowUICursor(true);
+					g_Game.GetUIManager().ShowUICursor(true);
 					m_ShowFeedback.Show(true);
 					m_FeedbackClose.Show(true);
 					m_FeedbackCloseLabel.SetText(string.Format("%1",InputUtils.GetRichtextButtonIconFromInputAction("UAUIBack", "#close", EUAINPUT_DEVICE_CONTROLLER, InputUtils.ICON_SCALE_NORMAL)));
@@ -119,9 +119,9 @@ class InGameMenuXbox extends UIScriptedMenu
 	
 	override Widget Init()
 	{
-		layoutRoot		= GetGame().GetWorkspace().CreateWidgets("gui/layouts/xbox/day_z_ingamemenu_xbox.layout");
+		layoutRoot		= g_Game.GetWorkspace().CreateWidgets("gui/layouts/xbox/day_z_ingamemenu_xbox.layout");
 		
-		m_OnlineMenu	= GetGame().GetWorkspace().CreateWidgets("gui/layouts/xbox/ingamemenu_xbox/online_info_menu.layout", layoutRoot);
+		m_OnlineMenu	= g_Game.GetWorkspace().CreateWidgets("gui/layouts/xbox/ingamemenu_xbox/online_info_menu.layout", layoutRoot);
 		m_OnlineMenu.Show(false);
 		
 		m_IngameMenuPanel 		= layoutRoot.FindAnyWidget("ingame_menu_panel");
@@ -148,7 +148,7 @@ class InGameMenuXbox extends UIScriptedMenu
 		m_GamercardAvailable = false;
 		m_BackAvailable = true;
 		
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player)
 		{
 			m_PlayerAlive = player.GetPlayerState() == EPlayerStates.ALIVE;
@@ -164,7 +164,7 @@ class InGameMenuXbox extends UIScriptedMenu
 		}
 		
 		string version;
-		GetGame().GetVersion(version);
+		g_Game.GetVersion(version);
 		#ifdef PLATFORM_CONSOLE
 		version = "#main_menu_version" + " " + version + " (" + g_Game.GetDatabaseID() + ")";
 		#else
@@ -172,7 +172,7 @@ class InGameMenuXbox extends UIScriptedMenu
 		#endif
 		m_Version.SetText(version);
 		
-		if (GetGame().IsMultiplayer())
+		if (g_Game.IsMultiplayer())
 		{
 			m_OnlineButton.Show(true);
 			
@@ -197,7 +197,7 @@ class InGameMenuXbox extends UIScriptedMenu
 				}
 				else
 				{
-					m_MuteAvailable = !GetGame().GetWorld().IsDisabledReceivingVoN();
+					m_MuteAvailable = !g_Game.GetWorld().IsDisabledReceivingVoN();
 					#ifndef PLATFORM_PS4
 					m_GamercardAvailable = true;
 					#endif
@@ -218,7 +218,7 @@ class InGameMenuXbox extends UIScriptedMenu
 		}
 		
 		//RESPAWN & RESTART
-		if (GetGame().IsMultiplayer())
+		if (g_Game.IsMultiplayer())
 		{
 			m_RestartButton.SetText("#main_menu_respawn");
 		}
@@ -232,7 +232,7 @@ class InGameMenuXbox extends UIScriptedMenu
 			m_RestartButton.Show(false);
 		}
 		
-		Mission mission = GetGame().GetMission();
+		Mission mission = g_Game.GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
@@ -273,7 +273,7 @@ class InGameMenuXbox extends UIScriptedMenu
 				{
 					if (!IsOnlineOpen())
 					{
-						GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(GetGame().GetMission().Continue);
+						g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.GetMission().Continue);
 					}
 					else
 					{
@@ -293,18 +293,18 @@ class InGameMenuXbox extends UIScriptedMenu
 				}
 				case IDC_MAIN_QUIT:
 				{
-					GetGame().GetUIManager().ShowDialog("#main_menu_exit", "#main_menu_exit_desc", IDC_INT_EXIT, DBT_YESNO, DBB_YES, DMT_QUESTION, NULL);
+					g_Game.GetUIManager().ShowDialog("#main_menu_exit", "#main_menu_exit_desc", IDC_INT_EXIT, DBT_YESNO, DBB_YES, DMT_QUESTION, NULL);
 					return true;
 				}
 				case IDC_INT_RETRY:
 				{
-					if (!GetGame().IsMultiplayer())
+					if (!g_Game.IsMultiplayer())
 					{
-						GetGame().GetUIManager().ShowDialog("#main_menu_restart", "Are you sure you want to restart?", IDC_INT_RETRY, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
+						g_Game.GetUIManager().ShowDialog("#main_menu_restart", "Are you sure you want to restart?", IDC_INT_RETRY, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
 					}
 					else
 					{
-						GetGame().GetUIManager().ShowDialog("#main_menu_respawn", "#main_menu_respawn_question", IDC_INT_RETRY, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
+						g_Game.GetUIManager().ShowDialog("#main_menu_respawn", "#main_menu_respawn_question", IDC_INT_RETRY, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
 					}
 					return true;
 				}
@@ -331,9 +331,9 @@ class InGameMenuXbox extends UIScriptedMenu
 			
 			if (w == m_RestartDeadButton)
 			{
-				if (GetGame().GetMission().GetRespawnModeClient() == GameConstants.RESPAWN_MODE_CUSTOM)
+				if (g_Game.GetMission().GetRespawnModeClient() == GameConstants.RESPAWN_MODE_CUSTOM)
 				{
-					GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(GetGame().GetUIManager().EnterScriptedMenu,MENU_RESPAWN_DIALOGUE,this);
+					g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.GetUIManager().EnterScriptedMenu,MENU_RESPAWN_DIALOGUE,this);
 				}
 				else
 				{
@@ -480,11 +480,11 @@ class InGameMenuXbox extends UIScriptedMenu
 	
 	bool IsLocalPlayer(string uid)
 	{
-		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
+		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		string local_uid;
-		if (GetGame().GetUserManager())
+		if (g_Game.GetUserManager())
 		{
-			local_uid = GetGame().GetUserManager().GetSelectedUser().GetUid();
+			local_uid = g_Game.GetUserManager().GetSelectedUser().GetUid();
 		}
 
 		return (uid == local_uid);
@@ -508,7 +508,7 @@ class InGameMenuXbox extends UIScriptedMenu
 	
 	private void UpdateExitButtonState() 
 	{
-		MissionGameplay mission = MissionGameplay.Cast(GetGame().GetMission());
+		MissionGameplay mission = MissionGameplay.Cast(g_Game.GetMission());
 		float remainingTime = mission.GetExitButtonDisabledRemainingTime();
 		if (remainingTime > 0) 
 		{
@@ -557,7 +557,7 @@ class InGameMenuXbox extends UIScriptedMenu
 			ToggleFeedbackDialog();
 		}
 		
-		if (GetGame().IsMultiplayer() && layoutRoot.FindAnyWidget("OnlineInfo").IsVisible())
+		if (g_Game.IsMultiplayer() && layoutRoot.FindAnyWidget("OnlineInfo").IsVisible())
 		{
 			PlayerListEntryScriptedWidget selected;
 			if (m_ServerInfoPanel)
@@ -596,7 +596,7 @@ class InGameMenuXbox extends UIScriptedMenu
 	void UpdateGUI()
 	{
 		bool shouldUpdateMenuFocus = false;
-		Man player = GetGame().GetPlayer();
+		Man player = g_Game.GetPlayer();
 		if (player)
 		{
 			m_PlayerAlive = player.GetPlayerState() == EPlayerStates.ALIVE;
@@ -669,8 +669,8 @@ class InGameMenuXbox extends UIScriptedMenu
 		super.OnShow();
 
 		#ifdef PLATFORM_CONSOLE
-		bool mk = GetGame().GetInput().IsEnabledMouseAndKeyboard();
-		bool mk_server = GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
+		bool mk = g_Game.GetInput().IsEnabledMouseAndKeyboard();
+		bool mk_server = g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
 		TextWidget warning = TextWidget.Cast(layoutRoot.FindAnyWidget("MouseAndKeyboardWarning"));
 		if (mk)
 		{
@@ -690,7 +690,7 @@ class InGameMenuXbox extends UIScriptedMenu
 		UpdateGUI();
 		
 		UpdateMenuFocus();
-		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
 	}
 	
 	override bool OnMouseEnter(Widget w, int x, int y)
@@ -760,7 +760,7 @@ class InGameMenuXbox extends UIScriptedMenu
 	override void Refresh()
 	{
 		string version;
-		GetGame().GetVersion(version);
+		g_Game.GetVersion(version);
 		#ifdef PLATFORM_CONSOLE
 		version = "#main_menu_version" + " " + version + " (" + g_Game.GetDatabaseID() + ")";
 		#else
@@ -771,12 +771,12 @@ class InGameMenuXbox extends UIScriptedMenu
 		m_MuteAvailable = false;
 		m_GamercardAvailable = false;
 		
-		if (GetGame().IsMultiplayer() && layoutRoot.FindAnyWidget("OnlineInfo").IsVisible() && m_ServerInfoPanel)
+		if (g_Game.IsMultiplayer() && layoutRoot.FindAnyWidget("OnlineInfo").IsVisible() && m_ServerInfoPanel)
 		{
 			PlayerListEntryScriptedWidget selected = m_ServerInfoPanel.GetSelectedPlayer();
 			if (selected && !selected.IsLocalPlayer())
 			{
-				m_MuteAvailable = !GetGame().GetWorld().IsDisabledReceivingVoN() && !selected.IsGloballyMuted();
+				m_MuteAvailable = !g_Game.GetWorld().IsDisabledReceivingVoN() && !selected.IsGloballyMuted();
 				#ifndef PLATFORM_PS4
 				m_GamercardAvailable = true;
 				#endif							
@@ -944,7 +944,7 @@ class InGameMenuXbox extends UIScriptedMenu
 	
 	void UpdateMenuFocus()
 	{
-		Man player = GetGame().GetPlayer();
+		Man player = g_Game.GetPlayer();
 		if (m_PlayerAlive)
 		{
 			if (ShouldRestartBeVisible(player))
@@ -964,7 +964,7 @@ class InGameMenuXbox extends UIScriptedMenu
 	
 	protected void UpdateControlsElements()
 	{
-		bool toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		bool toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		bool onlineOpen = IsOnlineOpen();
 		layoutRoot.FindAnyWidget("toolbar_bg").Show(toolbarShow);
 		layoutRoot.FindAnyWidget("top").Show(!onlineOpen);

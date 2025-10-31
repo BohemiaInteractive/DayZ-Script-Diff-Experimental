@@ -36,18 +36,18 @@ class UndergroundHandlerClient
 	
 	void UndergroundHandlerClient(PlayerBase player)
 	{
-		GetGame().GetWorld().LoadUserLightingCfg(UNDERGROUND_LIGHTING, "Underground");
+		g_Game.GetWorld().LoadUserLightingCfg(UNDERGROUND_LIGHTING, "Underground");
 		m_Player = player;
 		m_NVRequester = PPERequester_CameraNV.Cast(PPERequesterBank.GetRequester(PPERequesterBank.REQ_CAMERANV));
 	}
 	
 	void ~UndergroundHandlerClient()
 	{
-		if (GetGame())
+		if (g_Game)
 		{
-			GetGame().GetWorld().SetExplicitVolumeFactor_EnvSounds2D(1, 0.5);
-			GetGame().GetWeather().SuppressLightningSimulation(false);
-			GetGame().GetWorld().SetUserLightingLerp(0);
+			g_Game.GetWorld().SetExplicitVolumeFactor_EnvSounds2D(1, 0.5);
+			g_Game.GetWeather().SuppressLightningSimulation(false);
+			g_Game.GetWorld().SetUserLightingLerp(0);
 			if (m_AmbientSound)
 				m_AmbientSound.Stop();
 		}
@@ -186,7 +186,7 @@ class UndergroundHandlerClient
 				if (DiagMenu.GetBool(DiagMenuIDs.UNDERGROUND_SHOW_BREADCRUMB) )
 				{
 					float intensity = (1-ratio) * 255;
-					Debug.DrawLine(GetGame().GetPlayer().GetPosition() + "0 1 0", m_TransitionalTrigger.m_Data.Breadcrumbs[i].GetPosition(),ARGB(0,255,intensity,intensity),ShapeFlags.ONCE);
+					Debug.DrawLine(g_Game.GetPlayer().GetPosition() + "0 1 0", m_TransitionalTrigger.m_Data.Breadcrumbs[i].GetPosition(),ARGB(0,255,intensity,intensity),ShapeFlags.ONCE);
 				}
 				#endif
 				
@@ -331,14 +331,14 @@ class UndergroundHandlerClient
 		#ifdef DEVELOPER
 		if (!DiagMenu.GetBool(DiagMenuIDs.UNDERGROUND_DISABLE_DARKENING) )
 		{
-			GetGame().GetWorld().SetUserLightingLerp(m_LightingLerp);
+			g_Game.GetWorld().SetUserLightingLerp(m_LightingLerp);
 		}
 		else
 		{
-			GetGame().GetWorld().SetUserLightingLerp(0);
+			g_Game.GetWorld().SetUserLightingLerp(0);
 		}
 		#else
-		GetGame().GetWorld().SetUserLightingLerp(m_LightingLerp);
+		g_Game.GetWorld().SetUserLightingLerp(m_LightingLerp);
 		#endif
 	}
 	
@@ -348,7 +348,7 @@ class UndergroundHandlerClient
 			return;
 		
 		// reduces all env sounds and increases ambient based on eye acco
-		GetGame().GetWorld().SetExplicitVolumeFactor_EnvSounds2D(m_EyeAcco, 0);
+		g_Game.GetWorld().SetExplicitVolumeFactor_EnvSounds2D(m_EyeAcco, 0);
 
 		if (m_AmbientSound)
 		{
@@ -369,7 +369,7 @@ class UndergroundHandlerClient
 		#ifdef DIAG_DEVELOPER
 		if ( DiagMenu.GetBool(DiagMenuIDs.UNDERGROUND_SHOW_BREADCRUMB) )
 		{
-			DisplayDebugInfo(GetGame().GetWorld().GetEyeAccom(), m_LightingLerp);
+			DisplayDebugInfo(g_Game.GetWorld().GetEyeAccom(), m_LightingLerp);
 		}
 		#endif
 		
@@ -556,7 +556,7 @@ class UndergroundHandlerClient
 			}
 			if (newPresence > EUndergroundPresence.OUTER && oldPresence <= EUndergroundPresence.OUTER)
 			{
-				GetGame().GetWeather().SuppressLightningSimulation(true);		
+				g_Game.GetWeather().SuppressLightningSimulation(true);		
 				PlayAmbientSound();
 			}
 			if (newPresence == EUndergroundPresence.FULL)
@@ -572,7 +572,7 @@ class UndergroundHandlerClient
 		}
 		if (newPresence <= EUndergroundPresence.OUTER && oldPresence > EUndergroundPresence.OUTER)
 		{
-			GetGame().GetWeather().SuppressLightningSimulation(false);
+			g_Game.GetWeather().SuppressLightningSimulation(false);
 		}
 		if (newPresence == EUndergroundPresence.NONE)
 		{
@@ -580,7 +580,7 @@ class UndergroundHandlerClient
 			
 			if (oldPresence >= EUndergroundPresence.OUTER)
 			{
-				GetGame().GetWorld().SetUserLightingLerp(0);
+				g_Game.GetWorld().SetUserLightingLerp(0);
 				EnableLights(false);
 			}
 		}

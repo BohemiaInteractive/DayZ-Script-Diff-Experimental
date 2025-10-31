@@ -520,7 +520,7 @@ class ParticleList
 	//! Preloads all particles
 	static void PreloadParticles()
 	{
-		if ( !GetGame().IsServer() || !GetGame().IsMultiplayer() ) // client side
+		if ( !g_Game.IsServer() || !g_Game.IsMultiplayer() ) // client side
 		{
 			int count = m_ParticlePaths.Count();
 			

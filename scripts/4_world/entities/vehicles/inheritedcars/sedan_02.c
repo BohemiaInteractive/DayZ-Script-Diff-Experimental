@@ -35,7 +35,7 @@ class Sedan_02 extends CarScript
 	{		
 		super.EEInit();
 		
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_ManualUpdate 		= true;
@@ -53,7 +53,7 @@ class Sedan_02 extends CarScript
 	{
 		super.OnEngineStart();
 
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource)
 				m_UTSource.SetDefferedActive(true, 20.0);
@@ -64,7 +64,7 @@ class Sedan_02 extends CarScript
 	{
 		super.OnEngineStop();
 
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource)
 				m_UTSource.SetDefferedActive(false, 10.0);
@@ -73,7 +73,7 @@ class Sedan_02 extends CarScript
 	
 	override void EOnPostSimulate(IEntity other, float timeSlice)
 	{
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			if (m_UTSource && m_UTSource.IsActive())
 			{
@@ -418,22 +418,23 @@ class Sedan_02 extends CarScript
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
+		GameInventory inventory = GetInventory();
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
 
-		GetInventory().CreateInInventory("Sedan_02_Door_1_1");
-		GetInventory().CreateInInventory("Sedan_02_Door_1_2");
-		GetInventory().CreateInInventory("Sedan_02_Door_2_1");
-		GetInventory().CreateInInventory("Sedan_02_Door_2_2");
-		GetInventory().CreateInInventory("Sedan_02_Hood");
-		GetInventory().CreateInInventory("Sedan_02_Trunk");
+		inventory.CreateInInventory("Sedan_02_Door_1_1");
+		inventory.CreateInInventory("Sedan_02_Door_1_2");
+		inventory.CreateInInventory("Sedan_02_Door_2_1");
+		inventory.CreateInInventory("Sedan_02_Door_2_2");
+		inventory.CreateInInventory("Sedan_02_Hood");
+		inventory.CreateInInventory("Sedan_02_Trunk");
 
 		//-----IN CAR CARGO
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
 	}
 }
 
@@ -445,21 +446,22 @@ class Sedan_02_Red extends Sedan_02
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
+		GameInventory inventory = GetInventory();
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
 
-		GetInventory().CreateInInventory("Sedan_02_Door_1_1_Red");
-		GetInventory().CreateInInventory("Sedan_02_Door_1_2_Red");
-		GetInventory().CreateInInventory("Sedan_02_Door_2_1_Red");
-		GetInventory().CreateInInventory("Sedan_02_Door_2_2_Red");
-		GetInventory().CreateInInventory("Sedan_02_Hood_Red");
-		GetInventory().CreateInInventory("Sedan_02_Trunk_Red");
+		inventory.CreateInInventory("Sedan_02_Door_1_1_Red");
+		inventory.CreateInInventory("Sedan_02_Door_1_2_Red");
+		inventory.CreateInInventory("Sedan_02_Door_2_1_Red");
+		inventory.CreateInInventory("Sedan_02_Door_2_2_Red");
+		inventory.CreateInInventory("Sedan_02_Hood_Red");
+		inventory.CreateInInventory("Sedan_02_Trunk_Red");
 
 		//-----IN CAR CARGO
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
 	}
 }
 
@@ -471,20 +473,21 @@ class Sedan_02_Grey extends Sedan_02
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
+		GameInventory inventory = GetInventory();
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
 
-		GetInventory().CreateInInventory("Sedan_02_Door_1_1_Grey");
-		GetInventory().CreateInInventory("Sedan_02_Door_1_2_Grey");
-		GetInventory().CreateInInventory("Sedan_02_Door_2_1_Grey");
-		GetInventory().CreateInInventory("Sedan_02_Door_2_2_Grey");
-		GetInventory().CreateInInventory("Sedan_02_Hood_Grey");
-		GetInventory().CreateInInventory("Sedan_02_Trunk_Grey");
+		inventory.CreateInInventory("Sedan_02_Door_1_1_Grey");
+		inventory.CreateInInventory("Sedan_02_Door_1_2_Grey");
+		inventory.CreateInInventory("Sedan_02_Door_2_1_Grey");
+		inventory.CreateInInventory("Sedan_02_Door_2_2_Grey");
+		inventory.CreateInInventory("Sedan_02_Hood_Grey");
+		inventory.CreateInInventory("Sedan_02_Trunk_Grey");
 
 		//-----IN CAR CARGO
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
-		GetInventory().CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
+		inventory.CreateInInventory("Sedan_02_Wheel");
 	}
 }

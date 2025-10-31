@@ -49,6 +49,19 @@ class SawOffMagnum extends RecipeBase
 	//gets called upon recipe's completion
 	override void Do(ItemBase ingredients[], PlayerBase player,array<ItemBase> results, float specialty_weight)
 	{
+		Magnum oldIngredient;
+
+		if(Class.CastTo(oldIngredient, ingredients[0]))
+		{
+			GameInventory ingredientInventory = oldIngredient.GetInventory();
+			
+			EntityAI ejector = ingredientInventory.FindAttachmentByName(oldIngredient.ATT_SLOT_EJECTOR);
+			ejector.Delete();
+				
+			EntityAI cylinder = ingredientInventory.FindAttachmentByName(oldIngredient.ATT_SLOT_CYLINDER);
+			cylinder.Delete();
+		}
+		
 		MiscGameplayFunctions.TurnItemIntoItemEx(player, new TurnItemIntoItemLambda(ingredients[0], "SawedoffMagnum", player));
 	}
 };

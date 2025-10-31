@@ -138,6 +138,8 @@ class Physics
 	proto external int GetNumGeoms();
 	//! Returns world space transformation of a geometry element
 	proto external bool UpdateGeometries(int interactionLayerAnd = 0xffffffff, int interactionLayerOr = 0);
+	//! Returns name of a geometry element
+	proto external string GetGeomName(int index);
 	//! Returns world space transformation of a geometry element
 	proto external void GetGeomWorldTransform(int index, out vector mat[4]);
 	//! Returns entity space transformation of a geometry element
