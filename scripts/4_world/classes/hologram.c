@@ -443,7 +443,7 @@ class Hologram
 			SetIsColliding(true);
 			
 		}
-		else if (IsFloating() || IsHidden() || IsCollidingBBox(action_item) || IsCollidingPlayer() || IsClippingRoof() || !IsBaseViable() || IsCollidingGPlot() || IsCollidingZeroPos() || IsCollidingAngle() || !IsPlacementPermitted() || !HeightPlacementCheck() || IsUnderwater() || IsInTerrain())
+		else if (IsFloating() || IsHidden() || IsCollidingBBox(action_item) || IsCollidingGeometryProxy(action_item) || IsCollidingPlayer() || IsClippingRoof() || !IsBaseViable() || IsCollidingGPlot() || IsCollidingZeroPos() || IsCollidingAngle() || !IsPlacementPermitted() || !HeightPlacementCheck() || IsUnderwater() || IsInTerrain())
 		{
 			SetIsColliding(true);
 		}
@@ -577,6 +577,57 @@ class Hologram
 			if (isTrue)
 				color = 0x33F22613;
 			
+			if (m_CollisionBox)
+				DestroyDebugCollisionBox();
+			DrawDebugCollisionBox(minMax, color);
+		}
+		#endif
+
+		return isTrue;
+	}
+	
+	bool IsCollidingGeometryProxy(ItemBase action_item = null)
+	{
+		if (CfgGameplayHandler.GetDisableIsCollidingBBoxCheck())
+			return false;
+
+		vector center;
+		vector relativeOffset; //we need to lift BBox, because it is calculated from the bottom of projection, and not from the middle
+		vector absoluteOffset = "0 0.05 0"; //we need to lift BBox even more, because it colliddes with house floors due to various reasons (probably geometry or float imperfections)
+		vector orientation = GetProjectionOrientation();
+		vector edgeLength;
+		vector minMax[2];
+		array<Object> excludedObjects = new array<Object>();
+		array<ref BoxCollidingResult> collidedObjects = new array<ref BoxCollidingResult>();
+		
+		GetProjectionCollisionBox(minMax);
+		relativeOffset[1] = (minMax[1][1] - minMax[0][1]) * 0.5;
+		center = m_Projection.GetPosition() + relativeOffset + absoluteOffset;
+		edgeLength = GetCollisionBoxSize(minMax);
+		excludedObjects.Insert(m_Projection);
+		excludedObjects.Insert(m_Player);
+
+		if (action_item)
+			excludedObjects.Insert(action_item);
+		
+		BoxCollidingParams params = new BoxCollidingParams();
+		params.SetParams(center, orientation, edgeLength, ObjIntersect.View, ObjIntersect.Geom, false);
+		bool isTrue = g_Game.IsBoxCollidingGeometryProxy(params, excludedObjects, collidedObjects);	
+		#ifdef DIAG_DEVELOPER	
+		if (DiagMenu.GetBool(DiagMenuIDs.MISC_HOLOGRAM))
+		{
+			string text = "";
+			foreach (BoxCollidingResult object: collidedObjects)
+				text += " | " + Object.GetDebugName(object.obj);
+
+			DebugLog("IsCollidingGeometryProxy: ", false, isTrue, text);
+		
+			int color = 0x01FFFFFF;
+			if (isTrue)
+				color = 0x33F22613;
+			
+			if (m_CollisionBox)
+				DestroyDebugCollisionBox();	
 			DrawDebugCollisionBox(minMax, color);
 		}
 		#endif

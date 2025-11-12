@@ -3,6 +3,34 @@ class PlayerBaseType : DayZPlayerType
 
 };
 
+#ifdef FEATURE_NETWORK_RECONCILIATION
+class PlayerBaseOwnerState : DayZPlayerImplementOwnerState
+{
+	protected override event void Write(PawnStateWriter ctx)
+	{
+		super.Write(ctx);
+	}
+	
+	protected override event void Read(PawnStateReader ctx)
+	{
+		super.Read(ctx);
+	}
+};
+
+class PlayerBaseMove : DayZPlayerImplementMove
+{	
+	protected override event void Write(PawnMoveWriter ctx, PawnMove prev)
+	{
+		super.Write(ctx, prev);
+	}
+	
+	protected override event void Read(PawnMoveReader ctx, PawnMove prev)
+	{
+		super.Read(ctx, prev);
+	}
+};
+#endif
+
 class PlayerBase extends ManBase
 {
 	const int 						SIMPLIFIED_SHOCK_CAP = 63;
@@ -595,6 +623,51 @@ class PlayerBase extends ManBase
 			return;
 		}
 	}
+	
+#ifdef FEATURE_NETWORK_RECONCILIATION
+	protected override event typename GetOwnerStateType()
+	{
+		return PlayerBaseOwnerState;
+	}
+	
+	protected override event typename GetMoveType()
+	{
+		return PlayerBaseMove;
+	}
+	
+	protected override event void ObtainMove(/*inout*/ PawnMove pMove)
+	{
+		super.ObtainMove(pMove);
+		
+		PlayerBaseMove move = PlayerBaseMove.Cast(pMove);
+	}
+	
+	protected override event bool ReplayMove(PawnMove pMove)
+	{
+		if (!super.ReplayMove(pMove))
+			return false;
+		
+		PlayerBaseMove move = PlayerBaseMove.Cast(pMove);
+		UpdateMovementInertia();
+		
+		return true;
+	}
+	
+	protected override event void ObtainState(/*inout*/ PawnOwnerState pState)
+	{
+		super.ObtainState(pState);
+		
+		PlayerBaseOwnerState state = PlayerBaseOwnerState.Cast(pState);
+	}
+	
+	protected override event void RewindState(PawnOwnerState pState, /*inout*/ PawnMove pMove, inout NetworkRewindType pRewindType)
+	{
+		super.RewindState(pState, pMove, pRewindType);
+		
+		PlayerBaseOwnerState state = PlayerBaseOwnerState.Cast(pState);
+		PlayerBaseMove move = PlayerBaseMove.Cast(pMove);
+	}
+#endif
 	
 	ScriptInvoker GetOnUnconsciousStart()
 	{

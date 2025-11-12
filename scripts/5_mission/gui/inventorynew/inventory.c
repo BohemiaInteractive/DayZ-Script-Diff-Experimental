@@ -1154,7 +1154,7 @@ class Inventory: LayoutHolder
 		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 		if (player && player.IsPlacingLocal())
 		{
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(player.TogglePlacingLocal);
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(player.TogglePlacingLocal, null);
 		}
 
 		Mission mission = g_Game.GetMission();

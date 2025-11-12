@@ -2898,6 +2898,9 @@ class EntityAI extends Entity
 	//! Change material in hiddenSelections
 	proto native void SetObjectMaterial(int index, string mat_name);
 	proto native owned string GetObjectMaterial(int index);
+
+	proto native void SetRequiredSimulation(bool req);
+	proto native bool IsRequiredSimulation();
 		
 	proto native bool	IsPilotLight();
 	proto native void SetPilotLight(bool isOn);

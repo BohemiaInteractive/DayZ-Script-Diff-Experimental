@@ -26,13 +26,13 @@ enum eNotifiers
 class NotifiersManager
 {
 	static const int 					MAX_COUNT = 64;
-	ref array<ref NotifierBase> 	m_Notifiers;
+	ref array<ref NotifierBase> 		m_Notifiers;
 	ref NotifierBase 					m_NotifiersStatic[MAX_COUNT]; //introduced as a seperate array to allow for fast lookup, keeping the old one for quick looping through but also to keep modding compatibility
-	PlayerBase								m_Player;
+	PlayerBase							m_Player;
 	ref VirtualHud						m_VirtualHud;
-	int										m_MinTickTime;
-	string 									m_System = "Notifiers";
-	private int 							m_LastPolledIndex = 0;
+	int									m_MinTickTime;
+	string 								m_System = "Notifiers";
+	private int 						m_LastPolledIndex = 0;
 	
 	void NotifiersManager(PlayerBase player)
 	{
@@ -58,8 +58,7 @@ class NotifiersManager
 		m_Notifiers.Insert(new PillsNotfr(this));
 		m_Notifiers.Insert(new HeartbeatNotfr(this));
 		m_Notifiers.Insert(new FracturedLegNotfr(this));
-		m_Notifiers.Insert(new InjuredLegNotfr(this));
-		
+		m_Notifiers.Insert(new InjuredLegNotfr(this));		
 	}
 	
 	void RegisterItself(int notifier_id, NotifierBase modifier)
@@ -115,7 +114,7 @@ class NotifiersManager
 	#endif
 		
 		// Wrap around if we've reached the end
-		if (m_LastPolledIndex >= notifierCount)
+		if (m_LastPolledIndex >= MAX_COUNT)
 			m_LastPolledIndex = 0;
 		
 		// Get current notifier to process

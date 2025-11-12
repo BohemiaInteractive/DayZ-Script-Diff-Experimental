@@ -114,6 +114,8 @@ class ActionPackGift: ActionContinuousBase
 			if(!g_Game.IsDedicatedServer())
 				player.RemoveQuickBarEntityShortcut(item_to_pack);
 			
+			ClearActionJuncture(action_data);
+			
 			lambda = new ReplaceWithNewReciveCargoLambda( item, typeName, player,item_to_pack);
 			player.ServerReplaceItemWithNew(lambda);
 			
