@@ -14,9 +14,9 @@ class PersonalLight extends PointLightBase
 	
 	override void OnFrameLightSource(IEntity other, float timeSlice)
 	{
-		if ( g_Game  &&  IsEnabled() )
+		if ( GetGame()  &&  IsEnabled() )
 		{
-			vector pos = g_Game.GetCurrentCameraPosition();
+			vector pos = GetGame().GetCurrentCameraPosition();
 			pos += Vector( 0, -0.4, 0 );
 			
 			SetPosition( pos );
@@ -26,14 +26,14 @@ class PersonalLight extends PointLightBase
 	// Experiment with dynamic range of Personal Light based on distance between camera and player's character.
 	/*override void OnFrameLightSource(IEntity other, float timeSlice)
 	{
-		if ( g_Game  &&  IsEnabled() )
+		if ( GetGame()  &&  IsEnabled() )
 		{
-			vector pos = g_Game.GetCurrentCameraPosition();
-			vector dir = g_Game.GetCurrentCameraDirection();
+			vector pos = GetGame().GetCurrentCameraPosition();
+			vector dir = GetGame().GetCurrentCameraDirection();
 			
 			SetPosition(pos);
 			
-			DayZPlayer plr = g_Game.GetPlayer();
+			DayZPlayer plr = GetGame().GetPlayer();
 			if (plr)
 			{
 				vector pos_plr = plr.GetPosition() + Vector(0, 1.64, 0);

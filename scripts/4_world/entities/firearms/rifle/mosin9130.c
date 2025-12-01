@@ -29,7 +29,7 @@ class Mosin9130 extends Mosin9130_Base
 	//Debug menu Spawn Ground Special
 	override void OnDebugSpawn()
 	{
-		SpawnAmmo("Ammo_762x54",SAMF_DEFAULT);
+		super.OnDebugSpawn();
 		GameInventory inventory = GetInventory();
 
 		inventory.CreateInInventory( "PUScopeOptic" );
@@ -48,21 +48,5 @@ class SawedoffMosin9130_Base extends Mosin9130_Base
 	override RecoilBase SpawnRecoilObject()
 	{
 		return new MosinSawedOffRecoil(this);
-	}
-
-
-	//Debug menu Spawn Ground Special
-	override void OnDebugSpawn()
-	{
-		SpawnAmmo("Ammo_762x54",SAMF_DEFAULT);
-		GameInventory inventory = GetInventory();
-
-		inventory.CreateInInventory( "PUScopeOptic" );
-		
-		EntityAI entity;
-		if ( Class.CastTo(entity, this) )
-		{
-			entity.SpawnEntityOnGroundPos("Ammo_762x54", entity.GetPosition());
-		}
 	}
 };

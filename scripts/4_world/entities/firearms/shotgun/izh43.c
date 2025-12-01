@@ -8,7 +8,7 @@ class Izh43Shotgun_Base : DoubleBarrel_Base
 	//Debug menu Spawn Ground Special
 	override void OnDebugSpawn()
 	{
-		SpawnAmmo("Ammo_12gaPellets",SAMF_DEFAULT);
+		super.OnDebugSpawn();
 		
 		EntityAI entity;
 		if ( Class.CastTo(entity, this) )

@@ -6,7 +6,7 @@ class Raycaster extends ItemBase
 	
 	override void OnWorkStart()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() ) // Client side
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() ) // Client side
 		{
 			StartPeriodicMeasurement();
 		}
@@ -62,7 +62,7 @@ class Raycaster extends ItemBase
 
 	override void OnWorkStop()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() ) // Client side
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() ) // Client side
 		{
 			StopPeriodicMeasurement();
 		}

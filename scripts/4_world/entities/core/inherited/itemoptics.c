@@ -1,4 +1,4 @@
-class ItemOptics : InventoryItemSuper
+class ItemOptics extends InventoryItemSuper
 {
 	bool 				m_data_set;
 	bool 				m_allowsDOF; //true if optics DOES NOT have magnification (FOV >= DZPLAYER_CAMERA_FOV_IRONSIGHTS)
@@ -217,7 +217,7 @@ class ItemOptics : InventoryItemSuper
 	
 	override void OnWorkStart()
 	{
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			ShowReddot(true);
 		}
@@ -225,7 +225,7 @@ class ItemOptics : InventoryItemSuper
 	
 	override void OnWorkStop()
 	{
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			ShowReddot(false);
 		}
@@ -352,22 +352,22 @@ class ItemOptics : InventoryItemSuper
 		}
 		string temp;
 		
-		if (g_Game.ConfigIsExisting(path))
+		if (GetGame().ConfigIsExisting(path))
 		{
 			if (isUsing2D)
 				m_reddot_index = GetItemOpticsType().FindOptics2DSelection("reddot");
 			else
 				m_reddot_index = GetHiddenSelectionIndex("reddot");
 			
-			if (g_Game.ConfigIsExisting(path + " opticSightTexture"))
+			if (GetGame().ConfigIsExisting(path + " opticSightTexture"))
 			{
-				g_Game.ConfigGetText(path + " opticSightTexture", temp);
+				GetGame().ConfigGetText(path + " opticSightTexture", temp);
 				m_optic_sight_texture = temp;
 				temp = "";
 			}
-			if (g_Game.ConfigIsExisting(path + " opticSightMaterial"))
+			if (GetGame().ConfigIsExisting(path + " opticSightMaterial"))
 			{
-				g_Game.ConfigGetText(path + " opticSightMaterial", temp);
+				GetGame().ConfigGetText(path + " opticSightMaterial", temp);
 				m_optic_sight_material = temp;
 				temp = "";
 			}
@@ -377,7 +377,7 @@ class ItemOptics : InventoryItemSuper
 	
 	void ShowReddot(bool state)
 	{
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			ErrorEx("should not be called on the server!",ErrorExSeverity.INFO);
 			return;
@@ -432,7 +432,7 @@ class ItemOptics : InventoryItemSuper
 		if (!weapon)
 			return false; // no DOF for handheld optics
 		*/
-		fov_max = g_Game.ConfigGetFloat(path + " opticsZoomMax");
+		fov_max = GetGame().ConfigGetFloat(path + " opticsZoomMax");
 		if (fov_max >= GameConstants.DZPLAYER_CAMERA_FOV_IRONSIGHTS)
 		{
 			return true;
@@ -444,17 +444,17 @@ class ItemOptics : InventoryItemSuper
 	void InitOpticsPP(out array<float> mask_array, out array<float> lens_array, out float blur_float)
 	{
 		string path = "cfgVehicles " + GetType() + " OpticsInfo";
-		g_Game.ConfigGetFloatArray(path + " PPMaskProperties", mask_array);
-		g_Game.ConfigGetFloatArray(path + " PPLensProperties", lens_array);
-		blur_float = g_Game.ConfigGetFloat(path + " PPBlurProperties");
+		GetGame().ConfigGetFloatArray(path + " PPMaskProperties", mask_array);
+		GetGame().ConfigGetFloatArray(path + " PPLensProperties", lens_array);
+		blur_float = GetGame().ConfigGetFloat(path + " PPBlurProperties");
 	}
 	
 	void InitCameraOverrideProperties()
 	{
 		string path = "cfgVehicles " + GetType() + " OpticsInfo";
-		if ( g_Game.ConfigIsExisting(path + " nearPlaneDistanceOverride") )
+		if ( GetGame().ConfigIsExisting(path + " nearPlaneDistanceOverride") )
 		{
-			m_nearplane_override = Math.Max(g_Game.ConfigGetFloat(path + " nearPlaneDistanceOverride"),DayZPlayerCameraBase.CONST_NEARPLANE_OPTICS_MIN);
+			m_nearplane_override = Math.Max(GetGame().ConfigGetFloat(path + " nearPlaneDistanceOverride"),DayZPlayerCameraBase.CONST_NEARPLANE_OPTICS_MIN);
 		}
 		else
 		{
@@ -465,14 +465,14 @@ class ItemOptics : InventoryItemSuper
 	//! Initializes DOF properties for optic's alternate ironsights (ACOG etc.)
 	bool InitOpticsDOFProperties (out array<float> temp_array)
 	{
-		if (g_Game.ConfigIsExisting("cfgVehicles " + GetType() + " OpticsInfo PPDOFProperties"))
+		if (GetGame().ConfigIsExisting("cfgVehicles " + GetType() + " OpticsInfo PPDOFProperties"))
 		{
-			g_Game.ConfigGetFloatArray("cfgVehicles " + GetType() + " OpticsInfo PPDOFProperties", temp_array);
+			GetGame().ConfigGetFloatArray("cfgVehicles " + GetType() + " OpticsInfo PPDOFProperties", temp_array);
 			return true;
 		}
-		else if (g_Game.ConfigIsExisting("cfgVehicles " + GetType() + " OpticsInfoWeaponOverride PPDOFProperties"))
+		else if (GetGame().ConfigIsExisting("cfgVehicles " + GetType() + " OpticsInfoWeaponOverride PPDOFProperties"))
 		{
-			g_Game.ConfigGetFloatArray("cfgVehicles " + GetType() + " OpticsInfoWeaponOverride PPDOFProperties", temp_array);
+			GetGame().ConfigGetFloatArray("cfgVehicles " + GetType() + " OpticsInfoWeaponOverride PPDOFProperties", temp_array);
 			return true;
 		}
 		return false;
@@ -527,14 +527,14 @@ class ItemOptics : InventoryItemSuper
 	void OnOpticModeChange(){}
 	void OnOpticEnter()
 	{
-		if ( g_Game && !g_Game.IsDedicatedServer() )
+		if ( GetGame() && !GetGame().IsDedicatedServer() )
 		{
 			HideSelection("hide");
 		}
 	}
 	void OnOpticExit()
 	{
-		if ( g_Game && !g_Game.IsDedicatedServer() )
+		if ( GetGame() && !GetGame().IsDedicatedServer() )
 		{
 			ShowSelection("hide");
 		}
@@ -567,9 +567,9 @@ class ItemOptics : InventoryItemSuper
 		string path = "cfgVehicles " + GetType() + " OpticsInfo preloadOpticType";
 		string type_2d;
 		
-		if ( g_Game.ConfigIsExisting(path) )
+		if ( GetGame().ConfigIsExisting(path) )
 		{
-			g_Game.ConfigGetText(path, type_2d);
+			GetGame().ConfigGetText(path, type_2d);
 			m_2D_preload_type = type_2d;
 		}
 	}

@@ -91,8 +91,7 @@ class JsonObject
 		jsn += "{";
 		
 		// Parse Strings
-		int nStrings = m_Strings.Count();
-		for ( i = 0; i < nStrings; ++i )
+		for ( i = 0; i < m_Strings.Count(); ++i )
 		{
 			if ( jsn.Length() > 1 )
 			{
@@ -106,8 +105,7 @@ class JsonObject
 		}
 			
 		// Parse Ints
-		int nInts = m_Ints.Count();
-		for ( i = 0; i < nInts; ++i )
+		for ( i = 0; i < m_Ints.Count(); ++i )
 		{
 			if ( jsn.Length() > 1 )
 			{
@@ -121,8 +119,7 @@ class JsonObject
 		}
 				
 		// Parse Floats
-		int nFloats = m_Floats.Count();
-		for ( i = 0; i < nFloats; ++i )
+		for ( i = 0; i < m_Floats.Count(); ++i )
 		{
 			if ( jsn.Length() > 1 )
 			{
@@ -136,8 +133,7 @@ class JsonObject
 		}
 			
 		// Parse Bools
-		int nBools = m_Bools.Count();
-		for ( i = 0; i < nBools; ++i )
+		for ( i = 0; i < m_Bools.Count(); ++i )
 		{
 			if ( jsn.Length() > 1 )
 			{
@@ -157,8 +153,7 @@ class JsonObject
 		}
 		
 		// Parse Vectors2
-		int nVectors2 = m_Vectors2.Count();
-		for ( i = 0; i < nVectors2; ++i )
+		for ( i = 0; i < m_Vectors2.Count(); ++i )
 		{
 			if ( jsn.Length() > 1 )
 			{

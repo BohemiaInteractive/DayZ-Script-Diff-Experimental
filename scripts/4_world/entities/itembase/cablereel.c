@@ -88,7 +88,7 @@ class CableReel extends ItemBase
 		};
 		
 		PlayerBase playerPB = PlayerBase.Cast(player);
-		if (g_Game.IsMultiplayer() && g_Game.IsServer())
+		if (GetGame().IsMultiplayer() && GetGame().IsServer())
 			playerPB.GetHologramServer().SetSelectionToRefresh(selections);		
 		else
 			playerPB.GetHologramLocal().SetSelectionToRefresh(selections);

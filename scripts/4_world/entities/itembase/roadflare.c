@@ -95,7 +95,7 @@ class Roadflare : ItemBase
 	{
 		super.EEDelete(parent);
 		
-		if ( g_Game )
+		if ( GetGame() )
 		{
 			SEffectManager.DestroyEffect( m_BurningSound );	
 			SEffectManager.DestroyEffect( m_IgniteSound );			
@@ -189,7 +189,7 @@ class Roadflare : ItemBase
 	// When the flare starts burning
 	override void OnWorkStart()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() )
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() )
 		{
 			PlaySoundSetLoop( m_BurningSound, BURNING_SOUND, 0.5, 0 );
 			PlaySoundSet( m_IgniteSound, IGNITE_SOUND, 0, 0 );
@@ -198,16 +198,16 @@ class Roadflare : ItemBase
 			m_Light.AttachOnMemoryPoint( this, m_Light.m_MemoryPoint );
 		}
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			/*m_NoisePar = new NoiseParams();
 			m_NoisePar.LoadFromPath("cfgVehicles Roadflare NoiseRoadFlare");
-			if ( g_Game.GetWorld().IsNight() )
+			if ( GetGame().GetWorld().IsNight() )
 			{
-				NoiseSystem noise = g_Game.GetNoiseSystem();
+				NoiseSystem noise = GetGame().GetNoiseSystem();
 				if ( noise )
 				{
-					noise.AddNoisePos( this, GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(g_Game.GetWeather()) );
+					noise.AddNoisePos( this, GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(GetGame().GetWeather()) );
 				}
 			}*/
 		}
@@ -225,7 +225,7 @@ class Roadflare : ItemBase
 	// Insert RoadflareBurningState enum index as parameter. Activates server -> client synchronization
 	void SetBurningStateSynchronized(int state_number)
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			m_BurningState = state_number;
 			SetSynchDirty();
@@ -235,7 +235,7 @@ class Roadflare : ItemBase
 	// Every second of the flare burning
 	override void OnWork(float consumed_energy)
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			float burning_time = GetCompEM().GetEnergyMax() - GetCompEM().GetEnergy();
 			
@@ -249,12 +249,12 @@ class Roadflare : ItemBase
 			}
 			else if ( m_BurningState == RoadflareBurningState.MAIN_BURN )
 			{
-				/*if ( g_Game.GetWorld().IsNight() )
+				/*if ( GetGame().GetWorld().IsNight() )
 				{
-					NoiseSystem noise = g_Game.GetNoiseSystem();
+					NoiseSystem noise = GetGame().GetNoiseSystem();
 					if ( noise )
 					{
-						noise.AddNoisePos( this, GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(g_Game.GetWeather()));
+						noise.AddNoisePos( this, GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(GetGame().GetWeather()));
 					}
 				}*/
 				
@@ -285,14 +285,14 @@ class Roadflare : ItemBase
 	// When the flare stops burning
 	override void OnWorkStop()
 	{
-		if ( g_Game.IsMissionMainMenu() ) // This is singleplayer main menu so no synchronization here!
+		if ( GetGame().IsMissionMainMenu() ) // This is singleplayer main menu so no synchronization here!
 		{
 			SetBurningState(RoadflareBurningState.NOT_BURNING);
 			UpdateActiveParticles();
 		}
 		else
 		{
-			if ( g_Game.IsServer() )
+			if ( GetGame().IsServer() )
 			{
 				//Safeguard if item is turned off by another event than running out of energy
 				if (GetCompEM().GetEnergy() > 0)
@@ -326,7 +326,7 @@ class Roadflare : ItemBase
 	// Updates all (in)active particles
 	void UpdateActiveParticles()
 	{
-		if ( g_Game.IsDedicatedServer() )
+		if ( GetGame().IsDedicatedServer() )
 			return;
 		
 		switch (m_BurningState)

@@ -35,15 +35,16 @@ class ActionDeployObject : ActionDeployBase
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
 	{
 		//Client
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			if (player.IsPlacingLocal())
 			{
-				Hologram hologram = player.GetHologramLocal();
-				if (!hologram.IsColliding())
+				if (!player.GetHologramLocal().IsColliding())
 				{
-					if (item.CanBePlaced(player, hologram.GetProjectionEntity().GetPosition()))
+					if (item.CanBePlaced(player, player.GetHologramLocal().GetProjectionEntity().GetPosition()))
+					{
 						return true;
+					}
 				}
 			}
 			return false;
@@ -55,11 +56,11 @@ class ActionDeployObject : ActionDeployBase
 	override bool ActionConditionContinue(ActionData action_data)
 	{
 		//Server
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			if (action_data.m_Player.IsPlacingServer())
 			{
-				if (g_Game.IsMultiplayer())
+				if (GetGame().IsMultiplayer())
 					action_data.m_Player.GetHologramServer().EvaluateCollision(action_data.m_MainItem);
 				
 				if (!action_data.m_Player.GetHologramServer().IsColliding())
@@ -84,11 +85,11 @@ class ActionDeployObject : ActionDeployBase
 			
 			poActionData.m_AlreadyPlaced = false;
 			
-			if (!g_Game.IsDedicatedServer())
+			if (!GetGame().IsDedicatedServer())
 			{
-				Hologram hologram = player.GetHologramLocal();
-				hologram.SetUpdatePosition(false);
+				player.GetHologramLocal().SetUpdatePosition(false);
 				
+				Hologram hologram = player.GetHologramLocal();
 				if (hologram)
 				{
 					poActionData.m_Position = hologram.GetProjectionPosition();
@@ -118,7 +119,7 @@ class ActionDeployObject : ActionDeployBase
 		if (!poActionData)
 			return;
 		
-		if (g_Game.IsMultiplayer())
+		if (GetGame().IsMultiplayer())
 			poActionData.m_Player.PlacingCompleteLocal();
 	}
 	
@@ -130,18 +131,27 @@ class ActionDeployObject : ActionDeployBase
 		if (!poActionData)
 			return;
 		
-		if (g_Game.IsMultiplayer())
+		if (GetGame().IsMultiplayer())
 		{
+			EntityAI entity_for_placing = poActionData.m_MainItem;
 			poActionData.m_Player.SetLocalProjectionPosition(poActionData.m_Position);
 			poActionData.m_Player.SetLocalProjectionOrientation(poActionData.m_Orientation);
+			
+			if (poActionData.m_MainItem)
+			{
+				poActionData.m_Player.PlacingStartServer(poActionData.m_MainItem);
+			
+				GetGame().AddActionJuncture(poActionData.m_Player, entity_for_placing, 10000);
+				poActionData.m_MainItem.SetIsBeingPlaced(true);
+			}
 		}
-		
-		if (poActionData.m_MainItem)
+		else
 		{
+			//local singleplayer			
 			poActionData.m_Player.PlacingStartServer(poActionData.m_MainItem);
 			poActionData.m_MainItem.SetIsBeingPlaced(true);
 		}
-
+		
 		if (poActionData.m_MainItem.GetPlaceSoundset() != string.Empty)
 			poActionData.m_MainItem.StartItemSoundServer(SoundConstants.ITEM_PLACE);
 		
@@ -167,14 +177,11 @@ class ActionDeployObject : ActionDeployBase
 	override void OnFinishProgressServer(ActionData action_data)
 	{
 		super.OnFinishProgressServer(action_data);
-
+		
 		if (action_data.m_MainItem.GetDeploySoundset() != string.Empty)
 			action_data.m_MainItem.StartItemSoundServer(SoundConstants.ITEM_DEPLOY);
 		if (action_data.m_MainItem.GetLoopDeploySoundset() != string.Empty)
 			action_data.m_MainItem.StopItemSoundServer(SoundConstants.ITEM_DEPLOY_LOOP);
-		
-		if (!g_Game.IsMultiplayer())
-			action_data.m_Player.PlacingCompleteLocal();
 	}
 
 	override void OnEndClient(ActionData action_data)
@@ -212,9 +219,10 @@ class ActionDeployObject : ActionDeployBase
 		
 		if (!poActionData.m_AlreadyPlaced)
 		{
+			GetGame().ClearJunctureEx(poActionData.m_Player, poActionData.m_MainItem);
 			poActionData.m_MainItem.SetIsBeingPlaced(false);
 		
-			if (g_Game.IsMultiplayer())
+			if (GetGame().IsMultiplayer())
 			{	
 				poActionData.m_Player.PlacingCancelServer();
 			}
@@ -231,6 +239,10 @@ class ActionDeployObject : ActionDeployBase
 			{
 				poActionData.m_MainItem.Delete();
 			}
+			else
+			{
+				GetGame().ClearJunctureEx(poActionData.m_Player, poActionData.m_MainItem);
+			}
 		}
 		
 		if (poActionData.m_MainItem.GetLoopDeploySoundset() != string.Empty)
@@ -238,17 +250,17 @@ class ActionDeployObject : ActionDeployBase
 	}
 	
 	override void OnStartAnimationLoop(ActionData action_data)
-	{
-		// if object has no progress, it is moved directly when action finishes
-		if (HasProgress())
+	{			
+		if (!GetGame().IsDedicatedServer())
 		{
-			if (!g_Game.IsDedicatedServer())
+			if (action_data.m_Player.GetItemInHands())
+				ActiondeployObjectCB.Cast(action_data.m_Callback).DropDuringPlacing(); //legacy stuff
+			
+			if (HasProgress())	// if object has no progress, it is moved directly when action finishes
 			{
-				// Clear reservation as we put the main item from hands on ground
-				ClearInventoryReservationEx(action_data);
+				ClearInventoryReservationEx(action_data);	// Clear reservation as we put the main item from hands on ground
+				DropDuringPlacing(action_data.m_Player);
 			}
-
-			DropDuringPlacing(action_data.m_Player);
 		}
 	}
 	

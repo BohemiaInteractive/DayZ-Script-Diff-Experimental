@@ -23,28 +23,28 @@ class LogoutMenu extends UIScriptedMenu
 	void ~LogoutMenu()
 	{
 		g_Game.SetKeyboardHandle(null);
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 			Cancel(); //cancels request on irregular close (player death, suicide, some mass-menu closure...)
 
 		m_FullTime = null;
 		
-		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		if (player && player.GetEmoteManager()) 
 		{
 			player.GetEmoteManager().SetClientLoggingOut(false);
 		}
 		
 		#ifdef PLATFORM_CONSOLE
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{
-			g_Game.GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
 		}
 		#endif
 	}
 	
 	override Widget Init()
 	{
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/day_z_logout_dialog.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/day_z_logout_dialog.layout");
 		
 		m_LogoutTimeText 	= TextWidget.Cast(layoutRoot.FindAnyWidget("txtLogoutTime"));
 		m_DescriptionText 	= TextWidget.Cast(layoutRoot.FindAnyWidget("txtDescription"));
@@ -64,19 +64,19 @@ class LogoutMenu extends UIScriptedMenu
 		UpdateInfo();
 		
 		// player should sit down if possible
-		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		if (player.GetEmoteManager() && !player.IsRestrained() && !player.IsUnconscious()) 
 		{
 			player.GetEmoteManager().SetClientLoggingOut(true);
 		}
 
 		#ifdef PLATFORM_CONSOLE
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{
-			g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		}
 		
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 		#endif
 
 		return layoutRoot;
@@ -100,7 +100,7 @@ class LogoutMenu extends UIScriptedMenu
 		
 		if (w == m_bLogoutNow)
 		{
-			g_Game.GetMission().AbortMission();
+			GetGame().GetMission().AbortMission();
 			
 			return true;
 		}
@@ -168,7 +168,7 @@ class LogoutMenu extends UIScriptedMenu
 	
 	void UpdateInfo()
 	{
-		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		if (player.IsRestrained() || player.IsUnconscious())
 		{
 			// display killInfo
@@ -184,22 +184,22 @@ class LogoutMenu extends UIScriptedMenu
 	void Exit()
 	{		
 		// exit menu and logout screen
-		g_Game.GetMission().Continue();	
+		GetGame().GetMission().Continue();	
 
 		// stop updating of logout screen
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateTime);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateTime);
 
 		// go back to main menu
-		g_Game.GetMission().AbortMission();
+		GetGame().GetMission().AbortMission();
 	}
 
 	void Cancel()
 	{
-		g_Game.GetMission().Continue();	
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateTime);
+		GetGame().GetMission().Continue();	
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateTime);
 		
 		// request logout cancel from server
-		g_Game.LogoutRequestCancel();
+		GetGame().LogoutRequestCancel();
 	}
 	
 	#ifdef PLATFORM_CONSOLE
@@ -211,7 +211,7 @@ class LogoutMenu extends UIScriptedMenu
 	protected void UpdateControlsElementVisibility()
 	{
 		bool toolbarShow = false;
-		toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboard() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboard() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		layoutRoot.FindAnyWidget("toolbar_bg").Show(toolbarShow);
 		m_bCancelConsole.Show(!toolbarShow);
 

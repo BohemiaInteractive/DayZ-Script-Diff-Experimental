@@ -8,15 +8,8 @@ class LongHorn_Base : SingleShotPistol_Base
 	//Debug menu Spawn Ground Special
 	override void OnDebugSpawn()
 	{
-		SpawnAmmo("Ammo_308Win",SAMF_DEFAULT);
-		
+		super.OnDebugSpawn();
 		GetInventory().CreateInInventory( "PistolOptic" );
-		
-		EntityAI entity;
-		if ( Class.CastTo(entity, this) )
-		{
-			entity.SpawnEntityOnGroundPos("Ammo_308Win", entity.GetPosition());
-		}
 	}	
 };
 

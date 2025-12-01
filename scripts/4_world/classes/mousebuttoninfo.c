@@ -28,12 +28,12 @@ class MouseButtonInfo
 	
 	void Press()
 	{
-		m_TimeLastPress = g_Game.GetTime();
+		m_TimeLastPress = GetGame().GetTime();
 	}
 	
 	void Release()
 	{
-		m_TimeLastRelease = g_Game.GetTime();
+		m_TimeLastRelease = GetGame().GetTime();
 	}
 	
 	bool IsButtonDown()

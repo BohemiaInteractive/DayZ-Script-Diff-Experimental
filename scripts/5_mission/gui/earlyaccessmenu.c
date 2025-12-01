@@ -10,7 +10,7 @@ class EarlyAccessMenu extends UIScriptedMenu
 	
 	override Widget Init()
 	{
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/day_z_early_access.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/day_z_early_access.layout");
 		
 		return layoutRoot;
 	}

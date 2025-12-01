@@ -29,7 +29,7 @@ class Refridgerator extends ItemBase
 	{
 		// TO DO: Allow food inside the fridge to start aging again.
 		
-		g_Game.ObjectDelete(m_SoundLoopEntity);
+		GetGame().ObjectDelete(m_SoundLoopEntity);
 		m_SoundLoopEntity = NULL;
 	}
 	

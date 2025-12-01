@@ -138,7 +138,7 @@ class ActionEnterLadder: ActionInteractBase
 		}
 
 
-		/* if( g_Game.IsServer() )
+		/* if( GetGame().IsServer() )
 		{
 			OnStartServer(action_data);
 		}
@@ -153,7 +153,7 @@ class ActionEnterLadder: ActionInteractBase
 		ctx.Write(INPUT_UDT_STANDARD_ACTION);
 		ctx.Write(GetType());
 		
-		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		ActionManagerClient AM = ActionManagerClient.Cast( player.GetActionManager());
 		//ActionTarget target = AM.FindActionTarget();
 		Object targetObject = target.GetObject();

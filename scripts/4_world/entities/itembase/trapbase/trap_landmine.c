@@ -45,7 +45,7 @@ class LandMineTrap extends TrapBase
 	{
 		super.StartActivate(player);
 		
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			if (m_SafetyPinSound)
 			{
@@ -66,7 +66,7 @@ class LandMineTrap extends TrapBase
 	
 	override void OnActivate()
 	{
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			if (m_TimerLoopSound)
 			{
@@ -74,7 +74,7 @@ class LandMineTrap extends TrapBase
 				m_TimerLoopSound.SoundStop();
 			}
 			
-			if (g_Game.GetPlayer())
+			if (GetGame().GetPlayer())
 			{
 				PlaySoundActivate();
 			}
@@ -102,7 +102,7 @@ class LandMineTrap extends TrapBase
 	{
 		int i;
 
-		if (g_Game.IsServer() && victim)
+		if (GetGame().IsServer() && victim)
 		{
 			if (!victim.GetAllowDamage())
 			{
@@ -210,7 +210,7 @@ class LandMineTrap extends TrapBase
 	
 	void PlaySoundActivate()
 	{
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			EffectSound sound = SEffectManager.PlaySound("landmineActivate_SoundSet", GetPosition(), 0, 0, false);
 			sound.SetAutodestroy(true);
@@ -229,7 +229,7 @@ class LandMineTrap extends TrapBase
 			ammoType = "Dummy_Heavy";
 		}
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			SynchExplosion();
 			vector offset = Vector(0, 0.1, 0); //Vertical offset applied to landmine explosion (in meters)
@@ -286,7 +286,7 @@ class LandMineTrap extends TrapBase
 	{
 		super.OnPlacementComplete(player, position, orientation);
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			PlayerBase player_PB = PlayerBase.Cast(player);
 			StartActivate(player_PB);
@@ -337,7 +337,7 @@ class LandMineTrap extends TrapBase
 	{
 		if (super.OnAction(action_id, player, ctx))
 			return true;
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (action_id == EActions.ACTIVATE_ENTITY)
 			{

@@ -16,16 +16,11 @@ class BloodLoss extends SymptomBase
 		m_SyncToClient = true;
 		m_BloodSet = -1;
 		
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			Class.CastTo(m_RequesterBloodLoss,PPERequester_BloodLoss.Cast(PPERequesterBank.GetRequester(PPERequester_BloodLoss)));
 		}
 		
-	}
-	
-	override bool AllowInUnconscious()
-	{
-		return true;
 	}
 	
 	//!gets called every frame

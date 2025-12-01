@@ -9,8 +9,7 @@ class B95_base : DoubleBarrel_Base
 	//Debug menu Spawn Ground Special
 	override void OnDebugSpawn()
 	{
-		//super.OnDebugSpawn();
-		SpawnAmmo("Ammo_308Win",SAMF_DEFAULT);
+		super.OnDebugSpawn();
 		GameInventory inventory = GetInventory();
 
 		inventory.CreateInInventory( "HuntingOptic" );

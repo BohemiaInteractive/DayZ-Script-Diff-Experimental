@@ -64,7 +64,7 @@ class ActionPackGift: ActionContinuousBase
 		
 			
 		int x,y;
-		g_Game.GetInventoryItemSize( item_to_pack, x, y );
+		GetGame().GetInventoryItemSize( item_to_pack, x, y );
 			
 		if( x > 5 || y > 5 )
 			return false;
@@ -91,7 +91,7 @@ class ActionPackGift: ActionContinuousBase
 		if (item_to_pack)
 		{
 			int x,y;
-			g_Game.GetInventoryItemSize( item_to_pack, x, y );
+			GetGame().GetInventoryItemSize( item_to_pack, x, y );
 			int rnd = Math.RandomIntInclusive(1, 4);
 			
 			ReplaceWithNewReciveCargoLambda lambda;
@@ -111,10 +111,8 @@ class ActionPackGift: ActionContinuousBase
 			else return;
 			
 			
-			if(!g_Game.IsDedicatedServer())
+			if(!GetGame().IsDedicatedServer())
 				player.RemoveQuickBarEntityShortcut(item_to_pack);
-			
-			ClearActionJuncture(action_data);
 			
 			lambda = new ReplaceWithNewReciveCargoLambda( item, typeName, player,item_to_pack);
 			player.ServerReplaceItemWithNew(lambda);
@@ -145,7 +143,7 @@ class ReplaceWithNewReciveCargoLambda : TurnItemIntoItemLambda
 					
 		if ( dst.IsValid() )
 		{
-			if(g_Game.IsDedicatedServer())
+			if(GetGame().IsDedicatedServer())
 				m_Player.ServerTakeToDst(src,dst);
 			else
 				m_Player.LocalTakeToDst(src,dst);

@@ -86,7 +86,7 @@ class ContainerLockedBase : BuildingSuper
 		string selectionName = string.Format("side%1_lock",(doorIdx + 1));
 		SetAnimationPhase(selectionName,1);
 		
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 			SEffectManager.PlaySoundEnviroment("Land_ContainerLocked_lock_SoundSet",GetDoorSoundPos(doorIdx));
 	}
 	

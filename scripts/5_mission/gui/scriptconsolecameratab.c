@@ -220,14 +220,14 @@ class ScriptConsoleCameraTab : ScriptConsoleTabBase
 	
 	protected void SetDOF()
 	{
-		g_Game.OverrideDOF(true, GetScriptConsoleValues().m_CurrentFocusDistance, GetScriptConsoleValues().m_CurrentFocusLength, GetScriptConsoleValues().m_CurrentFocusLengthNear, GetScriptConsoleValues().m_CurrentBlur, GetScriptConsoleValues().m_CurrentFocusDepthOffset);
+		GetGame().OverrideDOF(true, GetScriptConsoleValues().m_CurrentFocusDistance, GetScriptConsoleValues().m_CurrentFocusLength, GetScriptConsoleValues().m_CurrentFocusLengthNear, GetScriptConsoleValues().m_CurrentBlur, GetScriptConsoleValues().m_CurrentFocusDepthOffset);
 	}
 	
 	protected void ResetDOF()
 	{
 		GetScriptConsoleValues().SetDefaultValues();
 		UpdateDOFSliders();
-		g_Game.OverrideDOF(true, GetScriptConsoleValues().m_CurrentFocusDistance, GetScriptConsoleValues().m_CurrentFocusLength, GetScriptConsoleValues().m_CurrentFocusLengthNear, GetScriptConsoleValues().m_CurrentBlur, GetScriptConsoleValues().m_CurrentFocusDepthOffset);
+		GetGame().OverrideDOF(true, GetScriptConsoleValues().m_CurrentFocusDistance, GetScriptConsoleValues().m_CurrentFocusLength, GetScriptConsoleValues().m_CurrentFocusLengthNear, GetScriptConsoleValues().m_CurrentBlur, GetScriptConsoleValues().m_CurrentFocusDepthOffset);
 	}
 	
 	protected void UpdateDOFSliders()
@@ -277,7 +277,7 @@ class ScriptConsoleCameraTab : ScriptConsoleTabBase
 	{
 		if (w == m_DOFPresetEditbox)
 		{
-			g_Game.GetMission().RemoveActiveInputExcludes({"movement"});
+			GetGame().GetMission().RemoveActiveInputExcludes({"movement"});
 			if (GetFocus() == m_DOFPresetEditbox)
 				SetFocus(null);
 		}
@@ -288,7 +288,7 @@ class ScriptConsoleCameraTab : ScriptConsoleTabBase
 	{
 		if (w == m_DOFPresetEditbox)
 		{
-			g_Game.GetMission().AddActiveInputExcludes({"movement"});
+			GetGame().GetMission().AddActiveInputExcludes({"movement"});
 		}
 		return false;
 	}
@@ -498,32 +498,32 @@ class ScriptConsoleCameraTab : ScriptConsoleTabBase
 		
 		if (m_IsCAPSPressed && !m_MouseMovementEnabled && (!GetFocus() || GetFocus() != m_DOFPresetEditbox) && GetWidgetUnderCursor() != m_DOFPresetEditbox)
 		{
-			if (g_Game && g_Game.GetMission() && g_Game.GetUIManager())
+			if (GetGame() && GetGame().GetMission() && GetGame().GetUIManager())
 			{
 				m_MouseMovementEnabled = true;
-				g_Game.GetMission().RemoveActiveInputExcludes({"aiming"});
-				g_Game.GetUIManager().ShowUICursor(false);
+				GetGame().GetMission().RemoveActiveInputExcludes({"aiming"});
+				GetGame().GetUIManager().ShowUICursor(false);
 			}
 		}
 		else if (!m_IsCAPSPressed && m_MouseMovementEnabled)
 		{
-			if (g_Game && g_Game.GetMission() && g_Game.GetUIManager())
+			if (GetGame() && GetGame().GetMission() && GetGame().GetUIManager())
 			{
 				m_MouseMovementEnabled = false;
-				g_Game.GetMission().AddActiveInputExcludes({"aiming"});
-				g_Game.GetUIManager().ShowUICursor(true);
+				GetGame().GetMission().AddActiveInputExcludes({"aiming"});
+				GetGame().GetUIManager().ShowUICursor(true);
 			}
 		}
 
 		if (GetFocus() == m_DOFPresetEditbox && !m_CanUseMovement)
 		{
 			m_CanUseMovement = true;
-			g_Game.GetMission().RemoveActiveInputExcludes({"UAMoveForward", "UAMoveBack", "UAMoveLeft", "UAMoveRight", "UAWalkRunTemp"});
+			GetGame().GetMission().RemoveActiveInputExcludes({"UAMoveForward", "UAMoveBack", "UAMoveLeft", "UAMoveRight", "UAWalkRunTemp"});
 		}
 		else if ((GetFocus() != m_DOFPresetEditbox || !GetFocus()) && GetWidgetUnderCursor() != m_DOFPresetEditbox && m_CanUseMovement)
 		{
 			m_CanUseMovement = false;
-			g_Game.GetMission().AddActiveInputExcludes({"UAMoveForward", "UAMoveBack", "UAMoveLeft", "UAMoveRight", "UAWalkRunTemp"});
+			GetGame().GetMission().AddActiveInputExcludes({"UAMoveForward", "UAMoveBack", "UAMoveLeft", "UAMoveRight", "UAWalkRunTemp"});
 		}
 	}
 }

@@ -71,7 +71,7 @@ class CAContinuousTimeCooking : CAContinuousBase
 			{
 				cooking_state_update = m_CookingProcess.CookOnStick(m_ItemToCook, m_CookingUpdateTime);
 
-				if (g_Game.IsServer() && m_ItemToCook.GetTemperature() >= m_MinTempToCook)
+				if (GetGame().IsServer() && m_ItemToCook.GetTemperature() >= m_MinTempToCook)
 				{
 					m_TimeElapsedDamage += m_TimeElapsedRepeat;
 
@@ -86,11 +86,11 @@ class CAContinuousTimeCooking : CAContinuousBase
 				{
 					Setup(action_data);
 					
-					if (!g_Game.IsServer())
+					if (!GetGame().IsServer())
 					{
 						if (m_ItemToCook.IsMeat() && m_ItemToCook.GetFoodStage().GetFoodStageType() == FoodStageType.BAKED)
 						{
-							g_Game.GetAnalyticsClient().OnActionCookedSteak();
+							GetGame().GetAnalyticsClient().OnActionCookedSteak();
 						}
 					}
 				}

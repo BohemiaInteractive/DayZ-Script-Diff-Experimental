@@ -113,7 +113,7 @@ class ClaymoreMine : ExplosivesBase
 	
 	override void OnActivatedByItem(notnull ItemBase item)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (m_RAIB.IsPaired() && GetArmed())
 			{
@@ -135,7 +135,7 @@ class ClaymoreMine : ExplosivesBase
 #ifdef DIAG_DEVELOPER
 #ifndef SERVER
 		// have to call this function a little later, after claymore transform has been finalized
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DrawDamageZone, 500);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DrawDamageZone, 500);
 #endif
 #endif
 	}
@@ -164,7 +164,7 @@ class ClaymoreMine : ExplosivesBase
 	{
 		super.OnPlacementComplete(player, position, orientation);
 
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			RemoteDetonatorTrigger rdt = RemoteDetonatorTrigger.SpawnInPlayerHands(player);
 			if (rdt)
@@ -269,11 +269,6 @@ class ClaymoreMine : ExplosivesBase
 		return "claymore_disarm_SoundSet";
 	}
 	
-	override string GetDisarmSoundsetUnpaired()
-	{
-		return "claymore_disarm_long_SoundSet";
-	}
-	
 	override void OnDebugSpawn()
 	{
 		RemoteDetonatorTrigger rdt = RemoteDetonatorTrigger.Cast(SpawnEntityOnGroundPos("RemoteDetonatorTrigger", GetPosition() + GetDirection() * 0.5));
@@ -305,11 +300,12 @@ class ClaymoreMine : ExplosivesBase
 			return;
 		}
 		
+		auto game 					= GetGame();
 		string cfgPath 				= "CfgAmmo " + m_AmmoTypes[0];
-		float hitRange 				= g_Game.ConfigGetFloat(cfgPath + " indirectHitRange");
-		float hitRangeMultiplier 	= g_Game.ConfigGetFloat(cfgPath + " indirectHitRangeMultiplier");
-		float verticalAngle 		= g_Game.ConfigGetFloat(cfgPath + " indirectHitAngle1");
-		float horizontalAngle 		= g_Game.ConfigGetFloat(cfgPath + " indirectHitAngle2");
+		float hitRange 				= game.ConfigGetFloat(cfgPath + " indirectHitRange");
+		float hitRangeMultiplier 	= game.ConfigGetFloat(cfgPath + " indirectHitRangeMultiplier");
+		float verticalAngle 		= game.ConfigGetFloat(cfgPath + " indirectHitAngle1");
+		float horizontalAngle 		= game.ConfigGetFloat(cfgPath + " indirectHitAngle2");
 		float range 				= hitRange * hitRangeMultiplier;
 		vector selfMatrix[4];
 

@@ -21,7 +21,7 @@ class Headtorch_ColorBase extends Clothing
 	
 	void Headtorch_ColorBase()
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (!m_Timer)
 				m_Timer = new Timer(CALL_CATEGORY_SYSTEM);
@@ -57,7 +57,7 @@ class Headtorch_ColorBase extends Clothing
 	{
 		super.OnWorkStart();
 		
-		if (!g_Game.IsServer() || !g_Game.IsMultiplayer()) // Client side
+		if (!GetGame().IsServer() || !GetGame().IsMultiplayer()) // Client side
 		{
 			CreateHeadtorchLight();
 		}
@@ -78,7 +78,7 @@ class Headtorch_ColorBase extends Clothing
 	{
 		super.OnWorkStop();
 		
-		if (!g_Game.IsServer() || !g_Game.IsMultiplayer()) // Client side
+		if (!GetGame().IsServer() || !GetGame().IsMultiplayer()) // Client side
 		{
 			if (m_Light)
 				m_Light.FadeOut();
@@ -94,7 +94,7 @@ class Headtorch_ColorBase extends Clothing
 	{
 		super.OnWork(consumed_energy);
 		
-		if (!g_Game.IsServer() || !g_Game.IsMultiplayer()) // Client side
+		if (!GetGame().IsServer() || !GetGame().IsMultiplayer()) // Client side
 		{
 			Battery9V battery = Battery9V.Cast(GetCompEM().GetEnergySource());
 			

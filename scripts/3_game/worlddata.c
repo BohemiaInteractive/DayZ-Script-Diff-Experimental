@@ -104,11 +104,10 @@ class WorldData
 	int GetDaytime()
 	{
 		int year, month, day, hour, minute;
-		g_Game.GetWorld().GetDate(year, month, day, hour, minute);
+		GetGame().GetWorld().GetDate(year, month, day, hour, minute);
 
-		WorldData worldData = g_Game.GetMission().GetWorldData();
-		float sunriseTimeStart = worldData.GetApproxSunriseTime(month);
-		float sunsetTimeStart = worldData.GetApproxSunsetTime(month);
+		float sunriseTimeStart = g_Game.GetMission().GetWorldData().GetApproxSunriseTime(month);
+		float sunsetTimeStart = g_Game.GetMission().GetWorldData().GetApproxSunsetTime(month);
 
 		if (hour >= sunriseTimeStart && hour < (sunriseTimeStart + 2))
 			return WorldDataDaytime.DAWN;
@@ -168,7 +167,7 @@ class WorldData
 		if (m_Timer > 30 || !m_EnTempUpdated)
 		{
 			int year, month, day, hour, minute;
-			g_Game.GetWorld().GetDate( year, month, day, hour, minute );
+			GetGame().GetWorld().GetDate( year, month, day, hour, minute );
 			m_EnvironmentTemperature = CalcBaseEnvironmentTemperature( month + ( day / 32.0 ), hour + ( minute / 60.0 ) );
 			m_Timer = 0;
 			

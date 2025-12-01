@@ -82,7 +82,7 @@ class CAContinuousEmptyMagazine : CAContinuousBase
 	
 	void CalcAndSetQuantity( ActionData action_data )
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			if ( action_data.m_MainItem )
 			{

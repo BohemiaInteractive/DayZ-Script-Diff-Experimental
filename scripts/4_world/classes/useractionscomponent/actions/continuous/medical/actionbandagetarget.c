@@ -60,7 +60,7 @@ class ActionBandageTarget : ActionBandageBase
 	
 	override void OnFinishProgressClient(ActionData action_data)
 	{
-		g_Game.GetAnalyticsClient().OnActionBandageTarget();
+		GetGame().GetAnalyticsClient().OnActionBandageTarget();
 	}
 	
 	override bool CanTargetBeInVehicle()

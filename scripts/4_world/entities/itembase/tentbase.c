@@ -56,7 +56,7 @@ class TentBase extends ItemBase
 	
 	void ~TentBase()
 	{
-		if (g_Game)
+		if (GetGame())
 		{
 			DestroyClutterCutter();
 		}
@@ -117,11 +117,11 @@ class TentBase extends ItemBase
 		{
 			TryPitch(true);
 						
-			if (g_Game.IsServer())
+			if (GetGame().IsServer())
 			{
 				if (!m_ClutterCutter && HasClutterCutter())
 				{		
-					m_ClutterCutter = g_Game.CreateObjectEx(GetClutterCutter(), GetPosition(), ECE_PLACE_ON_SURFACE);
+					m_ClutterCutter = GetGame().CreateObjectEx(GetClutterCutter(), GetPosition(), ECE_PLACE_ON_SURFACE);
 					m_ClutterCutter.SetOrientation(GetOrientation());
 				}
 				
@@ -194,7 +194,7 @@ class TentBase extends ItemBase
 		if (m_FixDamageSystemInit)
 			return;
 		
-		if (zone == "" && GetState() == PITCHED && newLevel == GameConstants.STATE_RUINED && g_Game.IsServer())
+		if (zone == "" && GetState() == PITCHED && newLevel == GameConstants.STATE_RUINED && GetGame().IsServer())
 			MiscGameplayFunctions.DropAllItemsInInventoryInBounds(this, m_HalfExtents);
 		
 		if (zone != "Body" && zone != "Inventory" && zone != "")
@@ -227,15 +227,15 @@ class TentBase extends ItemBase
 	{
 		string cfg_path = "cfgVehicles " + GetType() + " AnimationSources";
 		
-		if (g_Game.ConfigIsExisting(cfg_path))
+		if (GetGame().ConfigIsExisting(cfg_path))
 		{
-			int	selections = g_Game.ConfigGetChildrenCount(cfg_path);
+			int	selections = GetGame().ConfigGetChildrenCount(cfg_path);
 			string proxy_selection_name;
 			
 			for (int i = 0; i < selections; i++)
 			{
 				string selection_name;
-				g_Game.ConfigGetChildName(cfg_path, i, selection_name);
+				GetGame().ConfigGetChildName(cfg_path, i, selection_name);
 				if (hide_animations)
 				{
 					SetAnimationPhase(selection_name, 1);
@@ -505,12 +505,12 @@ class TentBase extends ItemBase
 						
 		DestroyClutterCutter();
 		
-		if (g_Game.IsServer() && !IsHologram())
+		if (GetGame().IsServer() && !IsHologram())
 			MiscGameplayFunctions.DropAllItemsInInventoryInBounds(this, m_HalfExtents);
 		
 		SetSynchDirty();
 		
-		if ((!g_Game.IsDedicatedServer()) && !init)
+		if ((!GetGame().IsDedicatedServer()) && !init)
 		{
 			GetOnViewIndexChanged().Invoke();
 		}
@@ -536,7 +536,7 @@ class TentBase extends ItemBase
 
 		SetSynchDirty();
 		
-		if ((!g_Game.IsDedicatedServer()) && !init)
+		if ((!GetGame().IsDedicatedServer()) && !init)
 		{
 			GetOnViewIndexChanged().Invoke();
 		}
@@ -546,7 +546,7 @@ class TentBase extends ItemBase
 	{
 		if (GetHierarchyRootPlayer())
 		{
-			if (g_Game.IsDedicatedServer())
+			if (GetGame().IsDedicatedServer())
 			{
 				Pack(update_navmesh,init);
 			}
@@ -600,7 +600,7 @@ class TentBase extends ItemBase
 				AddProxyPhysics(proxy_selection_name);
 			}
 			
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(HandleOpeningsPhysics);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(HandleOpeningsPhysics);
 		}
 		else
 		{
@@ -618,7 +618,7 @@ class TentBase extends ItemBase
 	//refresh visual/physics state
 	void Refresh()
 	{
-		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).Call(UpdateVisuals);
+		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).Call(UpdateVisuals);
 		UpdatePhysics();
 	}
 	
@@ -771,7 +771,7 @@ class TentBase extends ItemBase
 	{
 		SetAffectPathgraph(true, false);
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(g_Game.UpdatePathgraphRegionByObject, 100, false, this);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(GetGame().UpdatePathgraphRegionByObject, 100, false, this);
 	}
 
 	bool HasClutterCutter() {};	
@@ -779,11 +779,11 @@ class TentBase extends ItemBase
 	
 	void DestroyClutterCutter()
 	{
-		if (g_Game.IsMultiplayer() || g_Game.IsServer())
+		if (GetGame().IsMultiplayer() || GetGame().IsServer())
 		{
 			if (m_ClutterCutter)
 			{
-				g_Game.ObjectDelete(m_ClutterCutter);
+				GetGame().ObjectDelete(m_ClutterCutter);
 			}
 		}
 	}
@@ -801,7 +801,7 @@ class TentBase extends ItemBase
 	{
 		super.OnPlacementComplete(player, position, orientation);
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			TryPitch(true);
 		}

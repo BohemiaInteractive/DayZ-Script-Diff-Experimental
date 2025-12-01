@@ -11,7 +11,7 @@ class BotTestSpamUserActions_Start : BotTimedWait
 	{
 		botDebugPrint("[bot] + " + m_Owner + "BotTestSpamUserActions_Start::OnExit");
 
-		/*if (g_Game.IsServer() && g_Game.IsMultiplayer())
+		/*if (GetGame().IsServer() && GetGame().IsMultiplayer())
 		{
 			botDebugPrint("[bot] + " + m_Owner + "BotTestSpamUserActions_Start spamming!");
 			for (int i = 0; i < 10000; ++i)
@@ -41,7 +41,7 @@ class BotTestSpamUserActions_GetEntityFromSlot : BotTimedWait
 			Error("NI!");
 		}*/
 
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			m_Entity = m_Owner.GetInventory().FindAttachment(InventorySlots.GetSlotIdFromString("Legs"));
 			m_Owner.PredictiveDropEntity(m_Entity);
@@ -61,7 +61,7 @@ class BotTestSpamUserActions_GetEntityFromSlot : BotTimedWait
 	{
 		super.OnUpdate(dt);
 
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			if (m_Run && m_Entity)
 			{
@@ -172,7 +172,7 @@ class BotTestSpamUserActions : BotStateBase
 	{
 		m_Entity = null;
 
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			m_Owner.GetInventory().CreateAttachment("PolicePantsOrel"); // no assign to m_Entity
 			botDebugPrint("[bot] + " + m_Owner + " created attachment item=" + m_Entity);

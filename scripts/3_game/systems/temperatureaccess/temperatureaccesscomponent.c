@@ -14,7 +14,7 @@ class TemperatureAccessComponent
 		if (PriorityCheck(data) || CheckAccessTimeout(data))
 		{
 			m_AccessDataCurrent = TemperatureAccessManager.GetTAData(data.m_AccessType);
-			m_LastAccessTime = g_Game.GetTickTime();
+			m_LastAccessTime = GetGame().GetTickTime();
 			return true;
 		}
 		
@@ -29,7 +29,7 @@ class TemperatureAccessComponent
 	
 	protected bool CheckAccessTimeout(TemperatureData data)
 	{
-		float timeCurrent = g_Game.GetTickTime();
+		float timeCurrent = GetGame().GetTickTime();
 		return (timeCurrent - m_LastAccessTime) > data.m_UpdateTimeInfo;
 	}
 }

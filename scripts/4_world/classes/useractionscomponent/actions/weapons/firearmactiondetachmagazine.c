@@ -308,7 +308,7 @@ class FirearmActionDetachMagazine : ActionSequentialBase
 				mag = Magazine.Cast(action_data.m_Target.GetObject());
 			
 				action_data.m_Player.GetHumanInventory().ClearUserReservedLocation(wpn);
-				if ( ( !g_Game.IsDedicatedServer() ) && !mag.GetHierarchyParent() )
+				if ( ( !GetGame().IsDedicatedServer() ) && !mag.GetHierarchyParent() )
 				{
 					InventoryMode invMode = InventoryMode.PREDICTIVE;
 					
@@ -358,13 +358,13 @@ class FirearmActionDetachMagazine : ActionSequentialBase
 		super.OnStartServer(action_data);
 		
 		AdvDetachMagActionData action_data_dm = AdvDetachMagActionData.Cast(action_data);
-		g_Game.AddInventoryJunctureEx(action_data.m_Player, EntityAI.Cast(action_data.m_Target.GetObject()),action_data_dm.m_ilMagazine, true, 10000);
+		GetGame().AddInventoryJunctureEx(action_data.m_Player, EntityAI.Cast(action_data.m_Target.GetObject()),action_data_dm.m_ilMagazine, true, 10000);
 	}
 	
 	override void OnEndServer( ActionData action_data )
 	{
 		super.OnEndServer(action_data);
 		
-		g_Game.ClearJuncture(action_data.m_Player, EntityAI.Cast(action_data.m_Target.GetObject()));
+		GetGame().ClearJuncture(action_data.m_Player, EntityAI.Cast(action_data.m_Target.GetObject()));
 	}
 }

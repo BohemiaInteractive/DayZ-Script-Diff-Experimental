@@ -84,13 +84,6 @@ class DebugSpawnParams
 {
 	Man m_Player;
 
-	static DebugSpawnParams None()
-	{
-		DebugSpawnParams params = new DebugSpawnParams();
-		params.m_Player = null;
-		return params;
-	}
-
 	static DebugSpawnParams WithPlayer(Man player)
 	{
 		DebugSpawnParams params = new DebugSpawnParams();
@@ -211,7 +204,7 @@ class EntityAI extends Entity
 		// Set up the Energy Manager
 		string type = GetType();
 		string param_access_energy_sys = "CfgVehicles " + type + " EnergyManager ";
-		bool is_electic_device = g_Game.ConfigIsExisting(param_access_energy_sys);
+		bool is_electic_device = GetGame().ConfigIsExisting(param_access_energy_sys);
 
 		if (is_electic_device) // TO DO: Check if this instance is a hologram (advanced placement). If Yes, then do not create Energy Manager component.
 		{
@@ -242,7 +235,7 @@ class EntityAI extends Entity
 		
 		m_HiddenSelectionsData = new HiddenSelectionsData( GetType() );
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeferredInit,34);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeferredInit,34);
 
 		m_BloodInfectionChanceCached = new map<eAgents, float>();
 	}
@@ -285,10 +278,10 @@ class EntityAI extends Entity
 			RegisterNetSyncVariableFloat("m_VarTemperature", GetTemperatureMin(),GetTemperatureMax());
 			RegisterNetSyncVariableBool("m_IsFrozen");
 			
-			if (g_Game.IsServer())
+			if (GetGame().IsServer())
 				m_TAC = new TemperatureAccessComponent(this);
 			
-			if (!g_Game.IsMultiplayer() || g_Game.IsClient())
+			if (!GetGame().IsMultiplayer() || GetGame().IsClient())
 				m_FreezeThawProgress = -1;
 		}
 	}
@@ -333,11 +326,6 @@ class EntityAI extends Entity
 		return m_ComponentsBank.DeleteComponent(comp_type);
 	}
 	
-	ECachedEquipmentItemCategory GetCachedEquipmentCategory()
-	{
-		return ECachedEquipmentItemCategory.NONE;
-	}
-	
 	string GetDestructionBehaviour()
 	{
 		return "";
@@ -360,7 +348,7 @@ class EntityAI extends Entity
 	//! Calculates if the max lifetime is higher than refresher frequency (i.e. gets kept alive by refresher) 
 	void MaxLifetimeRefreshCalc()
 	{
-		if ( (!g_Game.IsMultiplayer() || g_Game.IsServer()) && GetEconomyProfile() )
+		if ( (!GetGame().IsMultiplayer() || GetGame().IsServer()) && GetEconomyProfile() )
 		{
 			float lifetime = GetEconomyProfile().GetLifetime();
 			int frequency = GetCEApi().GetCEGlobalInt("FlagRefreshFrequency");
@@ -424,10 +412,10 @@ class EntityAI extends Entity
 		
 		path_base = string.Format( "%1 %2 DamageSystem DamageZones", path_base, GetType() );
 		
-		if ( !g_Game.ConfigIsExisting(path_base) )
+		if ( !GetGame().ConfigIsExisting(path_base) )
 		{
 			component_name = GetDisplayName();
-			g_Game.FormatRawConfigStringKeys(component_name);
+			GetGame().FormatRawConfigStringKeys(component_name);
 			m_DamageDisplayNameMap.Insert( "".Hash(), component_name );
 		}
 		else
@@ -439,9 +427,9 @@ class EntityAI extends Entity
 			{
 				path = string.Format( "%1 %2 displayName", path_base, zone_names[i] );
 				
-				if (g_Game.ConfigIsExisting(path) && g_Game.ConfigGetTextRaw(path,component_name))
+				if (GetGame().ConfigIsExisting(path) && GetGame().ConfigGetTextRaw(path,component_name))
 				{
-					g_Game.FormatRawConfigStringKeys(component_name);
+					GetGame().FormatRawConfigStringKeys(component_name);
 					m_DamageDisplayNameMap.Insert( zone_names[i].Hash(), component_name );
 				}
 			}
@@ -681,7 +669,14 @@ class EntityAI extends Entity
 		
 		if(!cargo) return false;//this is not a cargo container
 		
-		return cargo.GetItemCount() > 0;
+		if( cargo.GetItemCount() > 0 )
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	array<EntityAI> GetAttachmentsWithCargo()
@@ -767,7 +762,7 @@ class EntityAI extends Entity
 	 * @return \p void
 	 *
 	 * @code
-	 *			ItemBase item = g_Game.GetPlayer().CreateInInventory("GrenadeRGD5");
+	 *			ItemBase item = GetGame().GetPlayer().CreateInInventory("GrenadeRGD5");
 	 *			item.Delete();
 	 * @endcode
 	**/
@@ -779,7 +774,7 @@ class EntityAI extends Entity
 	
 	void DeleteOnClient()
 	{
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(g_Game.ObjectDeleteOnClient, this);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(GetGame().ObjectDeleteOnClient, this);
 	}
 	
 	// delete synchronized between server and client
@@ -791,7 +786,7 @@ class EntityAI extends Entity
 		}
 		else
 		{
-			if (g_Game.IsServer() && g_Game.IsMultiplayer())
+			if (GetGame().IsServer() && GetGame().IsMultiplayer())
 				GetHierarchyRootPlayer().JunctureDeleteItem(this);
 			else
 				GetHierarchyRootPlayer().AddItemToDelete(this);
@@ -836,7 +831,7 @@ class EntityAI extends Entity
 	{
 		if (IsPrepareToDelete())
 		{
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(TryDelete, DELETE_CHECK_DELAY, false);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(TryDelete, DELETE_CHECK_DELAY, false);
 		}
 	}
 	
@@ -853,10 +848,10 @@ class EntityAI extends Entity
 			return false;
 		}
 
-		if (g_Game.HasInventoryJunctureItem(this))
+		if (GetGame().HasInventoryJunctureItem(this))
 		{
 			Debug.Log("TryDelete - deferred call");
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(TryDelete, DELETE_CHECK_DELAY, false);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(TryDelete, DELETE_CHECK_DELAY, false);
 			return false;
 		}
 
@@ -899,24 +894,22 @@ class EntityAI extends Entity
 	//! Called upon object creation
 	void EEInit()
 	{
-		GameInventory inventory = GetInventory();
-		if (inventory)
+		if (GetInventory())
 		{
-			inventory.EEInit();
+			GetInventory().EEInit();
 			m_AttachmentsWithCargo.Clear();
 			m_AttachmentsWithAttachments.Clear();
-			for ( int i = 0; i < inventory.AttachmentCount(); ++i )
+			for ( int i = 0; i < GetInventory().AttachmentCount(); i++ )
 			{
-				EntityAI attachment = inventory.GetAttachmentFromIndex( i );
+				EntityAI attachment = GetInventory().GetAttachmentFromIndex( i );
 				if ( attachment )
 				{
-					GameInventory attachmentInventory = attachment.GetInventory();
-					if ( attachmentInventory.GetCargo() )
+					if ( attachment.GetInventory().GetCargo() )
 					{
 						m_AttachmentsWithCargo.Insert( attachment );
 					}
 					
-					if ( attachmentInventory.GetAttachmentSlotsCount() > 0 )
+					if ( attachment.GetInventory().GetAttachmentSlotsCount() > 0 )
 					{
 						m_AttachmentsWithAttachments.Insert( attachment );
 					}
@@ -926,7 +919,7 @@ class EntityAI extends Entity
 		
 		MaxLifetimeRefreshCalc();
 		
-		if (CanHaveTemperature() && g_Game.IsServer())
+		if (CanHaveTemperature() && GetGame().IsServer())
 			InitTemperature();
 	}
 	
@@ -953,69 +946,70 @@ class EntityAI extends Entity
 	}
 	
 	
-	void OnItemLocationChanged(EntityAI old_owner, EntityAI new_owner);
-	void OnChildItemRemoved(InventoryItem item);
-	void OnChildItemReceived(InventoryItem item);
+	void OnItemLocationChanged(EntityAI old_owner, EntityAI new_owner) { }
+	void OnChildItemRemoved(InventoryItem item) { }
+	void OnChildItemReceived(InventoryItem item) { }
 	
-	void OnItemAttachmentSlotChanged(notnull InventoryLocation oldLoc, notnull InventoryLocation newLoc);
+	void OnItemAttachmentSlotChanged (notnull InventoryLocation oldLoc, notnull InventoryLocation newLoc) {}
 	
-	void EEItemLocationChanged(notnull InventoryLocation oldLoc, notnull InventoryLocation newLoc)
+	void EEItemLocationChanged (notnull InventoryLocation oldLoc, notnull InventoryLocation newLoc)
 	{
-		EntityAI oldOwner = oldLoc.GetParent();
-		EntityAI newOwner = newLoc.GetParent();
-		OnItemLocationChanged(oldOwner, newOwner);
+		EntityAI old_owner = oldLoc.GetParent();
+		EntityAI new_owner = newLoc.GetParent();
+		OnItemLocationChanged(old_owner, new_owner);
 		
 		if (oldLoc.GetType() == InventoryLocationType.ATTACHMENT && newLoc.GetType() == InventoryLocationType.ATTACHMENT)
-			OnItemAttachmentSlotChanged(oldLoc, newLoc);
+		{
+			OnItemAttachmentSlotChanged(oldLoc,newLoc);
+		}
 		
 		if (oldLoc.GetType() == InventoryLocationType.ATTACHMENT)
 		{
-			if (oldOwner)
-				OnWasDetached(oldOwner, oldLoc.GetSlot());
+			if (old_owner)
+				OnWasDetached(old_owner, oldLoc.GetSlot());
 			else
-				Error("EntityAI::EEItemLocationChanged - detached, but oldOwner is null");
+				Error("EntityAI::EEItemLocationChanged - detached, but old_owner is null");
 		}
 		
 		if (newLoc.GetType() == InventoryLocationType.ATTACHMENT)
 		{
-			if (newOwner)
-				OnWasAttached(newOwner, newLoc.GetSlot());
+			if (new_owner)
+				OnWasAttached(newLoc.GetParent(), newLoc.GetSlot());
 			else
-				Error("EntityAI::EEItemLocationChanged - attached, but newOwner is null");
+				Error("EntityAI::EEItemLocationChanged - attached, but new_owner is null");
 		}
 		
-		Man player;
 		if (oldLoc.GetType() == InventoryLocationType.HANDS)
 		{
-			player = Man.Cast(oldOwner);
-			player.OnItemInHandsChanged();
-			player.GetCachedEquipment().OnItemCargoOut(this);
+			Man.Cast(oldLoc.GetParent()).OnItemInHandsChanged();
 		}
 		
 		if (newLoc.GetType() == InventoryLocationType.HANDS)
 		{
-			player = Man.Cast(newOwner);
-			player.OnItemInHandsChanged();
-			player.GetCachedEquipment().OnItemCargoIn(this);
+			Man.Cast(newLoc.GetParent()).OnItemInHandsChanged();
 		}
 	}
 
 	//! Called from 'IEntity.AddChild'
-	void EEParentedTo(EntityAI parent);
+	void EEParentedTo(EntityAI parent)
+	{
+	}
 
 	//! Called from 'IEntity.RemoveChild' or 'IEntity.AddChild' when hierarchy changes
-	void EEParentedFrom(EntityAI parent);
-	
-	void EEInventoryIn(Man newParentMan, EntityAI diz, EntityAI newParent);
-	void EEInventoryOut(Man oldParentMan, EntityAI diz, EntityAI newParent)
+	void EEParentedFrom(EntityAI parent)
 	{
-		m_LastUpdatedTime = g_Game.GetTickTime();		
+	}
+	
+	void EEInventoryIn (Man newParentMan, EntityAI diz, EntityAI newParent)
+	{
+	}
+	void EEInventoryOut (Man oldParentMan, EntityAI diz, EntityAI newParent)
+	{
+		m_LastUpdatedTime = GetGame().GetTickTime();
 		
-		if (newParent == null)
+		if (GetInventory() && newParent == null)
 		{
-			GameInventory inventory = GetInventory();
-			if (inventory)
-				inventory.ResetFlipCargo();
+			GetInventory().ResetFlipCargo();
 		}
 	}
 
@@ -1080,10 +1074,10 @@ class EntityAI extends Entity
 		if (m_OnKilledInvoker)
 			m_OnKilledInvoker.Invoke(this, killer);
 
-		g_Game.GetAnalyticsServer().OnEntityKilled(killer, this);
+		GetGame().GetAnalyticsServer().OnEntityKilled(killer, this);
 		
 		if (ReplaceOnDeath())
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeathUpdate, DEAD_REPLACE_DELAY, false);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeathUpdate, DEAD_REPLACE_DELAY, false);
 	}
 	
 	bool ReplaceOnDeath()
@@ -1103,7 +1097,7 @@ class EntityAI extends Entity
 	
 	void DeathUpdate()
 	{
-		EntityAI dead_entity = EntityAI.Cast( g_Game.CreateObjectEx( GetDeadItemName(), GetPosition(), ECE_OBJECT_SWAP, RF_ORIGINAL ) );
+		EntityAI dead_entity = EntityAI.Cast( GetGame().CreateObjectEx( GetDeadItemName(), GetPosition(), ECE_OBJECT_SWAP, RF_ORIGINAL ) );
 		dead_entity.SetOrientation(GetOrientation());
 		if (KeepHealthOnReplace())
 			dead_entity.SetHealth(GetHealth());
@@ -1133,12 +1127,8 @@ class EntityAI extends Entity
 	void EEItemAttached(EntityAI item, string slot_name)
 	{
 		int slotId = InventorySlots.GetSlotIdFromString(slot_name);
-		PropagateExclusionValueRecursive(item.GetAttachmentExclusionMaskAll(slotId), slotId); //Performed from parent to avoid event order issues on swap
+		PropagateExclusionValueRecursive(item.GetAttachmentExclusionMaskAll(slotId),slotId); //Performed from parent to avoid event order issues on swap
 		SetWeightDirty();
-
-		Man player = GetHierarchyRootPlayer();
-		if (player)
-			player.GetCachedEquipment().OnItemAttached(item, slotId, this);
 
 		if ( m_ComponentsBank != NULL )
 		{
@@ -1155,11 +1145,10 @@ class EntityAI extends Entity
 		if ( m_EM && item.GetCompEM())
 			m_EM.OnAttachmentAdded(item);
 		
-		GameInventory itemInventory = item.GetInventory();
-		if ( itemInventory.GetCargo() )
+		if ( item.GetInventory().GetCargo() )
 			m_AttachmentsWithCargo.Insert( item );
 		
-		if ( itemInventory.GetAttachmentSlotsCount() > 0 )
+		if ( item.GetInventory().GetAttachmentSlotsCount() > 0 )
 			m_AttachmentsWithAttachments.Insert( item );
 		
 		if ( m_OnItemAttached )
@@ -1173,12 +1162,8 @@ class EntityAI extends Entity
 	void EEItemDetached(EntityAI item, string slot_name)
 	{
 		int slotId = InventorySlots.GetSlotIdFromString(slot_name);
-		ClearExclusionValueRecursive(item.GetAttachmentExclusionMaskAll(slotId), slotId); //Performed from parent to avoid event order issues on swap
+		ClearExclusionValueRecursive(item.GetAttachmentExclusionMaskAll(slotId),slotId); //Performed from parent to avoid event order issues on swap
 		SetWeightDirty();
-
-		Man player = GetHierarchyRootPlayer();
-		if (player)
-			player.GetCachedEquipment().OnItemDetached(item, slotId, this);
 		
 		if ( m_ComponentsBank != NULL )
 		{
@@ -1200,6 +1185,7 @@ class EntityAI extends Entity
 		
 		if ( m_AttachmentsWithAttachments.Find( item ) > -1 )
 			m_AttachmentsWithAttachments.RemoveItem( item );
+		
 				
 		if ( m_OnItemDetached )
 			m_OnItemDetached.Invoke( item, slot_name, this );
@@ -1211,10 +1197,7 @@ class EntityAI extends Entity
 		
 		if( m_OnItemAddedIntoCargo )
 			m_OnItemAddedIntoCargo.Invoke( item, this );
-
-		Man player = item.GetHierarchyRootPlayer();
-		if (player)		
-			player.GetCachedEquipment().OnItemCargoIn(item);
+			
 		item.OnMovedInsideCargo(this);
 	}
 
@@ -1224,10 +1207,7 @@ class EntityAI extends Entity
 		
 		if( m_OnItemRemovedFromCargo )
 			m_OnItemRemovedFromCargo.Invoke( item, this );
-	
-		Man player = item.GetHierarchyRootPlayer();
-		if (player)
-			player.GetCachedEquipment().OnItemCargoOut(item);
+			
 		item.OnRemovedFromCargo(this);
 	}
 
@@ -1362,7 +1342,7 @@ class EntityAI extends Entity
 			int b4 = m_EM.GetEnergySourceStorageIDb4();
 
 			// get pointer to EntityAI based on this ID
-			EntityAI potential_energy_source = g_Game.GetEntityByPersitentID(b1, b2, b3, b4); // This function is available only in this event!
+			EntityAI potential_energy_source = GetGame().GetEntityByPersitentID(b1, b2, b3, b4); // This function is available only in this event!
 			
 			// IMPORTANT!
 			// Object IDs acquired here become INVALID when electric devices are transfered to another server while in plugged state (like Flashlight plugged into its attachment 9V battery)
@@ -1404,14 +1384,14 @@ class EntityAI extends Entity
 	{
 		string cfg_path = "cfgVehicles " + GetType() + " AnimationSources";
 		
-		if ( g_Game.ConfigIsExisting(cfg_path) )
+		if ( GetGame().ConfigIsExisting(cfg_path) )
 		{
-			int	selections = g_Game.ConfigGetChildrenCount(cfg_path);
+			int	selections = GetGame().ConfigGetChildrenCount(cfg_path);
 			
 			for (int i = 0; i < selections; i++)
 			{
 				string selection_name;
-				g_Game.ConfigGetChildName(cfg_path, i, selection_name);
+				GetGame().ConfigGetChildName(cfg_path, i, selection_name);
 				HideSelection(selection_name);
 			}
 		}
@@ -1422,14 +1402,14 @@ class EntityAI extends Entity
 	{
 		string cfg_path = "cfgVehicles " + GetType() + " AnimationSources";
 		
-		if ( g_Game.ConfigIsExisting(cfg_path) )
+		if ( GetGame().ConfigIsExisting(cfg_path) )
 		{
-			int	selections = g_Game.ConfigGetChildrenCount(cfg_path);
+			int	selections = GetGame().ConfigGetChildrenCount(cfg_path);
 			
 			for (int i = 0; i < selections; i++)
 			{
 				string selection_name;
-				g_Game.ConfigGetChildName(cfg_path, i, selection_name);
+				GetGame().ConfigGetChildName(cfg_path, i, selection_name);
 				ShowSelection(selection_name);
 			}
 		}
@@ -1483,22 +1463,14 @@ class EntityAI extends Entity
 	 **/
 	bool CanReleaseAttachment (EntityAI attachment)
 	{
-		if (attachment)
+		if( attachment && attachment.GetInventory() && GetInventory() )
 		{
-			GameInventory attachmentInventory = attachment.GetInventory();
-			if (attachmentInventory)
+			InventoryLocation il = new InventoryLocation();
+			attachment.GetInventory().GetCurrentInventoryLocation( il );
+			if( il.IsValid() )
 			{
-				GameInventory inventory = GetInventory();
-				if (inventory)
-				{
-					InventoryLocation il = new InventoryLocation();
-					attachmentInventory.GetCurrentInventoryLocation( il );
-					if( il.IsValid() )
-					{
-						int slot = il.GetSlot();
-						return !inventory.GetSlotLock( slot );
-					}
-				}
+				int slot = il.GetSlot();
+				return !GetInventory().GetSlotLock( slot );
 			}
 		}
 		return true;
@@ -1549,13 +1521,9 @@ class EntityAI extends Entity
 	 **/
 	bool CanReceiveItemIntoCargo(EntityAI item)
 	{
-		GameInventory inventory = GetInventory();
-		if (inventory)
-		{ 
-			CargoBase cargo = inventory.GetCargo();
-			if (cargo)
-				return cargo.CanReceiveItemIntoCargo(item);
-		}
+		if (GetInventory() && GetInventory().GetCargo())
+			return GetInventory().GetCargo().CanReceiveItemIntoCargo(item);
+		
 		return true;
 	}
 	
@@ -1589,13 +1557,9 @@ class EntityAI extends Entity
 	 **/
 	bool CanSwapItemInCargo (EntityAI child_entity, EntityAI new_entity)
 	{
-		GameInventory inventory = GetInventory();
-		if (inventory)
-		{ 
-			CargoBase cargo = inventory.GetCargo();
-			if (cargo)
-				return cargo.CanSwapItemInCargo(child_entity, new_entity);
-		}		
+		if (GetInventory() && GetInventory().GetCargo())
+			return GetInventory().GetCargo().CanSwapItemInCargo(child_entity, new_entity);
+		
 		return true;
 	}
 
@@ -1663,14 +1627,13 @@ class EntityAI extends Entity
 		{
 			if (ent.GetInventory().GetCurrentInventoryLocation(lcn) && lcn.IsValid())
 			{
-				int lcnType = lcn.GetType();
-				if (lcnType == InventoryLocationType.CARGO || lcnType == InventoryLocationType.PROXYCARGO)
+				if (lcn.GetType() == InventoryLocationType.CARGO || lcn.GetType() == InventoryLocationType.PROXYCARGO)
 				{
 					return false;
 				}
 				
 				//hands treated as regular attachment here
-				if (lcnType == InventoryLocationType.ATTACHMENT || lcnType == InventoryLocationType.HANDS)
+				if (lcn.GetType() == InventoryLocationType.ATTACHMENT || lcn.GetType() == InventoryLocationType.HANDS)
 				{
 					attachmentDepth++;
 				}
@@ -1754,12 +1717,11 @@ class EntityAI extends Entity
 	 **/	
 	bool CanDisplayAnyAttachmentSlot()
 	{
-		GameInventory inventory = GetInventory();
-		int count = inventory.GetAttachmentSlotsCount();
+		int count = GetInventory().GetAttachmentSlotsCount();
 		int slotID;
-		for (int i = 0; i < count; ++i)
+		for (int i = 0; i < count; i++)
 		{
-			slotID = inventory.GetAttachmentSlotId(i);
+			slotID = GetInventory().GetAttachmentSlotId(i);
 			if (CanDisplayAttachmentSlot(slotID))
 			{
 				return true;
@@ -1807,11 +1769,11 @@ class EntityAI extends Entity
 	 **/		
 	bool IgnoreOutOfReachCondition()
 	{
-		return GetHierarchyRootPlayer() == g_Game.GetPlayer();
+		return GetHierarchyRootPlayer() == GetGame().GetPlayer();
 	}	
 
 	// !Called on CHILD when it's attached to parent.
-	void OnWasAttached(EntityAI parent, int slot_id);
+	void OnWasAttached( EntityAI parent, int slot_id );
 	
 	// !Called on CHILD when it's detached from parent.
 	void OnWasDetached( EntityAI parent, int slot_id )
@@ -1824,7 +1786,7 @@ class EntityAI extends Entity
 		}
 	}
 	
-	void OnCargoChanged();
+	void OnCargoChanged() { }
 	
 	bool IsTakeable()
 	{
@@ -1837,21 +1799,19 @@ class EntityAI extends Entity
 		
 	int GetSlotsCountCorrect()
 	{
-		GameInventory inventory = GetInventory();
-		if (inventory)
-			return inventory.GetAttachmentSlotsCount();
+		if (GetInventory())
+			return GetInventory().GetAttachmentSlotsCount();
 		else
 			return -1;
 	}
 
 	EntityAI FindAttachmentBySlotName(string slot_name)
 	{
-		GameInventory inventory = GetInventory();
-		if (g_Game && inventory)
+		if (g_Game && GetInventory())
 		{
 			int slot_id = InventorySlots.GetSlotIdFromString(slot_name);
 			if (slot_id != InventorySlots.INVALID)
-				return inventory.FindAttachment(slot_id); 
+				return GetInventory().FindAttachment(slot_id); 
 		}
 		return null;
 	}
@@ -1902,7 +1862,7 @@ class EntityAI extends Entity
 	*/
 	bool PredictiveTakeEntityToInventory (FindInventoryLocationType flags, notnull EntityAI item)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityToInventory(InventoryMode.JUNCTURE, flags, item);
 		else
 			return GetInventory().TakeEntityToInventory(InventoryMode.PREDICTIVE, flags, item);
@@ -1917,7 +1877,7 @@ class EntityAI extends Entity
 	}
 	bool PredictiveTakeEntityToTargetInventory (notnull EntityAI target, FindInventoryLocationType flags, notnull EntityAI item)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityToTargetInventory(InventoryMode.JUNCTURE, target, flags, item);
 		else
 			return GetInventory().TakeEntityToTargetInventory(InventoryMode.PREDICTIVE, target, flags, item);
@@ -1935,7 +1895,7 @@ class EntityAI extends Entity
 	*/
 	bool PredictiveTakeEntityToCargo (notnull EntityAI item)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityToCargo(InventoryMode.JUNCTURE, item);
 		else
 			return GetInventory().TakeEntityToCargo(InventoryMode.PREDICTIVE, item);
@@ -1951,7 +1911,7 @@ class EntityAI extends Entity
 
 	bool PredictiveTakeEntityToTargetCargo (notnull EntityAI target, notnull EntityAI item)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityToTargetCargo(InventoryMode.JUNCTURE, target, item);
 		else
 			return GetInventory().TakeEntityToTargetCargo(InventoryMode.PREDICTIVE, target, item);
@@ -1969,7 +1929,7 @@ class EntityAI extends Entity
 	*/
 	bool PredictiveTakeEntityToCargoEx (notnull EntityAI item, int idx, int row, int col)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityToCargoEx(InventoryMode.JUNCTURE, item, idx, row, col);
 		else
 			return GetInventory().TakeEntityToCargoEx(InventoryMode.PREDICTIVE, item, idx, row, col);
@@ -1981,7 +1941,7 @@ class EntityAI extends Entity
 
 	bool PredictiveTakeEntityToTargetCargoEx (notnull CargoBase cargo, notnull EntityAI item, int row, int col)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityToTargetCargoEx(InventoryMode.JUNCTURE, cargo, item, row, col);
 		else
 			return GetInventory().TakeEntityToTargetCargoEx(InventoryMode.PREDICTIVE, cargo, item, row, col);
@@ -1999,7 +1959,7 @@ class EntityAI extends Entity
 	*/
 	bool PredictiveTakeEntityAsAttachmentEx (notnull EntityAI item, int slot)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityAsAttachmentEx(InventoryMode.JUNCTURE, item, slot);
 		else
 			return GetInventory().TakeEntityAsAttachmentEx(InventoryMode.PREDICTIVE, item, slot);
@@ -2015,7 +1975,7 @@ class EntityAI extends Entity
 
 	bool PredictiveTakeEntityToTargetAttachmentEx (notnull EntityAI target, notnull EntityAI item, int slot)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityAsTargetAttachmentEx(InventoryMode.JUNCTURE, target, item, slot);
 		else
 			return GetInventory().TakeEntityAsTargetAttachmentEx(InventoryMode.PREDICTIVE, target, item, slot);
@@ -2031,7 +1991,7 @@ class EntityAI extends Entity
 
 	bool PredictiveTakeEntityToTargetAttachment (notnull EntityAI target, notnull EntityAI item)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeEntityAsTargetAttachment(InventoryMode.JUNCTURE, target, item);
 		else
 			return GetInventory().TakeEntityAsTargetAttachment(InventoryMode.PREDICTIVE, target, item);
@@ -2047,7 +2007,7 @@ class EntityAI extends Entity
 
 	bool PredictiveTakeToDst (notnull InventoryLocation src, notnull InventoryLocation dst)
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 			return GetInventory().TakeToDst(InventoryMode.JUNCTURE, src, dst);
 		else
 			return GetInventory().TakeToDst(InventoryMode.PREDICTIVE, src, dst);
@@ -2066,7 +2026,7 @@ class EntityAI extends Entity
 	*/
 	bool PredictiveTakeEntityAsAttachment(notnull EntityAI item)
 	{
-		if (g_Game.IsMultiplayer())
+		if (GetGame().IsMultiplayer())
 			return GetInventory().TakeEntityAsAttachment(InventoryMode.JUNCTURE, item);
 		else
 			return GetInventory().TakeEntityAsAttachment(InventoryMode.PREDICTIVE, item);
@@ -2100,11 +2060,9 @@ class EntityAI extends Entity
 	*/
 	EntityAI GetAttachmentByType(typename type)
 	{
-		GameInventory inventory = GetInventory();
-		int nAttachment = inventory.AttachmentCount();
-		for ( int i = 0; i < nAttachment; ++i )
+		for ( int i = 0; i < GetInventory().AttachmentCount(); i++ )
 		{
-			EntityAI attachment = inventory.GetAttachmentFromIndex( i );
+			EntityAI attachment = GetInventory().GetAttachmentFromIndex( i );
 			if ( attachment && attachment.IsInherited( type ) )
 				return attachment;
 		}
@@ -2116,14 +2074,12 @@ class EntityAI extends Entity
 	*/
 	EntityAI GetAttachmentByConfigTypeName(string type)
 	{
-		GameInventory inventory = GetInventory();
-		int nAttachment = inventory.AttachmentCount();
-		for ( int i = 0; i < nAttachment; ++i )
+		for ( int i = 0; i < GetInventory().AttachmentCount(); i++ )
 		{
-			EntityAI attachment = inventory.GetAttachmentFromIndex ( i );
+			EntityAI attachment = GetInventory().GetAttachmentFromIndex ( i );
 			if ( attachment.IsKindOf ( type ) )
 				return attachment;
-		}
+			}
 		return NULL;
 	}
 	/**
@@ -2773,7 +2729,7 @@ class EntityAI extends Entity
 		if (allow_client)
 			return true;
 
-		if (g_Game.IsClient() && g_Game.IsMultiplayer()) 
+		if (GetGame().IsClient() && GetGame().IsMultiplayer()) 
 		{
 			Error("Attempting to change variable client side, variables are supposed to be changed on server only !!");
 			return false;
@@ -2898,9 +2854,6 @@ class EntityAI extends Entity
 	//! Change material in hiddenSelections
 	proto native void SetObjectMaterial(int index, string mat_name);
 	proto native owned string GetObjectMaterial(int index);
-
-	proto native void SetRequiredSimulation(bool req);
-	proto native bool IsRequiredSimulation();
 		
 	proto native bool	IsPilotLight();
 	proto native void SetPilotLight(bool isOn);
@@ -3075,7 +3028,7 @@ class EntityAI extends Entity
 	{
 		if ( m_EM )
 		{
-			if ( g_Game.IsMultiplayer() )
+			if ( GetGame().IsMultiplayer() )
 			{
 				bool is_on = m_EM.IsSwitchedOn();
 				
@@ -3090,7 +3043,7 @@ class EntityAI extends Entity
 				int id_low = m_EM.GetEnergySourceNetworkIDLow();
 				int id_High = m_EM.GetEnergySourceNetworkIDHigh();
 				
-				EntityAI energy_source = EntityAI.Cast( g_Game.GetObjectByNetworkId(id_low, id_High) );
+				EntityAI energy_source = EntityAI.Cast( GetGame().GetObjectByNetworkId(id_low, id_High) );
 				
 				if (energy_source)
 				{
@@ -3115,7 +3068,7 @@ class EntityAI extends Entity
 			}
 		}
 		
-		if (m_IsFrozen != m_IsFrozenLocal && !g_Game.IsDedicatedServer())
+		if (m_IsFrozen != m_IsFrozenLocal && !GetGame().IsDedicatedServer())
 		{
 			m_IsFrozenLocal = m_IsFrozen;
 			OnFreezeStateChangeClient();
@@ -3134,7 +3087,7 @@ class EntityAI extends Entity
 	void SetVariableMask(int variable)
 	{
 		m_VariablesMask = variable | m_VariablesMask; 
-		if (g_Game.IsServer()) 
+		if (GetGame().IsServer()) 
 		{
 			SetSynchDirty();
 		}
@@ -3466,7 +3419,7 @@ class EntityAI extends Entity
 	{
 		super.OnRPC(sender, rpc_type, ctx);
 
-		if ( g_Game.IsClient() )
+		if ( GetGame().IsClient() )
 		{
 			switch (rpc_type)
 			{
@@ -3495,25 +3448,27 @@ class EntityAI extends Entity
 	#ifdef DIAG_DEVELOPER
 	void FixEntity()
 	{
-		if (!(g_Game.IsServer()))
+		if (!(GetGame().IsServer()))
 			return;
 		SetFullHealth();
 		
-		GameInventory inventory = GetInventory();
-		if (inventory)
+		if (GetInventory())
 		{
 			int i = 0;
-			int AttachmentsCount = inventory.AttachmentCount();
-			for (i = 0; i < AttachmentsCount; ++i)
+			int AttachmentsCount = GetInventory().AttachmentCount();
+			if (AttachmentsCount > 0)
 			{
-				inventory.GetAttachmentFromIndex(i).FixEntity();
+				for (i = 0; i < AttachmentsCount; i++)
+				{
+					GetInventory().GetAttachmentFromIndex(i).FixEntity();
+				}
 			}
 		
-			CargoBase cargo = inventory.GetCargo();
+			CargoBase cargo = GetInventory().GetCargo();
 			if (cargo)
 			{
 				int cargoCount = cargo.GetItemCount();
-				for (i = 0; i < cargoCount; ++i)
+				for (i = 0; i < cargoCount; i++)
 				{
 					cargo.GetItem(i).FixEntity();
 				}
@@ -3579,22 +3534,24 @@ class EntityAI extends Entity
 	// returns weight of all cargo and attachments
 	float GetInventoryAndCargoWeight(bool forceRecalc = false)
 	{
-		GameInventory inventory = GetInventory();
 		float totalWeight;
-		if (inventory)
+		if (GetInventory())
 		{
 			int i = 0;
-			int AttachmentsCount = inventory.AttachmentCount();
-			for (i = 0; i < AttachmentsCount; ++i)
+			int AttachmentsCount = GetInventory().AttachmentCount();
+			if (AttachmentsCount > 0)
 			{
-				totalWeight += inventory.GetAttachmentFromIndex(i).GetWeightEx(forceRecalc);
+				for (i = 0; i < AttachmentsCount; i++)
+				{
+					totalWeight += GetInventory().GetAttachmentFromIndex(i).GetWeightEx(forceRecalc);
+				}
 			}
 		
-			CargoBase cargo = inventory.GetCargo();
+			CargoBase cargo = GetInventory().GetCargo();
 			if (cargo)
 			{
 				int cargoCount = cargo.GetItemCount();
-				for (i = 0; i < cargoCount; ++i)
+				for (i = 0; i < cargoCount; i++)
 				{
 					totalWeight += cargo.GetItem(i).GetWeightEx(forceRecalc);
 				}
@@ -3720,7 +3677,7 @@ class EntityAI extends Entity
 	{
 		m_ViewIndex = index;
 		
-		if( g_Game.IsServer() ) 
+		if( GetGame().IsServer() ) 
 		{
 			SetSynchDirty();
 		}
@@ -3865,7 +3822,7 @@ class EntityAI extends Entity
 	*/
 	void OnCEUpdate()
 	{
-		float currentTime = g_Game.GetTickTime();
+		float currentTime = GetGame().GetTickTime();
 		if (m_LastUpdatedTime == 0)
 			m_LastUpdatedTime = currentTime;
 		
@@ -3929,23 +3886,23 @@ class EntityAI extends Entity
 		for (int i = 0; i < all_paths.Count(); i++)
 		{
 			config_path = all_paths.Get(i);
-			int children_count = g_Game.ConfigGetChildrenCount(config_path);
+			int children_count = GetGame().ConfigGetChildrenCount(config_path);
 			
 			for (int x = 0; x < children_count; x++)
 			{
-				g_Game.ConfigGetChildName(config_path, x, child_name);
+				GetGame().ConfigGetChildName(config_path, x, child_name);
 				path = config_path + " " + child_name;
-				scope = g_Game.ConfigGetInt( config_path + " " + child_name + " scope" );
-				bool should_check = true;
+				scope = GetGame().ConfigGetInt( config_path + " " + child_name + " scope" );
+				bool should_check = 1;
 				if ( config_path == "CfgVehicles" && scope == 0)
 				{
-					should_check = false;
+					should_check = 0;
 				}
 				
 				if ( should_check )
 				{
 					string inv_slot;
-					g_Game.ConfigGetText( config_path + " " + child_name + " inventorySlot",inv_slot );
+					GetGame().ConfigGetText( config_path + " " + child_name + " inventorySlot",inv_slot );
 					for (int z = 0; z < slots.Count(); z++)
 					{
 						if (slots.Get(z) == inv_slot)
@@ -3962,7 +3919,7 @@ class EntityAI extends Entity
 	
 	override EntityAI ProcessMeleeItemDamage(int mode = 0)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 			AddHealth("","Health",-MELEE_ITEM_DAMAGE);
 		return this;
 	}
@@ -3980,7 +3937,7 @@ class EntityAI extends Entity
 	
 	void ProcessInvulnerabilityCheck(string servercfg_param)
 	{
-		if ( g_Game && g_Game.IsMultiplayer() && g_Game.IsServer() )
+		if ( GetGame() && GetGame().IsMultiplayer() && GetGame().IsServer() )
 		{
 			int invulnerability;
 			switch (servercfg_param)
@@ -4017,37 +3974,28 @@ class EntityAI extends Entity
 			attachmentsArray.Copy(attachments);
 		else
 		{
-			GameInventory inventory = GetInventory();
-			int nAttachmentSlots = inventory.GetAttachmentSlotsCount();
-			for (int i = 0; i < nAttachmentSlots; ++i)
+			for (int i = 0; i < GetInventory().GetAttachmentSlotsCount(); i++)
 			{
-				attachmentsArray.Insert(inventory.GetAttachmentSlotId(i));
+				attachmentsArray.Insert(GetInventory().GetAttachmentSlotId(i));
 			}
 		}
 		
 		EntityAI item;
 		
-		GameInventory parentInventory;
-		if (parent)
-			parentInventory = parent.GetInventory();		
-
 		foreach( int slot : attachmentsArray )
 		{
-			if( parentInventory )
-				item = parentInventory.FindAttachment(slot);
+			if( parent )
+				item = parent.GetInventory().FindAttachment(slot);
 			else
 				item = this;//GetInventory().FindAttachment(slot);
 			
 			if( item )
 			{
-				GameInventory itemInventory = item.GetInventory();
-				int nAttachment = itemInventory.AttachmentCount();
-				if( nAttachment > 0 )
+				if( item.GetInventory().AttachmentCount() > 0 )
 				{
-					int nAttachmentSlots2 = itemInventory.GetAttachmentSlotsCount();
-					for(i = 0; i < nAttachmentSlots2; ++i)
+					for(i = 0; i < item.GetInventory().GetAttachmentSlotsCount(); i++)
 					{
-						childrenAtt.Insert(itemInventory.GetAttachmentSlotId(i));
+						childrenAtt.Insert(item.GetInventory().GetAttachmentSlotId(i));
 					}
 					
 					SetInvisibleRecursive(invisible,item,childrenAtt);
@@ -4234,15 +4182,14 @@ class EntityAI extends Entity
 	//! map stored on instance to better respond to various state changes
 	private void InitInherentSlotExclusionMap()
 	{
-		GameInventory inventory = GetInventory();
-		int count = inventory.GetSlotIdCount();
+		int count = GetInventory().GetSlotIdCount();
 		//starting with the INVALID slot, so it is always in the map of attachable items
 		SetAttachmentExclusionMaskSlot(InventorySlots.INVALID,GetAttachmentExclusionInitSlotValue(InventorySlots.INVALID));
 		
 		int slotId;
-		for (int i = 0; i < count; ++i) 
+		for (int i = 0; i < count; i++) 
 		{
-			slotId = inventory.GetSlotId(i);
+			slotId = GetInventory().GetSlotId(i);
 			SetAttachmentExclusionMaskSlot(slotId,GetAttachmentExclusionInitSlotValue(slotId));
 		}
 	}
@@ -4298,11 +4245,10 @@ class EntityAI extends Entity
 	protected void InitLegacySlotExclusionValuesImplicit()
 	{
 		int slotId;
-		GameInventory gameInventory = GetInventory();
-		int slotCount = gameInventory.GetSlotIdCount();
+		int slotCount = GetInventory().GetSlotIdCount();
 		for (int i = 0; i < slotCount; i++) 
 		{
-			slotId = gameInventory.GetSlotId(i);
+			slotId = GetInventory().GetSlotId(i);
 			set<int> tmp;
 			switch (slotId)
 			{
@@ -4352,11 +4298,10 @@ class EntityAI extends Entity
 	protected void InitLegacySlotExclusionValuesDerived()
 	{
 		int slotId;
-		GameInventory gameInventory = GetInventory();
-		int slotCount = gameInventory.GetSlotIdCount();
+		int slotCount = GetInventory().GetSlotIdCount();
 		for (int i = 0; i < slotCount; i++) 
 		{
-			slotId = gameInventory.GetSlotId(i);
+			slotId = GetInventory().GetSlotId(i);
 			set<int> tmp;
 			switch (slotId)
 			{
@@ -4495,7 +4440,7 @@ class EntityAI extends Entity
 			if (CheckExclusionAccessPropagation(lcn.GetSlot(), slotId, values, passThis))
 			{
 				int count = passThis.Count();
-				for (int i = 0; i < count; ++i)
+				for (int i = 0; i < count; i++)
 				{
 					m_AttachmentExclusionMaskChildren.RemoveItem(passThis[i]);
 				}
@@ -4571,7 +4516,7 @@ class EntityAI extends Entity
 		
 		set<int> currentSlotValuesAll = GetAttachmentExclusionMaskAll(slotId);
 		int count = values.Count();
-		for (int i = 0; i < count; ++i)
+		for (int i = 0; i < count; i++)
 		{
 			if (currentSlotValuesAll.Find(values[i]) != -1)
 				return true;

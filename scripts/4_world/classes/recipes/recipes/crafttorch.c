@@ -74,11 +74,11 @@ class CraftTorch : RecipeBase
 		{
 			torch.SetTorchDecraftResult(ingredients[1].GetType());
 			
-			if (g_Game.IsMultiplayer() && g_Game.IsServer())
+			if (GetGame().IsMultiplayer() && GetGame().IsServer())
 			{
 				player.ServerTakeEntityToTargetAttachment(torch, rag);
 			}
-			else if (!g_Game.IsMultiplayer())
+			else if (!GetGame().IsMultiplayer())
 			{
 				int slotID = InventorySlots.GetSlotIdFromString("Rags");
 				player.PredictiveTakeEntityToTargetAttachmentEx(torch, rag, slotID);

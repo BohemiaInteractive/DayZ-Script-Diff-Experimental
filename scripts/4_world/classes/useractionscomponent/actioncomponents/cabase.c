@@ -13,7 +13,7 @@ class CABase
 		{
 			m_ACData = new Param;
 		}
-		m_LastTick = g_Game.GetTime();
+		m_LastTick = GetGame().GetTime();
 		Setup(action_data);
 	}
 	

@@ -513,7 +513,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float fogVal = m_FogValue;
 		if (forceCurrent || m_FogValue == -1)
 		{
-			fogVal = g_Game.GetWeather().GetFog().GetActual();
+			fogVal = GetGame().GetWeather().GetFog().GetActual();
 		}
 		m_FogValueEditbox.SetText(fogVal.ToString());
 
@@ -530,7 +530,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float overcastVal = m_OvercastValue;
 		if (forceCurrent || m_OvercastValue == -1)
 		{
-			overcastVal = g_Game.GetWeather().GetOvercast().GetActual();
+			overcastVal = GetGame().GetWeather().GetOvercast().GetActual();
 		}
 		m_OvercastValueEditbox.SetText(overcastVal.ToString());
 		
@@ -548,7 +548,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float rainVal = m_RainValue;
 		if (forceCurrent || m_RainValue == -1)
 		{
-			rainVal = g_Game.GetWeather().GetRain().GetActual();
+			rainVal = GetGame().GetWeather().GetRain().GetActual();
 		}
 
 		m_RainValueEditbox.SetText(rainVal.ToString());
@@ -565,7 +565,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float snowfallVal = m_SnowfallValue;
 		if (forceCurrent || m_SnowfallValue == -1)
 		{
-			snowfallVal = g_Game.GetWeather().GetSnowfall().GetActual();
+			snowfallVal = GetGame().GetWeather().GetSnowfall().GetActual();
 		}
 
 		m_SnowfallValueEditbox.SetText(snowfallVal.ToString());
@@ -582,7 +582,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float volFogDistanceDensityValue = m_VolFogDistanceDensityValue;
 		if (forceCurrent || m_VolFogDistanceDensityValue == -1)
 		{
-			volFogDistanceDensityValue = g_Game.GetWeather().GetDynVolFogDistanceDensity();
+			volFogDistanceDensityValue = GetGame().GetWeather().GetDynVolFogDistanceDensity();
 		}
 
 		m_VolFogDistanceDensityEditbox.SetText(volFogDistanceDensityValue.ToString());
@@ -593,7 +593,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float volFogHeightDensityValue = m_VolFogHeightDensityValue;
 		if (forceCurrent || m_VolFogHeightDensityValue == -1)
 		{
-			volFogHeightDensityValue = g_Game.GetWeather().GetDynVolFogHeightDensity();
+			volFogHeightDensityValue = GetGame().GetWeather().GetDynVolFogHeightDensity();
 		}
 		
 		m_VolFogHeightDensityEditbox.SetText(volFogHeightDensityValue.ToString());
@@ -604,7 +604,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float volFogHeightBiasValue = m_VolFogHeightBiasValue;
 		if (forceCurrent /*|| m_VolFogHeightBiasValue == -500*/)
 		{
-			volFogHeightBiasValue = g_Game.GetWeather().GetDynVolFogHeightBias();
+			volFogHeightBiasValue = GetGame().GetWeather().GetDynVolFogHeightBias();
 		}
 
 		m_VolFogHeightBiasEditbox.SetText(volFogHeightBiasValue.ToString());
@@ -616,7 +616,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float windMagnitudeVal = m_WindMagnitudeValue;
 		if (forceCurrent || m_WindMagnitudeValue == -1)
 		{
-			windMagnitudeVal = g_Game.GetWeather().GetWindMagnitude().GetActual();
+			windMagnitudeVal = GetGame().GetWeather().GetWindMagnitude().GetActual();
 		}
 
 		m_WindMValueEditbox.SetText(windMagnitudeVal.ToString());
@@ -633,7 +633,7 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		float windDirectionVal = m_WindDirectionValue;
 		if (forceCurrent || m_WindDirectionValue == -1)
 		{
-			windDirectionVal = g_Game.GetWeather().GetWindDirection().GetActual();
+			windDirectionVal = GetGame().GetWeather().GetWindDirection().GetActual();
 		}
 
 		m_WindDValueEditbox.SetText(windDirectionVal.ToString());
@@ -1056,14 +1056,14 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		else if (w == m_CopyButton)
 		{
 			string output = CopyValues();
-			g_Game.CopyToClipboard(output);
+			GetGame().CopyToClipboard(output);
 			return true;
 		}
 		
 		else if (w == m_PasteButton)
 		{
 			string input;
-			g_Game.CopyFromClipboard(input);
+			GetGame().CopyFromClipboard(input);
 			PasteValues(input);
 			UpdateSliderValues();
 			return true;
@@ -1238,35 +1238,12 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 	protected void SendRPC(DebugWeatherRPCData data)
 	{
 		PlayerIdentity identity = null;
-		if (g_Game.GetPlayer())
+		if (GetGame().GetPlayer())
 		{
-			identity = g_Game.GetPlayer().GetIdentity();
+			identity = GetGame().GetPlayer().GetIdentity();
 		}
 		
-		if (g_Game.IsDedicatedServer())
-		{
-			// have to define earlier due to 'ScriptReadWriteContext' asserting on attempting to 
-			// decrement ref count of the serializers. This is due to the Serializers being inline allocated
-			ParamsWriteContext wCtx;
-			ParamsReadContext rCtx;
-
-			ScriptReadWriteContext ctx = new ScriptReadWriteContext();
-			
-			// see above comment
-			wCtx = ctx.GetWriteContext();
-			rCtx = ctx.GetReadContext();
-
-			// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa it was null for some reason
-			Param1<DebugWeatherRPCData> d = new Param1<DebugWeatherRPCData>(data);
-			
-			wCtx.Write(d);
-
-			g_Game.OnRPC(null, null, ERPCs.DEV_SET_WEATHER, rCtx);
-		}
-		else
-		{
-			g_Game.RPCSingleParam(null, ERPCs.DEV_SET_WEATHER, new Param1<DebugWeatherRPCData>(data), true, identity);
-		}
+		GetGame().RPCSingleParam(null, ERPCs.DEV_SET_WEATHER, new Param1<DebugWeatherRPCData>(data), true, identity);
 	}
 	
 	protected void InvokeSendRPC()
@@ -1277,39 +1254,39 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 	
 	protected void UpdateWeatherValues()
 	{
-		float overcast = g_Game.GetWeather().GetOvercast().GetActual();
+		float overcast = GetGame().GetWeather().GetOvercast().GetActual();
 		m_OvercastValueGetSlider.SetCurrent(overcast * 100);
 		m_OvercastValueSetText.SetText(overcast.ToString());
 		
-		float fog = g_Game.GetWeather().GetFog().GetActual();
+		float fog = GetGame().GetWeather().GetFog().GetActual();
 		m_FogValueGetSlider.SetCurrent(fog * 100);
 		m_FogValueSetText.SetText(fog.ToString());
 		
-		float rain = g_Game.GetWeather().GetRain().GetActual();
+		float rain = GetGame().GetWeather().GetRain().GetActual();
 		m_RainValueGetSlider.SetCurrent(rain * 100);
 		m_RainValueSetText.SetText(rain.ToString());
 		
-		float snowfall = g_Game.GetWeather().GetSnowfall().GetActual();
+		float snowfall = GetGame().GetWeather().GetSnowfall().GetActual();
 		m_SnowfallValueGetSlider.SetCurrent(snowfall * 100);
 		m_SnowfallValueSetText.SetText(snowfall.ToString());
 		
-		float volFogDistanceDensity = g_Game.GetWeather().GetDynVolFogDistanceDensity();
+		float volFogDistanceDensity = GetGame().GetWeather().GetDynVolFogDistanceDensity();
 		//m_VolFogDistanceDensitySlider.SetCurrent(volFogDistanceDensity * 100);
 		m_VolFogDistanceDensitySetText.SetText(volFogDistanceDensity.ToString());
 		
-		float volFogHeightDensity = g_Game.GetWeather().GetDynVolFogHeightDensity();
+		float volFogHeightDensity = GetGame().GetWeather().GetDynVolFogHeightDensity();
 		//m_VolFogHeightDensitySlider.SetCurrent(volFogHeightDensity * 100);
 		m_VolFogHeightDensitySetText.SetText(volFogHeightDensity.ToString());
 		
-		float volFogHeightBias = g_Game.GetWeather().GetDynVolFogHeightBias();
+		float volFogHeightBias = GetGame().GetWeather().GetDynVolFogHeightBias();
 		//m_VolFogHeightBiasSlider.SetCurrent(volFogHeightBias * 100);
 		m_VolFogHeightBiasSetText.SetText(volFogHeightBias.ToString());
 		
-		float windMagnitude = g_Game.GetWeather().GetWindMagnitude().GetActual();
+		float windMagnitude = GetGame().GetWeather().GetWindMagnitude().GetActual();
 		m_WindMValueGetSlider.SetCurrent(windMagnitude);
 		m_WindMValueSetText.SetText(windMagnitude.ToString());
 		
-		float windDirection = g_Game.GetWeather().GetWindDirection().GetActual();
+		float windDirection = GetGame().GetWeather().GetWindDirection().GetActual();
 		m_WindDValueGetSlider.SetCurrent(windDirection);
 		m_WindDValueSetText.SetText(windDirection.ToString());
 	}
@@ -1323,32 +1300,32 @@ class ScriptConsoleWeatherTab : ScriptConsoleTabBase
 		m_IsCAPSPressed = KeyState(KeyCode.KC_CAPITAL);
 		if (m_IsCAPSPressed && !m_MouseMovementEnabled && (!GetFocus() || GetFocus() != m_WeatherPresetEditbox) && GetWidgetUnderCursor() != m_WeatherPresetEditbox)
 		{
-			if (g_Game && g_Game.GetMission() && g_Game.GetUIManager())
+			if (GetGame() && GetGame().GetMission() && GetGame().GetUIManager())
 			{
 				m_MouseMovementEnabled = true;
-				g_Game.GetMission().RemoveActiveInputExcludes({"aiming"});
-				g_Game.GetUIManager().ShowUICursor(false);
+				GetGame().GetMission().RemoveActiveInputExcludes({"aiming"});
+				GetGame().GetUIManager().ShowUICursor(false);
 			}
 		}
 		else if (!m_IsCAPSPressed && m_MouseMovementEnabled)
 		{
-			if (g_Game && g_Game.GetMission() && g_Game.GetUIManager())
+			if (GetGame() && GetGame().GetMission() && GetGame().GetUIManager())
 			{
 				m_MouseMovementEnabled = false;
-				g_Game.GetMission().AddActiveInputExcludes({"aiming"});
-				g_Game.GetUIManager().ShowUICursor(true);
+				GetGame().GetMission().AddActiveInputExcludes({"aiming"});
+				GetGame().GetUIManager().ShowUICursor(true);
 			}
 		}
 		
 		if (GetFocus() == m_WeatherPresetEditbox && !m_CanUseMovement)
 		{
 			m_CanUseMovement = true;
-			g_Game.GetMission().RemoveActiveInputExcludes({"UAMoveForward", "UAMoveBack", "UAMoveLeft", "UAMoveRight", "UAWalkRunTemp"});
+			GetGame().GetMission().RemoveActiveInputExcludes({"UAMoveForward", "UAMoveBack", "UAMoveLeft", "UAMoveRight", "UAWalkRunTemp"});
 		}
 		else if ((GetFocus() != m_WeatherPresetEditbox || !GetFocus()) && GetWidgetUnderCursor() != m_WeatherPresetEditbox && m_CanUseMovement)
 		{
 			m_CanUseMovement = false;
-			g_Game.GetMission().AddActiveInputExcludes({"UAMoveForward", "UAMoveBack", "UAMoveLeft", "UAMoveRight", "UAWalkRunTemp"});
+			GetGame().GetMission().AddActiveInputExcludes({"UAMoveForward", "UAMoveBack", "UAMoveLeft", "UAMoveRight", "UAWalkRunTemp"});
 		}
 	}
 

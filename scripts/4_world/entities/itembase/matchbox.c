@@ -16,7 +16,7 @@ class Matchbox extends ItemBase
 	
 	override void OnIgnitedTarget( EntityAI target_item )
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			AddQuantity( -1 );
 		}
@@ -24,7 +24,7 @@ class Matchbox extends ItemBase
 	
 	override void OnIgnitedTargetFailed( EntityAI target_item )
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			AddQuantity( -1 );
 		}

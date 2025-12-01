@@ -15,9 +15,9 @@ class KitchenTimer : ClockBase
 	{
 		super.Init();
 	
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
-			m_NoiseSystem = g_Game.GetNoiseSystem();
+			m_NoiseSystem = GetGame().GetNoiseSystem();
 			if ( m_NoiseSystem && !m_NoisePar)
 			{
 				// Create and load noise parameters
@@ -124,7 +124,7 @@ class KitchenTimer : ClockBase
 			}
 			else if (m_NoiseSystem)
 			{
-				m_NoiseSystem.AddNoiseTarget(GetPosition(), UPDATE_TICK_RATE, m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(g_Game.GetWeather()));
+				m_NoiseSystem.AddNoiseTarget(GetPosition(), UPDATE_TICK_RATE, m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(GetGame().GetWeather()));
 			}
 		}
 	}
@@ -229,7 +229,7 @@ class KitchenTimer : ClockBase
 		if (super.OnAction(action_id, player, ctx))
 			return true;
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (action_id == EActions.ALARM_SET_AHEAD)
 			{
@@ -243,7 +243,7 @@ class KitchenTimer : ClockBase
 	{
 		string debug_output;
 		
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			debug_output = "alarm in: " + m_AlarmInSecs.ToString() + " secs" + "\n";
 			debug_output +=  "current state: " +  typename.EnumToString(EAlarmClockState, m_State) + "\n";

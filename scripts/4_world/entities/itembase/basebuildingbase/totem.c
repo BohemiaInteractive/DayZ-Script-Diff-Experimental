@@ -178,7 +178,7 @@ class TerritoryFlag extends BaseBuildingBase
 	//! Saves positions of active lifetime refreshers to MissionGameplay / MissionServer
 	void HandleRefreshers()
 	{
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if (!mission.m_ActiveRefresherLocations)
 			return;
 		
@@ -210,16 +210,16 @@ class TerritoryFlag extends BaseBuildingBase
 	
 	void InsertRefresherPosition()
 	{
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		mission.m_ActiveRefresherLocations.Insert(GetPosition());
 	}
 	
 	void RemoveRefresherPosition(int idx = -2)
 	{
-		if (!g_Game)
+		if (!GetGame())
 			return;
 		
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if (!mission || !mission.m_ActiveRefresherLocations)
 			return;
 		
@@ -280,7 +280,7 @@ class TerritoryFlag extends BaseBuildingBase
 	{
 		super.EEItemDetached( item, slot_name );
 		
-		if (g_Game.IsServer())	// reset totem state is flag is decrafted  while raised
+		if (GetGame().IsServer())	// reset totem state is flag is decrafted  while raised
 		{
 			float state = GetAnimationPhase("flag_mast");
 			if (state < 1)
@@ -297,9 +297,9 @@ class TerritoryFlag extends BaseBuildingBase
 			return false;
 		
 		//manage action initiator (AT_ATTACH_TO_CONSTRUCTION)
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
-			PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+			PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 			if ( player )
 			{
 				ConstructionActionData construction_action_data = player.GetConstructionActionData();
@@ -340,15 +340,15 @@ class TerritoryFlag extends BaseBuildingBase
 		{
 			string cfg_path = "cfgVehicles " + GetType() + " Construction " + part_lowest.GetMainPartName() + " " + part_lowest.GetPartName() + " Materials";
 			string material_path;
-			if ( g_Game.ConfigIsExisting(cfg_path) )
+			if ( GetGame().ConfigIsExisting(cfg_path) )
 			{
 				string child_name;
 				string child_slot_name;
-				for ( i = 0; i < g_Game.ConfigGetChildrenCount( cfg_path ); i++ )
+				for ( i = 0; i < GetGame().ConfigGetChildrenCount( cfg_path ); i++ )
 				{
-					g_Game.ConfigGetChildName( cfg_path, i, child_name );
+					GetGame().ConfigGetChildName( cfg_path, i, child_name );
 					material_path = "" + cfg_path + " " + child_name + " slot_name";
-					if ( g_Game.ConfigGetText(material_path,child_slot_name) && child_slot_name == slot_name )
+					if ( GetGame().ConfigGetText(material_path,child_slot_name) && child_slot_name == slot_name )
 					{
 						return true;
 					}
@@ -443,9 +443,9 @@ class TerritoryFlag extends BaseBuildingBase
 		return false; //TODO
 		
 		vector ref_dir = GetDirection();
-		vector cam_dir = g_Game.GetCurrentCameraDirection();
+		vector cam_dir = GetGame().GetCurrentCameraDirection();
 		
-		//ref_dir = g_Game.GetCurrentCameraPosition() - GetPosition();
+		//ref_dir = GetGame().GetCurrentCameraPosition() - GetPosition();
 		ref_dir.Normalize();
 		ref_dir[1] = 0;		//ignore height
 		

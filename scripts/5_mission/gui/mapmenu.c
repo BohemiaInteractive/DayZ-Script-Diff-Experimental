@@ -39,17 +39,17 @@ class MapMenu extends UIScriptedMenu
 	
 	void ~MapMenu()
 	{
-		if (g_Game && g_Game.GetMission())
+		if (GetGame() && GetGame().GetMission())
 		{
-			g_Game.GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
-			g_Game.GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
 		}
 	}
 	
 	override Widget Init()
 	{
-		layoutRoot 			= g_Game.GetWorkspace().CreateWidgets("gui/layouts/day_z_map.layout");
-		m_Hud 				= IngameHud.Cast(g_Game.GetMission().GetHud());
+		layoutRoot 			= GetGame().GetWorkspace().CreateWidgets("gui/layouts/day_z_map.layout");
+		m_Hud 				= IngameHud.Cast(GetGame().GetMission().GetHud());
 		m_IsOpenning		= true;
 		
 		/*MapWidget m = MapWidget.Cast(layoutRoot.FindAnyWidget("Map"));
@@ -89,7 +89,7 @@ class MapMenu extends UIScriptedMenu
 			PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
 			if (player && !player.GetLastMapInfo(scale, mapPosition))
 			{
-				vector tempPosition = g_Game.ConfigGetVector(string.Format("CfgWorlds %1 centerPosition", g_Game.GetWorldName()));
+				vector tempPosition = GetGame().ConfigGetVector(string.Format("CfgWorlds %1 centerPosition", GetGame().GetWorldName()));
 				scale = 0.33;
 				mapPosition = Vector(tempPosition[0], tempPosition[1], tempPosition[2]);
 			}
@@ -159,8 +159,8 @@ class MapMenu extends UIScriptedMenu
 		m_ToolsContainerPos0[0] = x;
 		m_ToolsContainerPos0[1] = y;
 		
-		g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-		g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+		GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+		GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 				
 		return layoutRoot;
 	}
@@ -353,14 +353,14 @@ class MapMenu extends UIScriptedMenu
 		{
 			if (!CfgGameplayHandler.GetUse3DMap())
 			{
-				g_Game.GetMission().RemoveActiveInputExcludes({"map"});
+				GetGame().GetMission().RemoveActiveInputExcludes({"map"});
 			}
 			else
 			{
-				g_Game.GetMission().RemoveActiveInputExcludes({"loopedactions"});
+				GetGame().GetMission().RemoveActiveInputExcludes({"loopedactions"});
 			}
 
-			g_Game.GetMission().RemoveActiveInputRestriction(EInputRestrictors.MAP);
+			GetGame().GetMission().RemoveActiveInputRestriction(EInputRestrictors.MAP);
 		}
 
 		Close();
@@ -482,7 +482,7 @@ class MapMenu extends UIScriptedMenu
 	{
 		bool toolbarShow = false;
 		#ifdef PLATFORM_CONSOLE
-		toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboard() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboard() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		#endif
 		
 		m_ToolbarPanel.Show(toolbarShow);

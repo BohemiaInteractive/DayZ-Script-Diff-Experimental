@@ -24,6 +24,6 @@ class ActionHandcuffTarget: ActionSingleUseBase
 	
 	override void OnExecuteClient( ActionData action_data )
 	{	
-		g_Game.GetAnalyticsClient().OnActionRestrain();
+		GetGame().GetAnalyticsClient().OnActionRestrain();
 	}
 };

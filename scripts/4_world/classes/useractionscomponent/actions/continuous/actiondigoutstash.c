@@ -58,7 +58,7 @@ class ActionDigOutStash: ActionContinuousBase
 	{
 		super.OnExecuteServer(action_data);
 		
-		if (!g_Game.IsMultiplayer())
+		if (!GetGame().IsMultiplayer())
 		{
 			SpawnParticleShovelRaise(action_data);
 		}

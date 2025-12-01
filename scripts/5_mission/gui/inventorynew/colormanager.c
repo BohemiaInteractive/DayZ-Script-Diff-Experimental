@@ -52,7 +52,7 @@ class ColorManager
 	{
 		int color = -1;
 		ItemBase dragged_item = ItemBase.Cast( ItemManager.GetInstance().GetDraggedItem() );
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 		
 		if ( item == dragged_item )
 			return color;

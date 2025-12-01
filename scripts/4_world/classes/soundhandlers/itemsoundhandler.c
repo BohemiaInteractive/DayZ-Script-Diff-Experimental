@@ -53,14 +53,12 @@ class ItemSoundHandler : Managed
 		m_SoundParamsMap = new map<int, ref SoundParameters>();
 	}
 	
-	void PlayItemSoundClient(int id, int slotId = InventorySlots.INVALID)
-	{		
-		InventoryItemType itemType = m_Parent.GetInventoryItemType();
-		
-		string soundSet = GetSoundSetForEvent(id, slotId);
+	void PlayItemSoundClient(int id)
+	{
+		string soundSet = m_AvailableSoundsets.Get(id);
 		if (soundSet == string.Empty)
 		{
-			Debug.Log("No soundset defined for sound event id " + typename.EnumToString(SoundConstants, id) + ". Item: " + m_Parent.GetType() + " | Slot ID: " + slotId);
+			Debug.Log("Attempting to play soundID " + id + " without defined soundset. Item: " + m_Parent.GetType());
 			return;
 		}
 		
@@ -69,12 +67,10 @@ class ItemSoundHandler : Managed
 		
 		EffectSound sound;
 		SoundParameters params = m_SoundParamsMap.Get(id);
-		vector position = m_Parent.GetPosition();		
-		
 		if (params)
-			sound = SEffectManager.PlaySoundCachedParams(soundSet, position, params.m_FadeIn, params.m_FadeOut, params.m_Loop);
+			sound = SEffectManager.PlaySoundCachedParams(soundSet, m_Parent.GetPosition(), params.m_FadeIn, params.m_FadeOut, params.m_Loop);
 		else
-			sound = SEffectManager.PlaySound(soundSet, position);
+			sound = SEffectManager.PlaySound(soundSet, m_Parent.GetPosition());
 		
 		if (sound)
 			sound.SetAutodestroy(true);
@@ -84,37 +80,9 @@ class ItemSoundHandler : Managed
 		m_PlayingSounds.Insert(id, sound);
 	}
 	
-	string GetSoundSetForEvent(int id, int slotId = InventorySlots.INVALID)
-	{
-		string soundSet;
-		InventoryItemType itemType = m_Parent.GetInventoryItemType();
-		
-		switch (id)
-		{
-			case SoundConstants.ITEM_ATTACH:
-			{
-				if (itemType)
-				soundSet = itemType.GetSlotAttachSoundSet(slotId);
-				break;
-			}
-			case SoundConstants.ITEM_DETACH:
-			{
-				if (itemType)
-				soundSet = itemType.GetSlotDetachSoundSet(slotId);
-				break;
-			}
-			default:
-			{
-				soundSet = m_AvailableSoundsets[id];
-				break;
-			}
-		}
-		return soundSet;
-	}
-	
 	void StopItemSoundClient(int id)
 	{
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 			return;
 				
 		EffectSound sound = m_PlayingSounds.Get(id);

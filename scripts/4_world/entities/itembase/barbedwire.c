@@ -42,7 +42,7 @@ class BarbedWire extends ItemBase
 	{
 		super.EEInit();
 	
-		g_Game.GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( UpdateAttachmentSlot, 100, false );
+		GetGame().GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( UpdateAttachmentSlot, 100, false );
 	}
 	
 	bool IsMounted()
@@ -108,7 +108,7 @@ class BarbedWire extends ItemBase
 	// --- SYNCHRONIZATION
 	void Synchronize()
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			SetSynchDirty();
 		}
@@ -266,7 +266,7 @@ class BarbedWire extends ItemBase
 	// ---------------------------------------------------------
 	void SoundCut()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() ) // client side
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() ) // client side
 		{
 			int random_index = Math.RandomInt(0, SOUNDS_CUT_COUNT);
 			string sound_type = m_SoundsCut[random_index];
@@ -277,7 +277,7 @@ class BarbedWire extends ItemBase
 	// Plays sound
 	void SoundSpark()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() ) // client side
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() ) // client side
 		{
 			int random_index = Math.RandomInt(0, SOUNDS_SPARK_COUNT);
 			string sound_type = m_SoundsSpark[random_index];
@@ -288,7 +288,7 @@ class BarbedWire extends ItemBase
 	// Plays sound
 	void SoundBuzzLoopStart()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() ) // client side
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() ) // client side
 		{
 			if (!m_BuzzSoundLoop)
 			{
@@ -300,11 +300,11 @@ class BarbedWire extends ItemBase
 	// Stops sound
 	void SoundBuzzLoopStop()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() ) // client side
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() ) // client side
 		{
 			if (m_BuzzSoundLoop)
 			{
-				g_Game.ObjectDelete(m_BuzzSoundLoop);
+				GetGame().ObjectDelete(m_BuzzSoundLoop);
 				m_BuzzSoundLoop = NULL;
 			}
 		}
@@ -313,7 +313,7 @@ class BarbedWire extends ItemBase
 	// Plays an electric shock sound
 	void SoundElectricShock()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() ) // client side
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() ) // client side
 		{
 			int random_index = Math.RandomInt(0, SOUNDS_SHOCK_COUNT);
 			string sound_type = m_SoundsShock[random_index];
@@ -324,7 +324,7 @@ class BarbedWire extends ItemBase
 	// Plays a collision sound
 	void SoundCollision()
 	{
-		if ( !g_Game.IsServer()  ||  !g_Game.IsMultiplayer() ) // client side
+		if ( !GetGame().IsServer()  ||  !GetGame().IsMultiplayer() ) // client side
 		{
 			int random_index = Math.RandomInt(0, SOUNDS_COLLISION_COUNT);
 			string sound_type = m_SoundsCollision[random_index];
@@ -373,7 +373,7 @@ class BarbedWire extends ItemBase
 	{
 		super.OnPlacementComplete( player, position, orientation );
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			ShowAllSelections();
 			HideSelection("zbytek");

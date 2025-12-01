@@ -10,6 +10,8 @@ class PowerGeneratorBase extends ItemBase
 	static const string			LOOP_SOUND = "powerGeneratorLoop_SoundSet";
 	protected const string		LOOP_LOW_FUEL_SOUND = "powerGenerator_low_Fuel_Loop_SoundSet";
 	static const string			STOP_SOUND = "powerGeneratorTurnOff_SoundSet";
+	static const string 		SPARKPLUG_ATTACH_SOUND = "sparkplug_attach_SoundSet";
+	static const string 		SPARKPLUG_DETACH_SOUND = "sparkplug_detach_SoundSet";
 	
 	protected bool 				m_IsLowEnergy; 
 	protected EffectSound 		m_EngineLoop;
@@ -42,7 +44,7 @@ class PowerGeneratorBase extends ItemBase
 	{		
 		super.EEInit();
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_ManualUpdate		= true;
@@ -58,7 +60,7 @@ class PowerGeneratorBase extends ItemBase
 	
 	override void EOnInit(IEntity other, int extra)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			m_FuelPercentage = GetCompEM().GetEnergy0To100();
 			SetSynchDirty();
@@ -85,7 +87,7 @@ class PowerGeneratorBase extends ItemBase
 	// Play the loop sound
 	void StartLoopSound()
 	{
-		if (g_Game.IsClient() || !g_Game.IsMultiplayer())
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
 		{
 			if (GetCompEM().IsWorking())
 			{
@@ -135,7 +137,7 @@ class PowerGeneratorBase extends ItemBase
 	// Init
 	override void OnInitEnergy()
 	{
-		m_FuelTankCapacity = g_Game.ConfigGetFloat ("CfgVehicles " + GetType() + " fuelTankCapacity");
+		m_FuelTankCapacity = GetGame().ConfigGetFloat ("CfgVehicles " + GetType() + " fuelTankCapacity");
 		m_FuelToEnergyRatio = GetCompEM().GetEnergyMax() / m_FuelTankCapacity; // Conversion ratio of 1 ml of fuel to X Energy
 		
 		UpdateFuelMeter();
@@ -144,7 +146,7 @@ class PowerGeneratorBase extends ItemBase
 	// Generator is working
 	override void OnWorkStart()
 	{
-		if (g_Game.IsClient() || !g_Game.IsMultiplayer())
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
 		{
 			if (IsInitialized())
 			{
@@ -162,7 +164,7 @@ class PowerGeneratorBase extends ItemBase
 			}
 		}
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			m_UTSource.SetDefferedActive(true, 20.0);
 		}
@@ -171,12 +173,12 @@ class PowerGeneratorBase extends ItemBase
 	// Do work
 	override void OnWork(float consumed_energy)
 	{
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			m_UTSource.Update(m_UTSSettings, m_UTSLEngine);
 		}
 
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			m_FuelPercentage = GetCompEM().GetEnergy0To100();
 			SetSynchDirty();
@@ -193,7 +195,7 @@ class PowerGeneratorBase extends ItemBase
 	// Turn off when this runs out of fuel
 	override void OnWorkStop()
 	{
-		if (g_Game.IsClient() || !g_Game.IsMultiplayer())
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
 		{
 			// Sound
 			PlaySoundSet(m_EngineStop, STOP_SOUND, 0, 0);
@@ -206,7 +208,7 @@ class PowerGeneratorBase extends ItemBase
 			UpdateFuelMeter();
 		}
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			m_UTSource.SetDefferedActive(false, 20.0);
 		}
@@ -225,22 +227,35 @@ class PowerGeneratorBase extends ItemBase
 		GetCompEM().InteractBranch(this);
 		
 		ItemBase item_IB = ItemBase.Cast(item);
+		
 		if (item_IB.IsKindOf("Sparkplug") && IsInitialized())
 		{
 			ShowSelection("sparkplug_installed");
+			
+			#ifndef SERVER
+			EffectSound sound = SEffectManager.PlaySound(SPARKPLUG_ATTACH_SOUND, GetPosition());
+			sound.SetAutodestroy( true );
+			#endif
 		}
 	}
 	
 	override void EEItemDetached(EntityAI item, string slot_name)
 	{
 		super.EEItemDetached(item, slot_name);
+		
 		GetCompEM().InteractBranch(this);
 		
 		ItemBase item_IB = ItemBase.Cast(item);
+		
 		if (item_IB.IsKindOf("Sparkplug"))
 		{
 			HideSelection("sparkplug_installed");
 			GetCompEM().SwitchOff();
+			
+			#ifndef SERVER
+			EffectSound sound = SEffectManager.PlaySound(SPARKPLUG_DETACH_SOUND, GetPosition());
+			sound.SetAutodestroy(true);
+			#endif
 		}
 	}
 	
@@ -252,7 +267,7 @@ class PowerGeneratorBase extends ItemBase
 	{
 		m_IsLowEnergy = state;
 		
-		if (g_Game.IsClient() || !g_Game.IsMultiplayer())
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
 		{
 			StopSoundSet(m_EngineLoop);
 			StartLoopSound();
@@ -261,7 +276,7 @@ class PowerGeneratorBase extends ItemBase
 	
 	void UpdateFuelMeter()
 	{
-		if (g_Game.IsClient() || !g_Game.IsMultiplayer())
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
 		{
 			SetAnimationPhase("dial_fuel", m_FuelPercentage * 0.01);
 		}
@@ -411,7 +426,7 @@ class PowerGeneratorBase extends ItemBase
 		if (super.OnAction(action_id, player, ctx))
 			return true;
 
-		if (!g_Game.IsServer())
+		if (!GetGame().IsServer())
 			return false;
 
 		switch (action_id)

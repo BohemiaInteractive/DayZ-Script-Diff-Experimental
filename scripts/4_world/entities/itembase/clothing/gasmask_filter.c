@@ -14,7 +14,7 @@ class GasMask_Filter : ItemBase
 	
 	override void EEHealthLevelChanged(int oldLevel, int newLevel, string zone)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if( newLevel == GameConstants.STATE_RUINED )
 			{

@@ -130,7 +130,7 @@ class CAContinuousFillCoolant : CAContinuousBase
 			SetACData(m_SpentUnits);
 		}
 
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			if( action_data.m_MainItem )
 				action_data.m_MainItem.AddQuantity( -m_SpentQuantity );

@@ -115,7 +115,7 @@ class ActionManagerClient: ActionManagerBase
 			{
 				bool isMenuOpen = false;	
 #ifndef NO_GUI
-				isMenuOpen = g_Game.GetUIManager().IsMenuOpen(MENU_INVENTORY);
+				isMenuOpen = GetGame().GetUIManager().IsMenuOpen(MENU_INVENTORY);
 #endif
 				if (m_Player.IsRaised() || isMenuOpen)
 				{
@@ -330,7 +330,7 @@ class ActionManagerClient: ActionManagerBase
 	{
 		if (m_ActionWantEndRequest)
 		{
-			if (g_Game.IsMultiplayer() && !m_CurrentActionData.m_Action.IsLocal())
+			if (GetGame().IsMultiplayer() && !m_CurrentActionData.m_Action.IsLocal())
 			{
 				if (!m_ActionWantEndRequest_Send && ScriptInputUserData.CanStoreInputUserData())
 				{
@@ -360,7 +360,7 @@ class ActionManagerClient: ActionManagerBase
 	{
 		if (m_ActionInputWantEnd)
 		{
-			if (g_Game.IsMultiplayer() && !m_CurrentActionData.m_Action.IsLocal())
+			if (GetGame().IsMultiplayer() && !m_CurrentActionData.m_Action.IsLocal())
 			{
 				if (!m_ActionInputWantEnd_Send && ScriptInputUserData.CanStoreInputUserData())
 				{
@@ -530,7 +530,7 @@ class ActionManagerClient: ActionManagerBase
 		// TODO: NEEDS OPTIMIZATION (focus on UpdatePossibleActions > CraftingManager::OnUpdate)
 		
 		m_ActionsAvaibale = false;
-		if (!m_ActionPossible || HasHandInventoryReservation() || g_Game.IsInventoryOpen())
+		if (!m_ActionPossible || HasHandInventoryReservation() || GetGame().IsInventoryOpen())
 		{
 			ResetInputsActions();
 			return;
@@ -621,7 +621,7 @@ class ActionManagerClient: ActionManagerBase
 				}
 			}
 			m_Interrupted = false;
-			if (g_Game.IsMultiplayer() && !action.IsLocal())
+			if (GetGame().IsMultiplayer() && !action.IsLocal())
 			{
 				if (!ScriptInputUserData.CanStoreInputUserData())
 				{
@@ -647,7 +647,7 @@ class ActionManagerClient: ActionManagerBase
 				Debug.ActionLog("Action data created wait to start", action.ToString() , "n/a", "ActionStart", m_Player.ToString());
 			}
 
-			if (g_Game.IsMultiplayer() && !action.IsLocal())
+			if (GetGame().IsMultiplayer() && !action.IsLocal())
 			{
 				ScriptInputUserData ctx = new ScriptInputUserData;
 				ctx.Write(INPUT_UDT_STANDARD_ACTION_START);
@@ -761,7 +761,7 @@ class ActionManagerClient: ActionManagerBase
 	
 	void PerformActionStart(ActionBase action, ActionTarget target, ItemBase item, Param extra_data = NULL)
 	{
-		if (!g_Game.IsMultiplayer())
+		if (!GetGame().IsMultiplayer())
 		{
 			m_PendingActionData = new ActionData;
 	

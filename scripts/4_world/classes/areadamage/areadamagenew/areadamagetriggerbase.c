@@ -223,7 +223,7 @@ class AreaDamageTriggerBase : Trigger
 	//! Adding of new TriggerInsider
 	override protected void AddInsider(Object obj)
 	{
-		if ( !g_Game.IsServer() )
+		if ( !GetGame().IsServer() )
 			return;
 		
 		super.AddInsider(obj);
@@ -232,7 +232,7 @@ class AreaDamageTriggerBase : Trigger
 	//! Removing of TriggerInsider
 	override protected void RemoveInsider(TriggerInsider insider, int index = -1)
 	{
-		if ( !g_Game.IsServer() )
+		if ( !GetGame().IsServer() )
 			return;
 		
 		super.RemoveInsider(insider, index);
@@ -241,7 +241,7 @@ class AreaDamageTriggerBase : Trigger
 	//! Update the current TriggerInsider inside the Trigger
 	override protected void UpdateInsiders(int timeout)
 	{
-		if ( !g_Game.IsServer() )
+		if ( !GetGame().IsServer() )
 			return;
 	
 		super.UpdateInsiders(timeout);

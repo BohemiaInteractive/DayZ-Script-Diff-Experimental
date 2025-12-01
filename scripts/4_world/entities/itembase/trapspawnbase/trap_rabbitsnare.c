@@ -33,7 +33,7 @@ class Trap_RabbitSnare extends TrapSpawnBase
 		
 	override void SetupTrap()
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			if ( GetHierarchyRootPlayer().CanDropEntity( this ) )
 			{

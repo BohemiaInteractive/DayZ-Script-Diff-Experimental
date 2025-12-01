@@ -5,32 +5,32 @@ class WarningMenuBase : UIScriptedMenu
 
 	void WarningMenuBase()
 	{
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{
-			g_Game.GetMission().AddActiveInputExcludes({"menu"});
+			GetGame().GetMission().AddActiveInputExcludes({"menu"});
 
-			g_Game.GetMission().GetHud().ShowHudUI(false);
-			g_Game.GetMission().GetHud().ShowQuickbarUI(false);
+			GetGame().GetMission().GetHud().ShowHudUI(false);
+			GetGame().GetMission().GetHud().ShowQuickbarUI(false);
 		}
 	}
 
 	void ~WarningMenuBase()
 	{
-		if (g_Game && g_Game.GetMission())
+		if (GetGame() && GetGame().GetMission())
 		{
-			g_Game.GetMission().RemoveActiveInputExcludes({"menu"},true);
+			GetGame().GetMission().RemoveActiveInputExcludes({"menu"},true);
 			
-			g_Game.GetMission().GetHud().ShowHudUI(true);
-			g_Game.GetMission().GetHud().ShowQuickbarUI(true);
+			GetGame().GetMission().GetHud().ShowHudUI(true);
+			GetGame().GetMission().GetHud().ShowQuickbarUI(true);
 	
-			g_Game.GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
-			g_Game.GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
 		}
 	}
 	
 	override Widget Init()
 	{
-		layoutRoot 		= g_Game.GetWorkspace().CreateWidgets("gui/layouts/day_z_dropped_items.layout");
+		layoutRoot 		= GetGame().GetWorkspace().CreateWidgets("gui/layouts/day_z_dropped_items.layout");
 		m_OkButton 		= ButtonWidget.Cast(layoutRoot.FindAnyWidget("bOK"));
 		m_Description 	= MultilineTextWidget.Cast(layoutRoot.FindAnyWidget("txtDescription"));
 		m_Description.Show(true);	
@@ -38,13 +38,13 @@ class WarningMenuBase : UIScriptedMenu
 		string text = Widget.TranslateString(GetText());
 		m_Description.SetText(text);
 		
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{		
-			g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-			g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		}
 		
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 
 		return layoutRoot;
 	}
@@ -102,7 +102,7 @@ class WarningMenuBase : UIScriptedMenu
 	{
 		bool toolbarShow = false;
 		#ifdef PLATFORM_CONSOLE
-		toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboard() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboard() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		#endif
 		
 		layoutRoot.FindAnyWidget("BottomConsoleToolbar").Show(toolbarShow);

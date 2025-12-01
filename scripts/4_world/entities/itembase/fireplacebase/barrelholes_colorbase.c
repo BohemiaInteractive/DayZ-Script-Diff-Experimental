@@ -499,9 +499,9 @@ class BarrelHoles_ColorBase extends FireplaceBase
 	override void OnIgnitedThis(EntityAI fire_source)
 	{	
 		//remove grass
-		Object cc_object = g_Game.CreateObjectEx(OBJECT_CLUTTER_CUTTER , GetPosition(), ECE_PLACE_ON_SURFACE);
+		Object cc_object = GetGame().CreateObjectEx(OBJECT_CLUTTER_CUTTER , GetPosition(), ECE_PLACE_ON_SURFACE);
 		cc_object.SetOrientation (GetOrientation());
-		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DestroyClutterCutter, 0.2, false, cc_object);
+		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DestroyClutterCutter, 0.2, false, cc_object);
 		
 		//start fire
 		StartFire(); 
@@ -509,7 +509,7 @@ class BarrelHoles_ColorBase extends FireplaceBase
 
 	void DestroyClutterCutter(Object clutter_cutter)
 	{
-		g_Game.ObjectDelete(clutter_cutter);
+		GetGame().ObjectDelete(clutter_cutter);
 	}	
 	
 	override bool IsThisIgnitionSuccessful(EntityAI item_source = NULL)

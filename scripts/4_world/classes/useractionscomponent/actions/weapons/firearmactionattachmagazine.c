@@ -93,7 +93,7 @@ class FirearmActionAttachMagazine : FirearmActionBase
 	
 	override bool Post_SetupAction( ActionData action_data )
 	{
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			Weapon_Base wpn = Weapon_Base.Cast(action_data.m_MainItem);
 			int muzzle_index = wpn.GetCurrentMuzzle();
@@ -313,7 +313,7 @@ class FirearmActionAttachMagazineQuick : FirearmActionBase
 	
 	override bool Post_SetupAction( ActionData action_data )
 	{
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			Weapon_Base wpn = Weapon_Base.Cast(action_data.m_MainItem);
 			int muzzle_index = wpn.GetCurrentMuzzle();
@@ -337,9 +337,6 @@ class FirearmActionAttachMagazineQuick : FirearmActionBase
 	
 	override bool InventoryReservation( ActionData action_data)
 	{
-		if (g_Game.IsServer())
-			return true;
-
 		if( (IsLocal() || !UseAcknowledgment()) && IsInstant() )
 			return true;
 		

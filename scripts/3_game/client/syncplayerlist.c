@@ -4,12 +4,12 @@ class SyncPlayerList
 
 	void CreatePlayerList()
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			m_PlayerList = new array<ref SyncPlayer>();
 			
 			array<PlayerIdentity> identities = new array<PlayerIdentity>();
-			g_Game.GetPlayerIndentities(identities);
+			GetGame().GetPlayerIndentities(identities);
 
 			foreach (auto identity : identities)
 			{

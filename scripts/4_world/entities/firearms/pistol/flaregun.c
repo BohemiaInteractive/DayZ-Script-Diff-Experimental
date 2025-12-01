@@ -143,20 +143,5 @@ class Flaregun: Weapon_Base
 		SelectionBulletHide();
 
 		m_fsm.Start();
-		
-		
 	}
-	override void OnDebugSpawn()
-	{
-		SpawnAmmo("Ammo_Flare",SAMF_DEFAULT);
-		
-		EntityAI entity;
-		if ( Class.CastTo(entity, this) )
-		{
-			entity.SpawnEntityOnGroundPos("Ammo_Flare", entity.GetPosition());
-			entity.SpawnEntityOnGroundPos("Ammo_Flare", entity.GetPosition());
-			entity.SpawnEntityOnGroundPos("Ammo_Flare", entity.GetPosition());
-		}
-	}	
-	
 };

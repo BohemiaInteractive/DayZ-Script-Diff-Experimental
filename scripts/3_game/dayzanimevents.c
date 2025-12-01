@@ -143,12 +143,12 @@ class AnimSoundEvent
 	
 	void AnimSoundEvent(string soundPath)
 	{
-		m_iID = g_Game.ConfigGetInt(soundPath + "id");
+		m_iID = GetGame().ConfigGetInt(soundPath + "id");
 
 		#ifndef SERVER
 
 		string soundSetName;
-		if (g_Game.ConfigGetText(soundPath + "soundSet", soundSetName))
+		if (GetGame().ConfigGetText(soundPath + "soundSet", soundSetName))
 		{
 			m_SoundParams = new SoundParams(soundSetName);
 			if (m_SoundParams.IsValid())
@@ -159,7 +159,7 @@ class AnimSoundEvent
 		}
 		
 		string tableName;
-		if (g_Game.ConfigGetText(soundPath + "soundLookupTable", tableName))
+		if (GetGame().ConfigGetText(soundPath + "soundLookupTable", tableName))
 		{
 			m_Table = AnimSoundLookupTableBank.GetInstance().GetActionTable(tableName);
 			if (m_Table)
@@ -173,10 +173,10 @@ class AnimSoundEvent
 		
 		
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			string noiseName;
-			if (g_Game.ConfigGetText(soundPath + "noise", noiseName))
+			if (GetGame().ConfigGetText(soundPath + "noise", noiseName))
 			{
 				m_NoiseParams = new NoiseParams();
 				m_NoiseParams.Load(noiseName);
@@ -225,12 +225,12 @@ class AnimSoundVoiceEvent
 
 	void AnimSoundVoiceEvent(string soundPath)
 	{
-		m_iID = g_Game.ConfigGetInt(soundPath + "id");
+		m_iID = GetGame().ConfigGetInt(soundPath + "id");
 
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			string soundSetName;
-			g_Game.ConfigGetText(soundPath + "soundSet", soundSetName);
+			GetGame().ConfigGetText(soundPath + "soundSet", soundSetName);
 			m_SoundParams = new SoundParams(soundSetName);
 			if ( m_SoundParams.IsValid() )
 			{
@@ -239,10 +239,10 @@ class AnimSoundVoiceEvent
 			}
 		}
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			string noiseName;
-			if (g_Game.ConfigGetText(soundPath + "noise", noiseName))
+			if (GetGame().ConfigGetText(soundPath + "noise", noiseName))
 			{
 				m_NoiseParams = new NoiseParams();
 				m_NoiseParams.Load(noiseName);
@@ -281,18 +281,18 @@ class AnimStepEvent
 
 	void AnimStepEvent(string stepPath)
 	{
-		m_iID = g_Game.ConfigGetInt(stepPath + "id");
+		m_iID = GetGame().ConfigGetInt(stepPath + "id");
 
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
-			g_Game.ConfigGetText(stepPath + "soundLookupTable", m_sSoundLookupTableName);
+			GetGame().ConfigGetText(stepPath + "soundLookupTable", m_sSoundLookupTableName);
 			m_soundLookupTable = StepSoundLookupTable.Cast( AnimSoundLookupTableBank.GetInstance().GetStepTable(m_sSoundLookupTableName) );
 		}
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			string noiseName;
-			if (g_Game.ConfigGetText(stepPath + "noise",noiseName))
+			if (GetGame().ConfigGetText(stepPath + "noise",noiseName))
 			{
 				m_NoiseParams = new NoiseParams();
 				m_NoiseParams.Load(noiseName);
@@ -313,10 +313,10 @@ class AnimDamageEvent
 
 	void AnimDamageEvent(string damagePath)
 	{
-		m_iID = g_Game.ConfigGetInt(damagePath + "id");
+		m_iID = GetGame().ConfigGetInt(damagePath + "id");
 		
 		string damageName;
-		g_Game.ConfigGetText(damagePath + "damage", damageName);
+		GetGame().ConfigGetText(damagePath + "damage", damageName);
 		m_DamageParams = new AnimDamageParams(damageName);
 	}
 }
@@ -336,14 +336,14 @@ class AnimDamageParams
 		m_sName = damageName;
 		string damagePath = DAMAGE_CFG_CLASS + damageName + " ";
 
-		g_Game.ConfigGetText(damagePath + "bone", m_sBoneName);
-		g_Game.ConfigGetText(damagePath + "ammo", m_sAmmoName);
-		m_fRadius = g_Game.ConfigGetFloat(damagePath + "radius");
-		m_fDuration = g_Game.ConfigGetFloat(damagePath + "duration");
+		GetGame().ConfigGetText(damagePath + "bone", m_sBoneName);
+		GetGame().ConfigGetText(damagePath + "ammo", m_sAmmoName);
+		m_fRadius = GetGame().ConfigGetFloat(damagePath + "radius");
+		m_fDuration = GetGame().ConfigGetFloat(damagePath + "duration");
 		
 		m_bInvertTeams = false;
 		string str_invert_teams_cfg;
-		g_Game.ConfigGetText(damagePath + "invertTeams", str_invert_teams_cfg);
+		GetGame().ConfigGetText(damagePath + "invertTeams", str_invert_teams_cfg);
 		str_invert_teams_cfg.ToLower();
 		if (str_invert_teams_cfg == "true")
 		{

@@ -40,7 +40,7 @@ class DeveloperFreeCamera
 			FreeDebugCamera.GetInstance().SetActive(true);
 
 			#ifdef DEVELOPER
-			g_Game.GetMission().RefreshCrosshairVisibility();
+			GetGame().GetMission().RefreshCrosshairVisibility();
 			#endif
 		}
 		else
@@ -61,9 +61,8 @@ class DeveloperFreeCamera
 				FreeDebugCamera.GetInstance().SetActive(false);
 
 				#ifdef DEVELOPER
-				Mission mission = g_Game.GetMission();
-				if (mission)
-					mission.RefreshCrosshairVisibility();
+				if (GetGame().GetMission())
+					GetGame().GetMission().RefreshCrosshairVisibility();
 				#endif
 			}
 		}
@@ -78,7 +77,7 @@ class DeveloperFreeCamera
 		if (player)
 		{
 			#ifdef DEVELOPER
-			if (!g_Game.IsMultiplayer())
+			if (!GetGame().IsMultiplayer())
 			{
 				PluginSceneManager sceneManager = PluginSceneManager.Cast(GetPlugin(PluginSceneManager));
 				
@@ -86,7 +85,7 @@ class DeveloperFreeCamera
 					sceneManager.EditorToggle();
 			}
 			
-			g_Game.GetMission().RefreshCrosshairVisibility();
+			GetGame().GetMission().RefreshCrosshairVisibility();
 			#endif
 		}
 	}

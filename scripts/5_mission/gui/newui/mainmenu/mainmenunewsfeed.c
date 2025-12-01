@@ -63,32 +63,32 @@ class MainMenuNewsfeed extends ScriptedWidgetEventHandler
 	
 	void OpenDLC()
 	{
-		g_Game.OpenURL( "https://store.steampowered.com/app/830660/Survivor_GameZ/" );
+		GetGame().OpenURL( "https://store.steampowered.com/app/830660/Survivor_GameZ/" );
 	}
 	
 	void OpenDiscord()
 	{
-		g_Game.OpenURL( "https://discord.gg/bXkyMNm" );
+		GetGame().OpenURL( "https://discord.gg/bXkyMNm" );
 	}
 	
 	void OpenFeedback()
 	{
-		g_Game.OpenURL( "https://feedback.bistudio.com/tag/dayz" );
+		GetGame().OpenURL( "https://feedback.bistudio.com/tag/dayz" );
 	}
 	
 	void OpenForums()
 	{
-		g_Game.OpenURL( "https://forums.dayz.com" );
+		GetGame().OpenURL( "https://forums.dayz.com" );
 	}
 	
 	void OpenTwitter()
 	{
-		g_Game.OpenURL( "https://twitter.com/DayZ" );
+		GetGame().OpenURL( "https://twitter.com/DayZ" );
 	}
 	
 	void OpenYoutube()
 	{
-		g_Game.OpenURL( "https://www.youtube.com/user/DayZDevTeam" );
+		GetGame().OpenURL( "https://www.youtube.com/user/DayZDevTeam" );
 	}
 	
 	override bool OnClick( Widget w, int x, int y, int button )

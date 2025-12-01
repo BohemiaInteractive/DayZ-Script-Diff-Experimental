@@ -27,33 +27,23 @@ class HandTakingAnimated_Show extends HandStartAction
 				}
 				#endif
 				
-				if (g_Game.IsDedicatedServer())
+				if (!GetGame().IsMultiplayer())
 				{
-					g_Game.ClearJunctureEx(e.m_Player, m_Dst.GetItem());
+					GameInventory.LocationSyncMoveEntity(m_Src, m_Dst);
+					m_Player.OnItemInHandsChanged();
 				}
 				else
 				{
-					m_Player.GetHumanInventory().ClearInventoryReservationEx(m_Dst.GetItem(), m_Dst);
-				}
-				
-				#ifdef DIAG_DEVELOPER
-				if (g_Game.IsMultiplayer() && InventoryDebug.IsHandAckEnable())
-				{
-					if (!g_Game.IsDedicatedServer())
+					if (!GetGame().IsDedicatedServer())
 					{
+						m_Player.GetHumanInventory().ClearInventoryReservationEx(m_Dst.GetItem(), m_Dst);
 						m_Player.GetHumanInventory().PostDeferredEventTakeToDst(InventoryMode.JUNCTURE, m_Src, m_Dst);
 					}
-				}
-				else
-				{
-				#endif
-					if (GameInventory.LocationSyncMoveEntity(m_Src, m_Dst))
+					else
 					{
-						m_Player.OnItemInHandsChanged();
+						GetGame().ClearJunctureEx(e.m_Player, m_Dst.GetItem());
 					}
-				#ifdef DIAG_DEVELOPER
 				}
-				#endif	
 			}
 			else
 			{
@@ -135,8 +125,8 @@ class HandAnimatedTakingFromAtt extends HandStateBase
 		if (m_Dst)
 		{
 			m_Player.GetHumanInventory().ClearInventoryReservationEx(m_Dst.GetItem(), m_Dst);
-			if ( g_Game.IsServer() )
-				g_Game.ClearJunctureEx(e.m_Player, m_Dst.GetItem());
+			if ( GetGame().IsServer() )
+				GetGame().ClearJunctureEx(e.m_Player, m_Dst.GetItem());
 		}
 		m_Dst = null;
 

@@ -24,18 +24,11 @@ class CivilianSedan extends CarScript
 		SetEnginePos("0 0.7 1.6");
 	}
 	
-	void ~CivilianSedan()
-	{
-		m_UTSource = null;
-		m_UTSSettings = null;
-		m_UTSLEngine = null;
-	}
-
 	override void EEInit()
 	{		
 		super.EEInit();
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_ManualUpdate 		= true;
@@ -53,10 +46,9 @@ class CivilianSedan extends CarScript
 	{
 		super.OnEngineStart();
 
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
-			if (m_UTSource)
-				m_UTSource.SetDefferedActive(true, 20.0);
+			m_UTSource.SetDefferedActive(true, 20.0);
 		}
 	}
 	
@@ -64,18 +56,17 @@ class CivilianSedan extends CarScript
 	{
 		super.OnEngineStop();
 
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
-			if (m_UTSource)
-				m_UTSource.SetDefferedActive(false, 10.0);
+			m_UTSource.SetDefferedActive(false, 10.0);
 		}
 	}
 	
 	override void EOnPostSimulate(IEntity other, float timeSlice)
 	{
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
-			if (m_UTSource && m_UTSource.IsActive())
+			if (m_UTSource.IsActive())
 			{
 				m_UTSource.Update(m_UTSSettings, m_UTSLEngine);
 			}
@@ -411,22 +402,21 @@ class CivilianSedan extends CarScript
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GameInventory inventory = GetInventory();
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
 
-		inventory.CreateInInventory("CivSedanDoors_Driver");
-		inventory.CreateInInventory("CivSedanDoors_CoDriver");
-		inventory.CreateInInventory("CivSedanDoors_BackLeft");
-		inventory.CreateInInventory("CivSedanDoors_BackRight");
-		inventory.CreateInInventory("CivSedanHood");
-		inventory.CreateInInventory("CivSedanTrunk");
+		GetInventory().CreateInInventory("CivSedanDoors_Driver");
+		GetInventory().CreateInInventory("CivSedanDoors_CoDriver");
+		GetInventory().CreateInInventory("CivSedanDoors_BackLeft");
+		GetInventory().CreateInInventory("CivSedanDoors_BackRight");
+		GetInventory().CreateInInventory("CivSedanHood");
+		GetInventory().CreateInInventory("CivSedanTrunk");
 
 		//-----IN CAR CARGO
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
 	}
 	
 	override float GetPushForceCoefficientMultiplier()
@@ -443,22 +433,21 @@ class CivilianSedan_Wine extends CivilianSedan
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GameInventory inventory = GetInventory();
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
 
-		inventory.CreateInInventory("CivSedanDoors_Driver_Wine");
-		inventory.CreateInInventory("CivSedanDoors_CoDriver_Wine");
-		inventory.CreateInInventory("CivSedanDoors_BackLeft_Wine");
-		inventory.CreateInInventory("CivSedanDoors_BackRight_Wine");
-		inventory.CreateInInventory("CivSedanHood_Wine");
-		inventory.CreateInInventory("CivSedanTrunk_Wine");
+		GetInventory().CreateInInventory("CivSedanDoors_Driver_Wine");
+		GetInventory().CreateInInventory("CivSedanDoors_CoDriver_Wine");
+		GetInventory().CreateInInventory("CivSedanDoors_BackLeft_Wine");
+		GetInventory().CreateInInventory("CivSedanDoors_BackRight_Wine");
+		GetInventory().CreateInInventory("CivSedanHood_Wine");
+		GetInventory().CreateInInventory("CivSedanTrunk_Wine");
 
 		//-----IN CAR CARGO
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
 	}
 }
 
@@ -470,21 +459,20 @@ class CivilianSedan_Black extends CivilianSedan
 		SpawnAdditionalItems();
 		FillUpCarFluids();
 
-		GameInventory inventory = GetInventory();
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
 
-		inventory.CreateInInventory("CivSedanDoors_Driver_Black");
-		inventory.CreateInInventory("CivSedanDoors_CoDriver_Black");
-		inventory.CreateInInventory("CivSedanDoors_BackLeft_Black");
-		inventory.CreateInInventory("CivSedanDoors_BackRight_Black");
-		inventory.CreateInInventory("CivSedanHood_Black");
-		inventory.CreateInInventory("CivSedanTrunk_Black");
+		GetInventory().CreateInInventory("CivSedanDoors_Driver_Black");
+		GetInventory().CreateInInventory("CivSedanDoors_CoDriver_Black");
+		GetInventory().CreateInInventory("CivSedanDoors_BackLeft_Black");
+		GetInventory().CreateInInventory("CivSedanDoors_BackRight_Black");
+		GetInventory().CreateInInventory("CivSedanHood_Black");
+		GetInventory().CreateInInventory("CivSedanTrunk_Black");
 
 		//-----IN CAR CARGO
-		inventory.CreateInInventory("CivSedanWheel");
-		inventory.CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
+		GetInventory().CreateInInventory("CivSedanWheel");
 	}
 }

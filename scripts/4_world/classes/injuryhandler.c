@@ -85,7 +85,7 @@ class InjuryAnimationHandler
 			m_AnimationChange = false;
 		}
 
-		if ( g_Game.IsClient() ) 
+		if ( GetGame().IsClient() ) 
 			return;
 		
 		m_TimeSinceLastTick += deltaT;

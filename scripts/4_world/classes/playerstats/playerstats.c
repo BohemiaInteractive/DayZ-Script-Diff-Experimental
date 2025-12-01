@@ -34,7 +34,7 @@ class PlayerStats
 	
 	void ~PlayerStats()
 	{
-		//if( g_Game && g_Game.IsDebugActions() ) GatherAllRecords();
+		//if( GetGame() && GetGame().IsDebugActions() ) GatherAllRecords();
 	}
 	
 	
@@ -98,7 +98,7 @@ class PlayerStats
 	
 	void SaveStats( ParamsWriteContext ctx )
 	{
-		int current_version = g_Game.SaveVersion();
+		int current_version = GetGame().SaveVersion();
 		PlayerStatsPCO_Base pco = GetPCO(current_version);
 		
 		if ( pco )

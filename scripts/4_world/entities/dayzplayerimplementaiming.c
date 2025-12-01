@@ -95,7 +95,7 @@ class DayZPlayerImplementAiming
 	
 	void OnRaiseBegin(DayZPlayerImplement player)
 	{
-		Weapon_Base weapon = Weapon_Base.Cast(player.GetEntityInHands());
+		Weapon_Base weapon = Weapon_Base.Cast(player.GetHumanInventory().GetEntityInHands());
 		if (weapon)
 		{
 			m_SwayModifier = weapon.GetPropertyModifierObject().m_SwayModifiers;

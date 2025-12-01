@@ -44,7 +44,7 @@ class ActionViewBinoculars : ActionViewOptics
 			{
 				opticBase.SetPlayer(player);
 				
-				if (g_Game.IsServer())
+				if (GetGame().IsServer())
 					opticBase.StartWorkServer();
 			}
 		}
@@ -66,7 +66,7 @@ class ActionViewBinoculars : ActionViewOptics
 			{
 				opticBase.SetPlayer(null);
 				
-				if (g_Game.IsServer())
+				if (GetGame().IsServer())
 					opticBase.StopWorkServer();
 			}
 		}

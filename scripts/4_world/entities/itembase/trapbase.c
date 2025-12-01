@@ -87,7 +87,7 @@ class TrapBase extends ItemBase
     {
         super.OnVariablesSynchronized();
 		
-		if (g_Game.IsMultiplayer())
+		if (GetGame().IsMultiplayer())
 		{
 			if (m_IsActive && !m_IsInProgress)
 				SetActive();
@@ -101,9 +101,9 @@ class TrapBase extends ItemBase
 	{
 		super.EEDelete(parent);
 
-		if (g_Game && m_TrapTrigger)
+		if (GetGame() && m_TrapTrigger)
 		{
-			g_Game.ObjectDelete(m_TrapTrigger);
+			GetGame().ObjectDelete(m_TrapTrigger);
 			m_TrapTrigger = null;
 		}
 	}
@@ -171,7 +171,7 @@ class TrapBase extends ItemBase
 
 	bool IsPlaceable()
 	{
-		if ( GetHierarchyRootPlayer() != null && GetHierarchyRootPlayer().GetEntityInHands() == this )
+		if ( GetHierarchyRootPlayer() != null && GetHierarchyRootPlayer().GetHumanInventory().GetEntityInHands() == this )
 		{
 			PlayerBase player = PlayerBase.Cast( GetHierarchyRootPlayer() );
 			
@@ -193,7 +193,7 @@ class TrapBase extends ItemBase
 		{
 			return false;
 		}
-		else if ( g_Game.SurfaceIsPond( position[0], position[2] ) )
+		else if ( GetGame().SurfaceIsPond( position[0], position[2] ) )
 		{
 			return false;
 		}
@@ -205,7 +205,7 @@ class TrapBase extends ItemBase
 	{
 		SetInactive(false);
 		RefreshState();
-		g_Game.RPCSingleParam(this, ERPCs.RPC_TRAP_DISARM, null, true);
+		GetGame().RPCSingleParam(this, ERPCs.RPC_TRAP_DISARM, null, true);
 
 		OnDisarm();
 	}
@@ -215,7 +215,7 @@ class TrapBase extends ItemBase
 	
 	void SnapOnObject(EntityAI victim)
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			if ( m_Timer )
 			{
@@ -250,7 +250,7 @@ class TrapBase extends ItemBase
 						{
 							int item_size_x = 1;
 							int item_size_y = 1;
-							g_Game.GetInventoryItemSize(victim_item, item_size_x, item_size_y);
+							GetGame().GetInventoryItemSize(victim_item, item_size_x, item_size_y);
 							
 							float add_damage = 300 * damage_coef / Math.Clamp(item_size_x * item_size_y, 1, int.MAX);
 							victim_item.DecreaseHealth("", "", add_damage);
@@ -280,13 +280,13 @@ class TrapBase extends ItemBase
 	// Synchronizes states
 	protected void Synch(EntityAI victim)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (victim && !victim.GetAllowDamage())
 				return;
 
 			Param1<EntityAI> p = new Param1<EntityAI>(victim);
-			g_Game.RPCSingleParam(this, ERPCs.RPC_TRAP_VICTIM, p, true);
+			GetGame().RPCSingleParam(this, ERPCs.RPC_TRAP_VICTIM, p, true);
 		}
 		
 	}	
@@ -296,7 +296,7 @@ class TrapBase extends ItemBase
 	{
 		super.OnRPC(sender, rpc_type, ctx);
 		
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			switch (rpc_type)
 			{
@@ -314,6 +314,16 @@ class TrapBase extends ItemBase
 				case ERPCs.RPC_TRAP_DISARM:
 					OnDisarm();
 					break;
+				
+				case SoundTypeTrap.ACTIVATING:
+			
+					Param1<bool> p = new Param1<bool>(false);
+					
+					bool isActivating = false;
+					if (ctx.Read(p))
+						isActivating = p.param1;
+								
+					break;
 			}
 		}
 	}
@@ -325,7 +335,7 @@ class TrapBase extends ItemBase
 			return;
 		}
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			// item is owned by player
 			if ( GetHierarchyRootPlayer() != NULL && m_AnimationPhaseGrounded != "" )
@@ -368,7 +378,7 @@ class TrapBase extends ItemBase
 
 	void SetupTrap()
 	{ 
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (GetHierarchyRootPlayer() && GetHierarchyRootPlayer().CanDropEntity(this))
 				SetupTrapPlayer(PlayerBase.Cast(GetHierarchyRootPlayer()));
@@ -377,7 +387,7 @@ class TrapBase extends ItemBase
 
 	void SetupTrapPlayer( PlayerBase player, bool set_position = true )
 	{ 
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (set_position)
 			{
@@ -395,7 +405,7 @@ class TrapBase extends ItemBase
 
 	void AddDefect()
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			DecreaseHealth( "", "", m_DefectRate );
 		}
@@ -413,7 +423,7 @@ class TrapBase extends ItemBase
 			AddDefect();
 		}
 			
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			CreateTrigger();
 			RefreshState();
@@ -427,7 +437,7 @@ class TrapBase extends ItemBase
 
 	void StartActivate(PlayerBase player)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			m_Timer = new Timer(CALL_CATEGORY_SYSTEM);
 			HideSelection("safety_pin");
@@ -464,14 +474,14 @@ class TrapBase extends ItemBase
 	
 	void CreateTrigger()
 	{
-		if (Class.CastTo(m_TrapTrigger, g_Game.CreateObjectEx("TrapTrigger", GetPosition(), SPAWN_FLAGS)))
+		if (Class.CastTo(m_TrapTrigger, GetGame().CreateObjectEx("TrapTrigger", GetPosition(), SPAWN_FLAGS)))
 		{
 			vector mins = "-0.01 -0.05 -0.01";
 			vector maxs = "0.01 0.5 0.01";
 			m_TrapTrigger.SetOrientation(GetOrientation());
 			m_TrapTrigger.SetExtents(mins, maxs);
 			m_TrapTrigger.SetParentObject(this);
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeferredEnableTrigger);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeferredEnableTrigger);
 		}
 	}
 	
@@ -494,7 +504,7 @@ class TrapBase extends ItemBase
 	{
 		super.OnItemLocationChanged(old_owner, new_owner);
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			RefreshState();
 
@@ -519,7 +529,7 @@ class TrapBase extends ItemBase
 	{
 		super.EEItemAttached(item, slot_name);
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 			RefreshState();
 	}	
 	
@@ -527,7 +537,7 @@ class TrapBase extends ItemBase
 	{
 		super.EEItemDetached(item, slot_name);
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 			RefreshState();
 	}
 	
@@ -535,7 +545,7 @@ class TrapBase extends ItemBase
 	{
 		super.OnPlacementComplete(player, position, orientation);
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			SetOrientation(orientation);
 			SetPosition(position);

@@ -1,3 +1,4 @@
+
 //-----------------------------------------------------------------------------
 class ItemSuppressor extends InventoryItemSuper
 {
@@ -210,42 +211,6 @@ class CarWheel extends InventoryItemSuper
 	{
 		return true;
 	}
-
-	string GetRuinedReplacement()
-	{
-		string newWheel = "";
-		switch (GetType())
-		{
-			case "HatchbackWheel":
-				newWheel = "HatchbackWheel_Ruined";
-				break;
-	
-			case "CivSedanWheel":
-				newWheel = "CivSedanWheel_Ruined";
-				break;
-	
-			case "Hatchback_02_Wheel":
-				newWheel = "Hatchback_02_Wheel_Ruined";
-				break;
-			
-			case "Sedan_02_Wheel":
-				newWheel = "Sedan_02_Wheel_Ruined";
-				break;
-	
-			case "Truck_01_Wheel":
-				newWheel = "Truck_01_Wheel_Ruined";
-				break;
-	
-			case "Truck_01_WheelDouble":
-				newWheel = "Truck_01_WheelDouble_Ruined";
-				break;
-
-			case "Offroad_02_Wheel":
-				newWheel = "Offroad_02_Wheel_Ruined";
-				break;
-		}
-		return newWheel;
-	}
 	
 	override void EEHealthLevelChanged(int oldLevel, int newLevel, string zone)
 	{
@@ -253,7 +218,37 @@ class CarWheel extends InventoryItemSuper
 		
 		if (newLevel ==  GameConstants.STATE_RUINED)
 		{
-			string newWheel = GetRuinedReplacement();
+			string newWheel = "";
+			switch (GetType())
+			{
+				case "HatchbackWheel":
+					newWheel = "HatchbackWheel_Ruined";
+					break;
+	
+				case "CivSedanWheel":
+					newWheel = "CivSedanWheel_Ruined";
+					break;
+	
+				case "Hatchback_02_Wheel":
+					newWheel = "Hatchback_02_Wheel_Ruined";
+					break;
+				
+				case "Sedan_02_Wheel":
+					newWheel = "Sedan_02_Wheel_Ruined";
+					break;
+	
+				case "Truck_01_Wheel":
+					newWheel = "Truck_01_Wheel_Ruined";
+					break;
+	
+				case "Truck_01_WheelDouble":
+					newWheel = "Truck_01_WheelDouble_Ruined";
+					break;
+
+				case "Offroad_02_Wheel":
+					newWheel = "Offroad_02_Wheel_Ruined";
+					break;
+			}
 			
 			if (newWheel != "")
 			{
@@ -332,51 +327,45 @@ class CarWheel_Ruined : CarWheel
 
 		return true;
 	}
-
-	string GetReplacement()
-	{
-		string newWheel = "";
-		switch (GetType())
-		{
-			case "HatchbackWheel_Ruined":
-				newWheel = "HatchbackWheel";
-				break;
-	
-			case "CivSedanWheel_Ruined":
-				newWheel = "CivSedanWheel";
-				break;
-	
-			case "Hatchback_02_Wheel_Ruined":
-				newWheel = "Hatchback_02_Wheel";
-				break;
-			
-			case "Sedan_02_Wheel_Ruined":
-				newWheel = "Sedan_02_Wheel";
-				break;
-	
-			case "Truck_01_Wheel_Ruined":
-				newWheel = "Truck_01_Wheel";
-				break;
-	
-			case "Truck_01_WheelDouble_Ruined":
-				newWheel = "Truck_01_WheelDouble";
-				break;
-
-			case "Offroad_02_Wheel_Ruined":
-				newWheel = "Offroad_02_Wheel";
-				break;
-		}
-		return newWheel;
-	}
 	
 	override void EEHealthLevelChanged(int oldLevel, int newLevel, string zone)
 	{
 		super.EEHealthLevelChanged( oldLevel, newLevel, zone );
-#ifdef DIAG_DEVELOPER
+		#ifdef DEVELOPER
 		// used when fixing the whole car through debug
 		if (newLevel ==  GameConstants.STATE_PRISTINE)
 		{
-			string newWheel = GetReplacement();
+			string newWheel = "";
+			switch (GetType())
+			{
+				case "HatchbackWheel_Ruined":
+					newWheel = "HatchbackWheel";
+					break;
+	
+				case "CivSedanWheel_Ruined":
+					newWheel = "CivSedanWheel";
+					break;
+	
+				case "Hatchback_02_Wheel_Ruined":
+					newWheel = "Hatchback_02_Wheel";
+					break;
+				
+				case "Sedan_02_Wheel_Ruined":
+					newWheel = "Sedan_02_Wheel";
+					break;
+	
+				case "Truck_01_Wheel_Ruined":
+					newWheel = "Truck_01_Wheel";
+					break;
+	
+				case "Truck_01_WheelDouble_Ruined":
+					newWheel = "Truck_01_WheelDouble";
+					break;
+
+				case "Offroad_02_Wheel_Ruined":
+					newWheel = "Offroad_02_Wheel";
+					break;
+			}
 
 			if (newWheel != "")
 			{
@@ -389,7 +378,7 @@ class CarWheel_Ruined : CarWheel
 				GetInventory().ReplaceItemWithNew(InventoryMode.SERVER, lambda);
 			}
 		}
-#endif
+		#endif
 	}
 	
 }
@@ -709,7 +698,7 @@ class CarRadiator extends InventoryItemSuper
 
 	override void EEKilled(Object killer)
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			Car car;
 			EntityAI parent = GetHierarchyParent();
@@ -971,9 +960,9 @@ class Clothing_Base extends ItemBase
 	void MutePlayer(PlayerBase player, bool state)
 	{
 		#ifdef SERVER
-		if (g_Game && player.GetIdentity() != null)
+		if (GetGame() && player.GetIdentity() != null)
 		{
-			g_Game.SetVoiceEffect(player, GetVoiceEffect(), state);
+			GetGame().SetVoiceEffect(player, GetVoiceEffect(), state);
 		}
 		#endif
 	}
@@ -1057,13 +1046,13 @@ class ItemMap extends InventoryItemSuper
 	
 	void InitMapState()
 	{
-		string path = "CfgWorlds " + g_Game.GetWorldName();
+		string path = "CfgWorlds " + GetGame().GetWorldName();
 		
-		g_Game.ConfigGetText(path + " mapDisplayNameKey",m_DisplayName);
-		g_Game.ConfigGetText(path + " mapDescriptionKey",m_Description);
-		g_Game.ConfigGetText(path + " mapTextureClosed",m_TextureClosed);
-		g_Game.ConfigGetText(path + " mapTextureOpened",m_TextureOpened);
-		g_Game.ConfigGetText(path + " mapTextureLegend",m_TextureLegend);
+		GetGame().ConfigGetText(path + " mapDisplayNameKey",m_DisplayName);
+		GetGame().ConfigGetText(path + " mapDescriptionKey",m_Description);
+		GetGame().ConfigGetText(path + " mapTextureClosed",m_TextureClosed);
+		GetGame().ConfigGetText(path + " mapTextureOpened",m_TextureOpened);
+		GetGame().ConfigGetText(path + " mapTextureLegend",m_TextureLegend);
 		
 		SetObjectTexture(0,m_TextureClosed);
 		SetObjectTexture(1,m_TextureOpened);
@@ -1071,7 +1060,7 @@ class ItemMap extends InventoryItemSuper
 		
 		//m_MarkerArray = new array<vector,int,int,string>;
 		m_MapMarkerArray = new array<ref MapMarker>;
-		if (g_Game.IsMultiplayer() && g_Game.IsServer())
+		if (GetGame().IsMultiplayer() && GetGame().IsServer())
 		{
 			SyncMapMarkers();
 		}
@@ -1122,7 +1111,7 @@ class ItemMap extends InventoryItemSuper
 		//Param1<ref array<vector,int,int,string>> params = new Param1<ref array<vector,int,int,string>>( m_MarkerArray );
 		Param1<ref array<ref MapMarker>> params = new Param1<ref array<ref MapMarker>>( m_MapMarkerArray );
 		
-		if (g_Game.IsServer() && GetHierarchyRootPlayer()) //TODO do we need PlayerIdentity here?
+		if (GetGame().IsServer() && GetHierarchyRootPlayer()) //TODO do we need PlayerIdentity here?
 		{
 			pid = GetHierarchyRootPlayer().GetIdentity();
 			RPCSingleParam(ERPCs.RPC_SEND_MAP_MARKERS,params,true,pid);

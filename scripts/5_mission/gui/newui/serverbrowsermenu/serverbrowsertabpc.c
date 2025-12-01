@@ -28,10 +28,10 @@ class ServerBrowserTabPc extends ServerBrowserTab
 	protected override void Construct(Widget parent, ServerBrowserMenuNew menu, TabType type)
 	{
 	#ifdef PLATFORM_CONSOLE
-		m_Root = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/server_browser/xbox/server_browser_tab.layout", parent);
+		m_Root = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/server_browser/xbox/server_browser_tab.layout", parent);
 	#else
 	#ifdef PLATFORM_WINDOWS
-		m_Root = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/server_browser/pc/server_browser_tab_pages.layout", parent);
+		m_Root = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/server_browser/pc/server_browser_tab_pages.layout", parent);
 	#endif
 	#endif
 
@@ -223,28 +223,11 @@ class ServerBrowserTabPc extends ServerBrowserTab
 		
 		if (m_TotalLoadedServers == 0)
 		{
-			switch (m_TabType)
-			{
-				case TabType.OFFICIAL:
-				case TabType.COMMUNITY:
-				{
-					SwitchToFilters();
-					break;
-				}
-			}
+			if (GetTabType() != TabType.FAVORITE && GetTabType() != TabType.LAN)
+				SwitchToFilters();
 		}
-		
-		int totalVisibleEntries = 0;
-		foreach(string serverID, ServerBrowserEntry entry: m_EntryWidgets)
-		{
-			if (entry.GetRoot().IsVisible())
-				totalVisibleEntries++;
-		}
-		
-		if (GetTabType() == TabType.FAVORITE && totalVisibleEntries == 0)
-			g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(m_Menu.SwitchToOfficalTab);
 	}
-		
+	
 	override void OnLoadServersAsyncPC(GetServersResult result_list, EBiosError error, string response)
 	{
 		if (result_list)
@@ -1091,7 +1074,6 @@ class ServerBrowserTabPc extends ServerBrowserTab
 	{
 		int lastFilledIndexOnPage = 0;
 		m_TotalLoadedServers = m_EntriesSorted[m_SortType].Count();
-				
 		ServerBrowserEntry entry;
 		
 		m_EntryWidgets.Clear();
@@ -1106,12 +1088,12 @@ class ServerBrowserTabPc extends ServerBrowserTab
 				
 				if (server_info.m_Favorite)
 				{
-					m_OnlineFavServers.Insert(server_info.GetIpPort());
+					m_OnlineFavServers.Insert(server_info.m_Id);
 				}
 				
-				server_info.m_IsSelected = (server_info.GetIpPort() == m_CurrentSelectedServer);
+				server_info.m_IsSelected = (server_info.m_Id == m_CurrentSelectedServer);
 				
-				entry = GetServerEntryByIndex(i, server_info.GetIpPort());
+				entry = GetServerEntryByIndex(i, server_info.m_Id);
 				entry.Show(true);
 				entry.SetIsOnline(true);
 				entry.FillInfo(server_info);
@@ -1131,7 +1113,8 @@ class ServerBrowserTabPc extends ServerBrowserTab
 			}
 		}
 		
-		LoadExtraEntries(lastFilledIndexOnPage);		
+		LoadExtraEntries(lastFilledIndexOnPage);
+		
 		m_ServerList.Update();
 	}
 	

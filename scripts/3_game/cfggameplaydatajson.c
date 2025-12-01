@@ -43,9 +43,9 @@ class ITEM_GeneralData : ITEM_DataBase
 {
 	override void InitServer()
 	{
-		disableBaseDamage = g_Game.ServerConfigGetInt( "disableBaseDamage" );
-		disableContainerDamage = g_Game.ServerConfigGetInt( "disableContainerDamage" );
-		disableRespawnDialog = g_Game.ServerConfigGetInt("disableRespawnDialog");
+		disableBaseDamage = GetGame().ServerConfigGetInt( "disableBaseDamage" );
+		disableContainerDamage = GetGame().ServerConfigGetInt( "disableContainerDamage" );
+		disableRespawnDialog = GetGame().ServerConfigGetInt("disableRespawnDialog");
 	}
 	
 	override bool ValidateServer()
@@ -73,7 +73,7 @@ class ITEM_PlayerData : ITEM_DataBase
 	
 	override void InitServer()
 	{
-		disablePersonalLight = g_Game.ServerConfigGetInt( "disablePersonalLight" );
+		disablePersonalLight = GetGame().ServerConfigGetInt( "disablePersonalLight" );
 	}
 	
 	override bool ValidateServer()
@@ -170,7 +170,7 @@ class ITEM_WorldData : ITEM_DataBase
 {
 	override void InitServer()
 	{
-		lightingConfig = g_Game.ServerConfigGetInt( "lightingConfig" );
+		lightingConfig = GetGame().ServerConfigGetInt( "lightingConfig" );
 		wetnessWeightModifiers = {GameConstants.WEIGHT_DRY,GameConstants.WEIGHT_DAMP,GameConstants.WEIGHT_WET,GameConstants.WEIGHT_SOAKING_WET,GameConstants.WEIGHT_DRENCHED};
 	}
 	

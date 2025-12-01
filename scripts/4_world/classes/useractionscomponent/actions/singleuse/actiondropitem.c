@@ -71,7 +71,7 @@ class ActionDropItem : ActionSingleUseBase
 		
 		ClearInventoryReservationEx(action_data);
 		
-		if (g_Game.IsServer() && g_Game.IsMultiplayer())
+		if (GetGame().IsServer() && GetGame().IsMultiplayer())
 		{
 			action_data.m_Player.ServerDropEntity(action_data.m_Player.GetItemInHands()); // multiplayer server side
 		}

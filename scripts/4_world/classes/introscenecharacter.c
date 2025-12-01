@@ -209,9 +209,9 @@ class IntroSceneCharacter extends Managed
 	void CreateNewCharacterByName( string character_name, bool randomize_equip = true )
 	{
 		m_CharacterType = character_name;
-		g_Game.GetMenuDefaultCharacterData().SetCharacterType(m_CharacterType);
+		GetGame().GetMenuDefaultCharacterData().SetCharacterType(m_CharacterType);
 		if (randomize_equip)
-			g_Game.GetMenuDefaultCharacterData().GenerateRandomEquip();
+			GetGame().GetMenuDefaultCharacterData().GenerateRandomEquip();
 		
 		CreateNewCharacter();
 	}
@@ -220,7 +220,7 @@ class IntroSceneCharacter extends Managed
 	{
 		CharacterUnload();
 		//m_CharacterDta.RequestGetDefaultCharacterData();
-		m_CharacterType = g_Game.GetMenuDefaultCharacterData().GetCharacterType();
+		m_CharacterType = GetGame().GetMenuDefaultCharacterData().GetCharacterType();
 		if (m_CharacterType != "")
 		{
 			CreateNewCharacter();
@@ -237,7 +237,7 @@ class IntroSceneCharacter extends Managed
 			string default_name = Widget.TranslateString( GameConstants.DEFAULT_CHARACTER_NAME );
 			CreateNewCharacterRandom();
 			//m_CharacterDta.SetCharacterName(GameConstants.DEFAULT_CHARACTER_MENU_ID, default_name);
-			g_Game.GetMenuDefaultCharacterData().SetCharacterName(GameConstants.DEFAULT_CHARACTER_NAME);
+			GetGame().GetMenuDefaultCharacterData().SetCharacterName(GameConstants.DEFAULT_CHARACTER_NAME);
 		}
 	}
 	
@@ -269,7 +269,7 @@ class IntroSceneCharacter extends Managed
 		{
 			m_CharacterObj.PlaceOnSurface();
 			m_CharacterObj.SetOrientation(m_CharacterRot);
-			g_Game.GetMenuDefaultCharacterData().EquipDefaultCharacter(m_CharacterObj);
+			GetGame().GetMenuDefaultCharacterData().EquipDefaultCharacter(m_CharacterObj);
 		}
 		
 		//Create New Random Character
@@ -305,9 +305,7 @@ class IntroSceneCharacter extends Managed
 		if (!default_char && m_CharacterDta.GetLastPlayedCharacter() > -1 )
 		{
 			m_CharacterId = m_CharacterDta.GetLastPlayedCharacter();
-			string characterName = g_Game.GetPlayerGameName();
-			m_CharacterDta.GetCharacterName(m_CharacterId, characterName);
-			g_Game.SetPlayerGameName(characterName);
+			m_CharacterDta.GetCharacterName(m_CharacterId, g_Game.GetPlayerGameName());
 		}
 		
 		// Load all avalible options for character creation; mostly legacy stuff
@@ -322,11 +320,11 @@ class IntroSceneCharacter extends Managed
 		m_Characters.Insert( ECharGender.Female,	new array<string> );
 		
 		// Sort character by Gender
-		TStringArray characters = g_Game.ListAvailableCharacters();
+		TStringArray characters = GetGame().ListAvailableCharacters();
 		for (int i = 0; i < characters.Count(); i++)
 		{
 			string char_cfg_name = characters.Get(i);
-			if ( g_Game.IsKindOf(char_cfg_name, "SurvivorMale_Base") )
+			if ( GetGame().IsKindOf(char_cfg_name, "SurvivorMale_Base") )
 			{
 				m_Characters[ECharGender.Male].Insert( char_cfg_name );
 			}
@@ -393,7 +391,7 @@ class IntroSceneCharacter extends Managed
 		string name = GameConstants.DEFAULT_CHARACTER_NAME;		
 		
 #ifdef PLATFORM_CONSOLE
-		BiosUserManager user_manager = g_Game.GetUserManager();
+		BiosUserManager user_manager = GetGame().GetUserManager();
 		if( user_manager )
 		{
 			BiosUser user = user_manager.GetSelectedUser();
@@ -437,7 +435,7 @@ class IntroSceneCharacter extends Managed
 		string character_name;
 		if (char_id == GameConstants.DEFAULT_CHARACTER_MENU_ID)
 		{
-			character_name = g_Game.GetMenuDefaultCharacterData().GetCharacterName();
+			character_name = GetGame().GetMenuDefaultCharacterData().GetCharacterName();
 		}
 		else
 		{
@@ -451,7 +449,7 @@ class IntroSceneCharacter extends Managed
 		string character_name;
 		if (IsDefaultCharacter())
 		{
-			character_name = g_Game.GetMenuDefaultCharacterData().GetCharacterName();
+			character_name = GetGame().GetMenuDefaultCharacterData().GetCharacterName();
 		}
 		else
 		{
@@ -467,7 +465,7 @@ class IntroSceneCharacter extends Managed
 	{
 		if (IsDefaultCharacter())
 		{
-			g_Game.GetMenuDefaultCharacterData().SetCharacterName(name);
+			GetGame().GetMenuDefaultCharacterData().SetCharacterName(name);
 		}
 		else
 		{

@@ -23,7 +23,7 @@ class VideoPlayer extends ScriptedWidgetEventHandler
 	
 	void VideoPlayer(Widget parent)
 	{
-		m_Root = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/video_player.layout", parent);
+		m_Root = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/video_player.layout", parent);
 		m_Root.SetHandler(this);
 		m_Root.SetSort(333);
 		Init();
@@ -95,7 +95,7 @@ class VideoPlayer extends ScriptedWidgetEventHandler
 	
 	private void CreateVideoLoadingEntry(string entryName)
 	{	
-		Widget entry = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/video_player_entry.layout", m_LoadVideo);
+		Widget entry = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/video_player_entry.layout", m_LoadVideo);
 		ButtonWidget entryButton = ButtonWidget.Cast(entry.GetChildren());
 		entryButton.SetText(entryName);
 		entryButton.SetUserID(333);
@@ -118,7 +118,7 @@ class VideoPlayer extends ScriptedWidgetEventHandler
 		{
 			UpdateTime(m_TotalTime, time);
 			m_Progress.SetMinMax(0, time);
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(UpdateTotalTime);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(UpdateTotalTime);
 		}
 	}
 	
@@ -187,7 +187,7 @@ class VideoPlayer extends ScriptedWidgetEventHandler
 		m_PlayButton.Show(false);
 		m_PauseButton.Show(true);
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateCurrentTime, 0, true);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateCurrentTime, 0, true);
 	}
 	
 	protected void OnPlaybackStop()
@@ -197,7 +197,7 @@ class VideoPlayer extends ScriptedWidgetEventHandler
 		
 		UpdateCurrentTime();
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(UpdateCurrentTime);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(UpdateCurrentTime);
 	}
 	
 	protected void OnBufferingStart()
@@ -246,7 +246,7 @@ class VideoPlayer extends ScriptedWidgetEventHandler
 		
 		m_VideoWidget.Load(path + videoPath, m_VideoWidget.IsLooping());
 			
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateTotalTime, 0, true);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateTotalTime, 0, true);
 	}
 	
 	void PlayVideo()

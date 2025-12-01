@@ -28,7 +28,7 @@ class GestureMenuItem
 		m_CanPerformEmote 	= true;
 		
 		PlayerBase player;
-		if (Class.CastTo(player,g_Game.GetPlayer()) && category != GestureCategories.CATEGORIES)
+		if (Class.CastTo(player,GetGame().GetPlayer()) && category != GestureCategories.CATEGORIES)
 		{
 			m_EmoteClass = player.GetEmoteManager().GetNameEmoteMap().Get(id);
 		}
@@ -42,7 +42,7 @@ class GestureMenuItem
 	string GetBoundButtonText()
 	{
 		string ret = "";
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer() && m_EmoteClass && m_EmoteClass.GetInputActionName() != "")
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer() && m_EmoteClass && m_EmoteClass.GetInputActionName() != "")
 		{
 			map<int,ref TStringArray> button_map = InputUtils.GetComboButtonNamesFromInput(m_EmoteClass.GetInputActionName(), EInputDeviceType.MOUSE_AND_KEYBOARD);
 			
@@ -137,14 +137,14 @@ class GesturesMenu extends UIScriptedMenu
 			instance = this;
 		}
 		
-		g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+		GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
 	}
 	
 	void ~GesturesMenu()
 	{
-		if (g_Game && g_Game.GetMission())
+		if (GetGame() && GetGame().GetMission())
 		{
-			g_Game.GetMission().RemoveActiveInputExcludes({"radialmenu"},false);
+			GetGame().GetMission().RemoveActiveInputExcludes({"radialmenu"},false);
 		}
 	}
 
@@ -153,7 +153,7 @@ class GesturesMenu extends UIScriptedMenu
 	//============================================	
 	static void OpenMenu()
 	{
-		g_Game.GetUIManager().EnterScriptedMenu( MENU_GESTURES, NULL );
+		GetGame().GetUIManager().EnterScriptedMenu( MENU_GESTURES, NULL );
 	}
 	
 	static void CloseMenu()
@@ -161,9 +161,9 @@ class GesturesMenu extends UIScriptedMenu
 		//execute on menu release
 		instance.OnMenuRelease();
 		
-		g_Game.GetUIManager().Back();
+		GetGame().GetUIManager().Back();
 		
-		//g_Game.GetMission().RemoveActiveInputExcludes({"radialmenu"},false);
+		//GetGame().GetMission().RemoveActiveInputExcludes({"radialmenu"},false);
 	}
 	
 	static bool CanOpenMenu()
@@ -172,7 +172,7 @@ class GesturesMenu extends UIScriptedMenu
 		{
 			PlayerBase player;
 			HumanInputController hic;
-			if (Class.CastTo(player,g_Game.GetPlayer()) && Class.CastTo(hic,player.GetInputController()) && hic.WeaponADS())
+			if (Class.CastTo(player,GetGame().GetPlayer()) && Class.CastTo(hic,player.GetInputController()) && hic.WeaponADS())
 				return false;
 			else
 				return true;
@@ -194,7 +194,7 @@ class GesturesMenu extends UIScriptedMenu
 	{
 		m_CurrentCategory = -1;
 		
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets( "gui/layouts/radial_menu/radial_gestures/day_z_gestures.layout" );
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets( "gui/layouts/radial_menu/radial_gestures/day_z_gestures.layout" );
 		m_GestureItemCardPanel = layoutRoot.FindAnyWidget( RadialMenu.RADIAL_ITEM_CARD_CONTAINER );
 		
 		//register gestures menu
@@ -222,7 +222,7 @@ class GesturesMenu extends UIScriptedMenu
 	{
 		super.OnShow();
 		
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
@@ -240,7 +240,7 @@ class GesturesMenu extends UIScriptedMenu
 	{
 		super.OnHide();
 		
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
@@ -286,7 +286,7 @@ class GesturesMenu extends UIScriptedMenu
 		super.Update(timeslice);
 		
 		//RefreshGestures(m_CurrentCategory);
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 		if (m_CurrentCategory != GestureCategories.CATEGORIES && m_CurrentCategory != -1 && player)
 		{
 			for (int i = 0; i < m_GestureItems.Count(); i++)
@@ -298,7 +298,7 @@ class GesturesMenu extends UIScriptedMenu
 	
 	void ProcessEmoteConditionRequest(GestureMenuItem gesture_item)
 	{
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 		if (player && m_CurrentCategory != -1)
 		{
 			bool can = player.GetEmoteManager().CanPlayEmote(gesture_item.GetID()) && !player.GetEmoteManager().IsEmotePlaying();
@@ -409,7 +409,7 @@ class GesturesMenu extends UIScriptedMenu
 			GestureMenuItem gesture_item = m_GestureItems.Get( i );
 			
 			//create item card
-			Widget gesture_item_card_widget = Widget.Cast( g_Game.GetWorkspace().CreateWidgets( "gui/layouts/radial_menu/radial_gestures/day_z_gesture_item_card.layout", m_GestureItemCardPanel ) );
+			Widget gesture_item_card_widget = Widget.Cast( GetGame().GetWorkspace().CreateWidgets( "gui/layouts/radial_menu/radial_gestures/day_z_gesture_item_card.layout", m_GestureItemCardPanel ) );
 			gesture_item.SetRadialItemCard( gesture_item_card_widget );
 			
 			//update item card widget
@@ -641,9 +641,9 @@ class GesturesMenu extends UIScriptedMenu
 	{
 		if ( instance.m_IsCategorySelected && instance.m_SelectedItem )
 		{
-			if ( !g_Game.IsDedicatedServer() )
+			if ( !GetGame().IsDedicatedServer() )
 			{
-				PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+				PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 				
 				GestureMenuItem gesture_item;
 				instance.m_SelectedItem.GetUserData( gesture_item );
@@ -687,7 +687,7 @@ class GesturesMenu extends UIScriptedMenu
 		string backAction;
 		int controllerID;
 		
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer() && g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.MOUSE_AND_KEYBOARD)
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer() && GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.MOUSE_AND_KEYBOARD)
 		{
 			selectAction = "UAMenuSelect";
 			backAction = "UAMenuBack";

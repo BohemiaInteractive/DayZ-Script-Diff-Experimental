@@ -16,13 +16,13 @@ class RadialProgressBar
 	void RadialProgressBar()
 	{
 		m_Anim = new AnimatorTimer();
-		g_Game.GetUpdateQueue(CALL_CATEGORY_GUI).Insert(this.Update);
+		GetGame().GetUpdateQueue(CALL_CATEGORY_GUI).Insert(this.Update);
 	}
 	
 	// -----------------------------------------------------------
 	void ~RadialProgressBar()
 	{
-		g_Game.GetUpdateQueue(CALL_CATEGORY_GUI).Remove(this.Update);
+		GetGame().GetUpdateQueue(CALL_CATEGORY_GUI).Remove(this.Update);
 	}
 	
 	void SetProgress( float progress )

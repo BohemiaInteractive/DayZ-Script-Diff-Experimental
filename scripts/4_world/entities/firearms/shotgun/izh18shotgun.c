@@ -16,12 +16,8 @@ class Izh18Shotgun_Base extends RifleSingleShot_Base
 	//Debug menu Spawn Ground Special
 	override void OnDebugSpawn()
 	{
-		SpawnAmmo("Ammo_12gaPellets",SAMF_DEFAULT);
-		
-		EntityAI entity;
-		if ( Class.CastTo(entity, this) )
-		{
-			entity.SpawnEntityOnGroundPos("Ammo_12gaPellets", entity.GetPosition());
-		}
+		super.OnDebugSpawn();
+
+	    SpawnEntityOnGroundPos("Ammo_12gaPellets", GetPosition());
 	}
 };

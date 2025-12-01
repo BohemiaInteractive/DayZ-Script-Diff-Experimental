@@ -18,7 +18,7 @@ class ActionRepackTentCB : ActionContinuousBaseCB
 		Math3D.MatrixToQuat( rotation_matrix, direction );
 			
 		vector ground_position = position;
-		ground_position[1] = g_Game.SurfaceY(ground_position[0],ground_position[2]);
+		ground_position[1] = GetGame().SurfaceY(ground_position[0],ground_position[2]);
 		
 		if ( vector.DistanceSq( m_ActionData.m_Player.GetPosition(), ground_position ) > UAMaxDistances.DEFAULT * UAMaxDistances.DEFAULT)
 		{
@@ -112,7 +112,7 @@ class ActionRepackTent: ActionContinuousBase
 	override void OnFinishProgressServer( ActionData action_data )
 	{			
 		Param1<bool> play = new Param1<bool>( false );
-		g_Game.RPCSingleParam( action_data.m_MainItem, SoundTypeTent.REPACK, play, true );
+		GetGame().RPCSingleParam( action_data.m_MainItem, SoundTypeTent.REPACK, play, true );
 		
 		m_IsFinished = true;
 	}
@@ -137,7 +137,7 @@ class ActionRepackTent: ActionContinuousBase
 		}
 		else
 		{
-			if ( g_Game.IsMultiplayer() )
+			if ( GetGame().IsMultiplayer() )
 			{		
 				if ( action_data.m_MainItem )
 				{
@@ -183,7 +183,7 @@ class ActionRepackTent: ActionContinuousBase
 	override void OnStartAnimationLoopServer( ActionData action_data )
 	{
 		Param1<bool> play = new Param1<bool>( false );
-		if ( !g_Game.IsMultiplayer() )
+		if ( !GetGame().IsMultiplayer() )
 		{		
 			if ( action_data.m_Player.GetItemInHands() )
 				ActionRepackTentCB.Cast(action_data.m_Callback).DropDuringRepacking();
@@ -192,16 +192,16 @@ class ActionRepackTent: ActionContinuousBase
 		if ( action_data.m_Player.GetItemInHands() )
 		{
 			play = new Param1<bool>( true );
-			g_Game.RPCSingleParam( action_data.m_MainItem, SoundTypeTent.REPACK, play, true );
+			GetGame().RPCSingleParam( action_data.m_MainItem, SoundTypeTent.REPACK, play, true );
 		}
 	}
 	
 	override void OnEndAnimationLoop( ActionData action_data )
 	{
-		if ( !g_Game.IsMultiplayer() || g_Game.IsServer() )
+		if ( !GetGame().IsMultiplayer() || GetGame().IsServer() )
 		{
 			Param1<bool> play = new Param1<bool>( false );
-			g_Game.RPCSingleParam( action_data.m_MainItem, SoundTypeTent.REPACK, play, true );
+			GetGame().RPCSingleParam( action_data.m_MainItem, SoundTypeTent.REPACK, play, true );
 		}
 	}
 	

@@ -21,7 +21,7 @@ class GameSettings: Settings
 	
 	override static void OnAnyChange() 
 	{
-		g_Game.SetDebug(Debug);
+		GetGame().SetDebug(Debug);
 	}
 }
 

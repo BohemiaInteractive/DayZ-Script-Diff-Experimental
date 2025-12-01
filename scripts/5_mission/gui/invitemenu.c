@@ -14,32 +14,32 @@ class InviteMenu extends UIScriptedMenu
 
 		m_FullTime = new FullTimeData();
 
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{
-			g_Game.GetMission().AddActiveInputExcludes({"menu"});
+			GetGame().GetMission().AddActiveInputExcludes({"menu"});
 
-			g_Game.GetMission().GetHud().ShowHudUI(false);
-			g_Game.GetMission().GetHud().ShowQuickbarUI(false);
+			GetGame().GetMission().GetHud().ShowHudUI(false);
+			GetGame().GetMission().GetHud().ShowQuickbarUI(false);
 		}
 	}
 	
 	void ~InviteMenu()
 	{
-		if (g_Game && g_Game.GetMission())
+		if (GetGame() && GetGame().GetMission())
 		{
-			g_Game.GetMission().RemoveActiveInputExcludes({"menu"},true);
+			GetGame().GetMission().RemoveActiveInputExcludes({"menu"},true);
 			
-			g_Game.GetMission().GetHud().ShowHudUI(true);
-			g_Game.GetMission().GetHud().ShowQuickbarUI(true);
+			GetGame().GetMission().GetHud().ShowHudUI(true);
+			GetGame().GetMission().GetHud().ShowQuickbarUI(true);
 	
-			g_Game.GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
-			g_Game.GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
 		}
 	}
 	
 	override Widget Init()
 	{
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/day_z_invite_dialog.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/day_z_invite_dialog.layout");
 		
 		m_LogoutTimeText 	= TextWidget.Cast(layoutRoot.FindAnyWidget("txtLogoutTime"));
 		m_DescriptionText 	= MultilineTextWidget.Cast(layoutRoot.FindAnyWidget("txtDescription"));
@@ -49,23 +49,23 @@ class InviteMenu extends UIScriptedMenu
 		m_DescriptionText.Update();
 		
 		// player should sit down if possible
-		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		if (player && player.GetEmoteManager() && !player.IsRestrained() && !player.IsUnconscious()) 
 		{
 			player.GetEmoteManager().CreateEmoteCBFromMenu(EmoteConstants.ID_EMOTE_SITA);
 			player.GetEmoteManager().GetEmoteLauncher().SetForced(EmoteLauncher.FORCE_DIFFERENT);
 		}
 		
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{		
-			g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-			g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		}
 		
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 		
 		SetTime(m_iTime);
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateTime, 1000, true);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(UpdateTime, 1000, true);
 
 		return layoutRoot;
 	}
@@ -77,11 +77,11 @@ class InviteMenu extends UIScriptedMenu
 		
 		if (m_iTime <= 0)
 		{
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateTime);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateTime);
 			string ip;
 			int port;
 			OnlineServices.GetInviteServerInfo(ip, port);
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(g_Game.ConnectFromJoin, ip, port);
+			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(g_Game.ConnectFromJoin, ip, port);
 		}
 	}
 	
@@ -130,7 +130,7 @@ class InviteMenu extends UIScriptedMenu
 
 	void Cancel()
 	{
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateTime);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateTime);
 		
 		g_Game.SetGameState(DayZGameState.IN_GAME);
 		g_Game.SetLoadState(DayZLoadState.CONNECT_CONTROLLER_SELECT);
@@ -162,7 +162,7 @@ class InviteMenu extends UIScriptedMenu
 	{
 		bool toolbarShow = false;
 		#ifdef PLATFORM_CONSOLE
-		toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboard() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboard() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		#endif
 		
 		layoutRoot.FindAnyWidget("BottomConsoleToolbar").Show(toolbarShow);

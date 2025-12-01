@@ -57,7 +57,7 @@ class InventoryActionHandler
 		//mngr.InjectAction( action, target, main_item );
 		mngr.ForceTarget(m_target.GetObject());
 		
-		g_Game.GetMission().HideInventory();
+		GetGame().GetMission().HideInventory();
 	}	
 	
 	bool IsActiveAction()
@@ -76,7 +76,7 @@ class InventoryActionHandler
 			return;			
 		}
 		
-		if( g_Game.IsInventoryOpen() )
+		if( GetGame().IsInventoryOpen() )
 		{
 			DeactiveAction();
 			return;				

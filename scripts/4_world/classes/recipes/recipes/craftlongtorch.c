@@ -68,12 +68,12 @@ class CraftLongTorch extends RecipeBase
 		Torch torch = Torch.Cast(results[0]);
 		torch.SetTorchDecraftResult(ingredients[1].GetType());
 		
-		if ( g_Game.IsMultiplayer() && g_Game.IsServer() )
+		if ( GetGame().IsMultiplayer() && GetGame().IsServer() )
 		{
 			player.ServerTakeEntityToTargetAttachment(torch, rag);
 			
 		}
-		else if ( !g_Game.IsMultiplayer() )
+		else if ( !GetGame().IsMultiplayer() )
 		{
 			player.LocalTakeEntityToTargetAttachment(torch, rag);
 		}

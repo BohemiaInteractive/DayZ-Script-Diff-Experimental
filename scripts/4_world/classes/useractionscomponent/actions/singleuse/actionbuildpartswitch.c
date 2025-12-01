@@ -52,7 +52,7 @@ class ActionBuildPartSwitch: ActionSingleUseBase
 	{
 		super.OnStartServer( action_data );
 		
-		if (!g_Game.IsMultiplayer())
+		if (!GetGame().IsMultiplayer())
 			SetNextIndex(action_data);
 	}
 	

@@ -12,14 +12,15 @@ class FracturedLegNotfr: NotifierBase
 
 	override void SetActive( bool state )
 	{
-		if (state)
+		if (state == true)
 		{
 			DisplayBadge();
 		}
 		else
 		{
 			HideBadge();
-		}		
+		}
+			
 	}
 	
 	override void DisplayBadge()

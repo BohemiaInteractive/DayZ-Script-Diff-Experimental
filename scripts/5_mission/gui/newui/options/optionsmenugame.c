@@ -43,7 +43,7 @@ class OptionsMenuGame extends ScriptedWidgetEventHandler
 	
 	void OptionsMenuGame(Widget parent, Widget details_root, GameOptions options, OptionsMenu menu)
 	{
-		m_Root						= g_Game.GetWorkspace().CreateWidgets(GetLayoutName(), parent);
+		m_Root						= GetGame().GetWorkspace().CreateWidgets(GetLayoutName(), parent);
 		
 		m_DetailsRoot				= details_root;
 		m_DetailsBodyDefault 		= m_DetailsRoot.FindAnyWidget("settings_details_body");
@@ -191,8 +191,8 @@ class OptionsMenuGame extends ScriptedWidgetEventHandler
 	void Apply()
 	{
 		IngameHud hud = GetHud();
-		InGameMenu menu = InGameMenu.Cast(g_Game.GetUIManager().FindMenu(MENU_INGAME));
-		MissionGameplay mission = MissionGameplay.Cast(g_Game.GetMission());
+		InGameMenu menu = InGameMenu.Cast(GetGame().GetUIManager().FindMenu(MENU_INGAME));
+		MissionGameplay mission = MissionGameplay.Cast(GetGame().GetMission());
 		
 		g_Game.SetProfileOptionBool(EDayZProfilesOptions.HUD, m_ShowHUDSelector.GetValue());
 		g_Game.SetProfileOptionBool(EDayZProfilesOptions.CROSSHAIR, m_ShowCrosshairSelector.GetValue());
@@ -212,7 +212,7 @@ class OptionsMenuGame extends ScriptedWidgetEventHandler
 			#ifndef PLATFORM_CONSOLE
 			hud.ShowQuickBar(m_ShowQuickbarSelector.GetValue());
 			#else
-			hud.ShowQuickBar(g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer());
+			hud.ShowQuickBar(GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer());
 			#endif
 			hud.ShowHud(m_ShowHUDSelector.GetValue());
 			hud.SetVehicleHudDisabled(!m_ShowHUDVehicleSelector.GetValue());
@@ -360,12 +360,6 @@ class OptionsMenuGame extends ScriptedWidgetEventHandler
 				m_PauseSelector.SetValue(m_PauseOption.GetIndex(), false);
 			}
 		#endif
-		
-		if (m_LanguageSelector)
-		{
-			m_LanguageOption.SetIndex(m_PauseOption.GetDefaultIndex());
-			m_LanguageSelector.SetValue(m_PauseOption.GetIndex(), false);
-		}
 	}
 	
 	void ReloadOptions()
@@ -483,7 +477,7 @@ class OptionsMenuGame extends ScriptedWidgetEventHandler
 	
 	IngameHud GetHud()
 	{
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
@@ -553,7 +547,7 @@ class OptionsMenuGame extends ScriptedWidgetEventHandler
 	
 	protected void OnBleedingIndicationChanged(bool state)
 	{
-		MissionGameplay mission = MissionGameplay.Cast(g_Game.GetMission());
+		MissionGameplay mission = MissionGameplay.Cast(GetGame().GetMission());
 		if (mission)
 		{
 			Param1<bool> par = new Param1<bool>(state);

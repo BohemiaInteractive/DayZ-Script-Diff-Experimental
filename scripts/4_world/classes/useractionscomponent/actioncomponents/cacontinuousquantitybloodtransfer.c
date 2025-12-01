@@ -2,7 +2,7 @@ class CAContinuousQuantityBloodTransfer : CAContinuousQuantityRepeat
 {
 	override void CalcAndSetQuantity( ActionData action_data )
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			if ( m_SpentUnits )
 			{

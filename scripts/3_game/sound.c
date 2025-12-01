@@ -85,7 +85,7 @@ class SoundObjectBuilder
 	
 	SoundObject BuildSoundObject()
 	{
-		return g_Game.GetSoundScene().BuildSoundObject(this);
+		return GetGame().GetSoundScene().BuildSoundObject(this);
 	}
 
 	proto native void Initialize(SoundParams soundParams);

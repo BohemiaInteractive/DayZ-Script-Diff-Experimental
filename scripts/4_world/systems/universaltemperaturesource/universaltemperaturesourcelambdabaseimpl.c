@@ -106,25 +106,30 @@ class UniversalTemperatureSourceLambdaBaseImpl : UniversalTemperatureSourceLambd
 		
 		// go through any attachments and cargo, recursive
 		int inventoryAttCount = ent.GetInventory().AttachmentCount();
-		for (int inAttIdx = 0; inAttIdx < inventoryAttCount; ++inAttIdx)
+		if (inventoryAttCount > 0)
 		{
 			EntityAI attachmentEnt;
-			if (Class.CastTo(attachmentEnt,ent.GetInventory().GetAttachmentFromIndex(inAttIdx)))
+			for (int inAttIdx = 0; inAttIdx < inventoryAttCount; ++inAttIdx)
 			{
-				UpdateVicinityTemperatureRecursive(attachmentEnt,dta,heatPermCoef);
+				if (Class.CastTo(attachmentEnt,ent.GetInventory().GetAttachmentFromIndex(inAttIdx)))
+				{
+					UpdateVicinityTemperatureRecursive(attachmentEnt,dta,heatPermCoef);
+				}
 			}
 		}
 		
-		CargoBase cargo = ent.GetInventory().GetCargo();
-		if (cargo)
+		if (ent.GetInventory().GetCargo())
 		{
-			int inventoryItemCount = cargo.GetItemCount();
-			for (int j = 0; j < inventoryItemCount; ++j)
+			int inventoryItemCount = ent.GetInventory().GetCargo().GetItemCount();
+			if (inventoryItemCount > 0)
 			{
 				EntityAI cargoEnt;
-				if (Class.CastTo(cargoEnt, cargo.GetItem(j)))
+				for (int j = 0; j < inventoryItemCount; ++j)
 				{
-					UpdateVicinityTemperatureRecursive(cargoEnt, dta, heatPermCoef);
+					if (Class.CastTo(cargoEnt,ent.GetInventory().GetCargo().GetItem(j)))
+					{
+						UpdateVicinityTemperatureRecursive(cargoEnt,dta,heatPermCoef);
+					}
 				}
 			}
 		}

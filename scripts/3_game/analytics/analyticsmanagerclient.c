@@ -86,7 +86,7 @@ class AnalyticsManagerClient
 			return;
 		}
 		
-		Man player = g_Game.GetPlayer();
+		Man player = GetGame().GetPlayer();
 		if (!player)
 		{
 			return;
@@ -172,7 +172,7 @@ class AnalyticsManagerClient
 	//===================================
 	void Event_OnEntityKilled(EntityAI victim, EntityAI killer, EntityAI source, bool is_headshot)
 	{
-		if ( killer != null && killer.IsPlayer() && killer.GetID() == g_Game.GetPlayer().GetID() )
+		if ( killer != null && killer.IsPlayer() && killer.GetID() == GetGame().GetPlayer().GetID() )
 		{
 			Achievements.OnPlayerKilled(victim, killer, source, is_headshot);
 		}

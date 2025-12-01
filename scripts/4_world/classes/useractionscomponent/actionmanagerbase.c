@@ -285,7 +285,7 @@ class ActionManagerBase
 	{
 		if (m_CurrentActionData)
 		{
-			if(g_Game.IsMultiplayer())
+			if(GetGame().IsMultiplayer())
 			{
 				RequestInterruptAction();
 			}

@@ -32,7 +32,7 @@ class NotifierBase
 
 	bool IsTimeToTick(int current_time)
 	{
-		return (current_time >= m_TickIntervalLastTick + m_TickInterval);
+		return (current_time > m_TickIntervalLastTick + m_TickInterval);
 	}
 
 	VirtualHud GetVirtualHud()
@@ -59,7 +59,9 @@ class NotifierBase
 	{
 		m_Active = state;
 		if (!state)
-			HideBadge();		
+			HideBadge();
+
+		
 	}
 
 	void DisplayTendency(float delta);
@@ -67,7 +69,7 @@ class NotifierBase
 	void AddToCyclicBuffer(float value)//for tendency
 	{
 		m_TendencyBuffer[m_TendencyBufferWriteIterator] = value;
-		++m_TendencyBufferWriteIterator;
+		m_TendencyBufferWriteIterator++;
 		if (m_TendencyBufferWriteIterator == m_TendencyBufferSize)
 		{
 			m_TendencyBufferWriteIterator = 0;
@@ -89,17 +91,17 @@ class NotifierBase
 	float GetDeltaAvaraged() //for tendency
 	{
 		array<float> values = new array<float>();
-		for (int i = 0; i < m_TendencyBufferSize; ++i)
+		for (int i = 0; i < m_TendencyBufferSize; i++)
 		{
 			values.Insert(ReadFromCyclicBuffer(i));
 		}
 		
 		float valuesSum = 0;
 
-		int nValues = values.Count();
-		for (i = 0; i < nValues; ++i)
+		for (i = 0; i < values.Count(); i++)
 		{
-			valuesSum += values.Get(i);
+			float value = values.Get(i);
+			valuesSum += value;
 		}
 		
 		float sma = valuesSum / m_TendencyBufferSize;
@@ -119,8 +121,7 @@ class NotifierBase
 	{
 		float value1;
 		float value2;
-		int nValues = values.Count();
-		for (int i = 0; i < nValues - 1; i++)
+		for (int i = 0; i < values.Count() - 1; i++)
 		{
 			value1 = values.Get(i);
 			value2 = values.Get(i + 1);
@@ -129,7 +130,7 @@ class NotifierBase
 			values.Set(i + 1, average);
 		}
 
-		int index = nValues - 1;
+		int index = values.Count() - 1;
 		values.Set(index, value2);
 	}
 
@@ -142,23 +143,24 @@ class NotifierBase
 
 		if (m_ShowTendency)
 			DisplayTendency(GetDeltaAvaraged());
+
 	}
 	
 	protected int CalculateTendency(float delta, float inctresholdlow, float inctresholdmed, float inctresholdhigh, float dectresholdlow, float dectresholdmed, float dectresholdhigh)
 	{                                        	
 		int tendency = TENDENCY_STABLE;
+		if (delta > inctresholdlow)
+			tendency = TENDENCY_INC_LOW;
+		if (delta > inctresholdmed)
+			tendency = TENDENCY_INC_MED;
 		if (delta > inctresholdhigh)
 			tendency = TENDENCY_INC_HIGH;	
-		else if (delta > inctresholdmed)
-			tendency = TENDENCY_INC_MED;
-		else if (delta > inctresholdlow)
-			tendency = TENDENCY_INC_LOW;
-		else if (delta < dectresholdhigh)
-			tendency = TENDENCY_DEC_HIGH;		
-		else if (delta < dectresholdmed)
-			tendency = TENDENCY_DEC_MED;
-		else if (delta < dectresholdlow)
+		if (delta < dectresholdlow)
 			tendency = TENDENCY_DEC_LOW;
+		if (delta < dectresholdmed)
+			tendency = TENDENCY_DEC_MED;
+		if (delta < dectresholdhigh)
+			tendency = TENDENCY_DEC_HIGH;
 
 		return tendency;
 	}
@@ -167,12 +169,12 @@ class NotifierBase
 	protected eBadgeLevel DetermineBadgeLevel(float value, float lvl_1, float lvl_2, float lvl_3)
 	{
 		eBadgeLevel level = eBadgeLevel.NONE;
+		if (value >= lvl_1)
+			level = eBadgeLevel.FIRST;
+		if (value >= lvl_2)
+			level = eBadgeLevel.SECOND;
 		if (value >= lvl_3)
 			level = eBadgeLevel.THIRD;
-		else if (value >= lvl_2)
-			level = eBadgeLevel.SECOND;
-		else if (value >= lvl_1)
-			level = eBadgeLevel.FIRST;
 
 		return 	level;
 	}

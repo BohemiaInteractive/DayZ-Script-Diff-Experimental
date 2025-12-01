@@ -13,9 +13,9 @@ class Ammunition_Base: Magazine_Base
 		{
 			float ammoWeight;
 			string ammoTypeName;
-			g_Game.ConfigGetText( string.Format("CfgAmmo %1 spawnPileType", bulletType) , ammoTypeName);
+			GetGame().ConfigGetText( string.Format("CfgAmmo %1 spawnPileType", bulletType) , ammoTypeName);
 			if (ammoTypeName)
-				ammoWeight = g_Game.ConfigGetFloat(string.Format("CfgMagazines %1 weight", ammoTypeName));
+				ammoWeight = GetGame().ConfigGetFloat(string.Format("CfgMagazines %1 weight", ammoTypeName));
 			else
 				ErrorEx("empty 'spawnPileType' for bullet type:" + bulletType);
 			if (ammoWeight)
@@ -49,7 +49,7 @@ class Ammunition_Base: Magazine_Base
 	
 	override void SetFromProjectile(ProjectileStoppedInfo info)
 	{
-		float dmgPerUse = g_Game.ConfigGetFloat("cfgAmmo " + info.GetAmmoType() + " dmgPerUse");
+		float dmgPerUse = GetGame().ConfigGetFloat("cfgAmmo " + info.GetAmmoType() + " dmgPerUse");
 		float totalDmg = info.GetProjectileDamage() + dmgPerUse;
 		float health = Math.Max(1 - totalDmg, 0);
 		
@@ -191,7 +191,7 @@ class Ammo_40mm_Explosive: Ammo_40mm_Base
 	
 	override void OnActivatedByItem(notnull ItemBase item)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			DamageSystem.ExplosionDamage(this, null, "Explosion_40mm_Ammo", item.GetPosition(), DamageType.EXPLOSION);
 		}
@@ -201,7 +201,7 @@ class Ammo_40mm_Explosive: Ammo_40mm_Base
 	{
 		super.EEKilled(killer);
 		DamageSystem.ExplosionDamage(this, null, "Explosion_40mm_Ammo", GetPosition(), DamageType.EXPLOSION);
-		g_Game.GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( DeleteSafe, 1000, false);
+		GetGame().GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( DeleteSafe, 1000, false);
 	}
 	
 	override void OnDamageDestroyed(int oldLevel)
@@ -217,17 +217,17 @@ class Ammo_40mm_ChemGas: Ammo_40mm_Base
 {
 	override void OnActivatedByItem(notnull ItemBase item)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
-			g_Game.CreateObject("ContaminatedArea_Local", item.GetPosition());
+			GetGame().CreateObject("ContaminatedArea_Local", item.GetPosition());
 		}
 	}
 	
 	override void EEKilled(Object killer)
 	{
 		super.EEKilled(killer);
-		g_Game.CreateObject("ContaminatedArea_Local", GetPosition());
-		g_Game.GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( DeleteSafe, 1000, false);
+		GetGame().CreateObject("ContaminatedArea_Local", GetPosition());
+		GetGame().GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( DeleteSafe, 1000, false);
 	}
 	
 	override void OnDamageDestroyed(int oldLevel)
@@ -262,7 +262,7 @@ class Ammo_40mm_Smoke_ColorBase: Ammo_40mm_Base
 		if (m_Activated)
 		{
 			#ifndef SERVER
-			string particleStrIdentifier = g_Game.ConfigGetTextOut(string.Format("CfgMagazines %1 particleStrIdentifier", GetType()));
+			string particleStrIdentifier = GetGame().ConfigGetTextOut(string.Format("CfgMagazines %1 particleStrIdentifier", GetType()));
 			m_ParticleId = ParticleList.GetParticleIDByName(particleStrIdentifier);
 			if (m_ParticleId > 0)
 			{
@@ -275,18 +275,18 @@ class Ammo_40mm_Smoke_ColorBase: Ammo_40mm_Base
 	
 	protected void Activate()
 	{
-		m_ParticleLifetime = g_Game.ConfigGetFloat(string.Format("CfgMagazines %1 particleLifeTime", GetType()));		
+		m_ParticleLifetime = GetGame().ConfigGetFloat(string.Format("CfgMagazines %1 particleLifeTime", GetType()));		
 		m_Activated = true;
 		SetSynchDirty();
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeleteSafe, m_ParticleLifetime * 1000);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeleteSafe, m_ParticleLifetime * 1000);
 	}
 
 	//! special behaviour - do not call super
 	override void EEKilled(Object killer)	
 	{
 		//analytics (behaviour from EntityAI)
-		g_Game.GetAnalyticsServer().OnEntityKilled(killer, this);
+		GetGame().GetAnalyticsServer().OnEntityKilled(killer, this);
 	}
 
 	override void EEDelete(EntityAI parent)	

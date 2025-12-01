@@ -70,12 +70,12 @@ class EnochData : WorldData
 		
 		m_UniversalTemperatureSourceCapModifier = 1.0;			
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
-			m_Weather.GetSnowfall().SetLimits(0, 0);
 			m_Weather.SetDynVolFogHeightBias(m_WeatherDefaultSettings.m_DefaultHeigthBias);
 		
-			if (g_Game.IsMultiplayer())
+			if (GetGame().IsMultiplayer())
+		
 			{
 				float startingOvercast = Math.RandomFloat(0.2,0.75);
 				m_Weather.GetOvercast().Set(startingOvercast,0,5); //forcing a random weather at a clean server start and an instant change for overcast
@@ -140,7 +140,7 @@ class EnochData : WorldData
 		#ifdef WEATHER_DATA_LOGGING	
 		if ( !dayInit )
 		{
-			g_Game.GetWorld().GetDate(startYear, startMonth, startDay, startHour, startMinute);
+			GetGame().GetWorld().GetDate(startYear, startMonth, startDay, startHour, startMinute);
 			dayInit = true;
 		}
 		#endif
@@ -150,10 +150,9 @@ class EnochData : WorldData
 		float phmnValue = 0;
 		
 		int year, month, day, hour, minute;
-		g_Game.GetWorld().GetDate(year, month, day, hour, minute);
+		GetGame().GetWorld().GetDate(year, month, day, hour, minute);
 
 		m_Weather.SetStorm( 1.0, m_WeatherDefaultSettings.m_StormThreshold, 20 );
-		m_Weather.GetSnowfall().SetLimits(0, 0);
 
 		m_Weather.SetRainThresholds( m_WeatherDefaultSettings.m_RainThreshold, 1.0, 60 );
 		m_Weather.SetWindMaximumSpeed( 20 );
@@ -320,7 +319,7 @@ class EnochData : WorldData
 				int testDay = 0;
 				int testHour = 0;
 				int testMinute = 0;
-				g_Game.GetWorld().GetDate(testYear, testMonth, testDay, testHour, testMinute);
+				GetGame().GetWorld().GetDate(testYear, testMonth, testDay, testHour, testMinute);
 					
 				if ( testDay - startDay > currentDay && testHour - startHour >= 0 && testMinute - startMinute >= 0 )
 				{
@@ -554,7 +553,7 @@ class EnochData : WorldData
 	{				
 		float distanceDensity, heigthDensity, heightBias;
 		int year, month, day, hour, minute;
-		g_Game.GetWorld().GetDate(year, month, day, hour, minute);
+		GetGame().GetWorld().GetDate(year, month, day, hour, minute);
 				
 		if ( hour < 6 && hour >= 3 )
 		{

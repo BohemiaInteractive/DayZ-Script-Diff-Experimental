@@ -42,7 +42,7 @@ class GeyserTrigger : EffectTrigger
 		if (IsSubmerged())
 			RandomizeMouthPos();
 		
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 			UpdateGeyserState();	
 	}
 	
@@ -116,10 +116,8 @@ class GeyserTrigger : EffectTrigger
 		}
 		else if (!CheckGeyserState(EGeyserState.ERUPTION_SOON) && m_bIsEruptingSoon)
 		{
-			if (m_GeyserBubblesParticle)
-				m_GeyserBubblesParticle.StopParticle();
-			if (m_SoundBubbling)
-				SEffectManager.DestroyEffect(m_SoundBubbling);
+			m_GeyserBubblesParticle.StopParticle();
+			m_SoundBubbling.Stop();
 			
 			m_bIsEruptingSoon = false;
 		}
@@ -135,13 +133,10 @@ class GeyserTrigger : EffectTrigger
 		}
 		else if (!CheckGeyserState(EGeyserState.ERUPTING_PRIMARY) && m_bIsErupting)
 		{
-			if (m_GeyserParticle)
-				m_GeyserParticle.StopParticle();
+			m_GeyserParticle.StopParticle();
 			
-			if (m_SoundEruptionStart)
-				SEffectManager.DestroyEffect(m_SoundEruptionStart);
-			if (m_SoundEruption)
-				SEffectManager.DestroyEffect(m_SoundEruption);
+			m_SoundEruptionStart.Stop();
+			m_SoundEruption.Stop();
 			
 			m_bIsErupting = false;
 		}
@@ -160,12 +155,9 @@ class GeyserTrigger : EffectTrigger
 			m_GeyserSplashParticle = ParticleManager.GetInstance().PlayInWorld(ParticleList.GEYSER_SPLASH, m_DefaultPosition);
 			m_SoundEruptionSecondaryEnd = SEffectManager.PlaySound(SOUND_ERUPTION_TALL_END, m_DefaultPosition, 0, 0, false);
 			
-			if (m_GeyserTallParticle)
-				m_GeyserTallParticle.StopParticle();
-			if (m_SoundEruptionSecondaryStart)
-				SEffectManager.DestroyEffect(m_SoundEruptionSecondaryStart);
-			if (m_SoundEruptionSecondary)
-				SEffectManager.DestroyEffect(m_SoundEruptionSecondary);
+			m_GeyserTallParticle.StopParticle();
+			m_SoundEruptionSecondaryStart.Stop();
+			m_SoundEruptionSecondary.Stop();
 			
 			m_bIsEruptingTall = false;
 		}
@@ -186,7 +178,7 @@ class GeyserTrigger : EffectTrigger
 	protected vector GetAdjustedPosition(float height = 0)
 	{
 		vector pos = GetPosition();
-		pos[1] = g_Game.SurfaceRoadY(pos[0], pos[2], RoadSurfaceDetection.UNDER) + height;
+		pos[1] = GetGame().SurfaceRoadY(pos[0], pos[2], RoadSurfaceDetection.UNDER) + height;
 		
 		return pos;
 	}
@@ -195,28 +187,22 @@ class GeyserTrigger : EffectTrigger
 	{
 		if (m_bIsEruptingSoon)
 		{
-			if (m_GeyserBubblesParticle)
-				m_GeyserBubblesParticle.StopParticle();
-			if (m_SoundBubbling)
-				SEffectManager.DestroyEffect(m_SoundBubbling);
+			m_GeyserBubblesParticle.StopParticle();
+			m_SoundBubbling.Stop();
 			m_bIsEruptingSoon = false;
 		}
 		
 		if (m_bIsErupting)
 		{
-			if (m_GeyserParticle)
-				m_GeyserParticle.StopParticle();
-			if (m_SoundEruption)
-				SEffectManager.DestroyEffect(m_SoundEruption);
+			m_GeyserParticle.StopParticle();
+			m_SoundEruption.Stop();
 			m_bIsErupting = false;
 		}
 		
 		if (m_bIsEruptingTall)
 		{
-			if (m_GeyserTallParticle)
-				m_GeyserTallParticle.StopParticle();
-			if (m_SoundEruptionSecondary)
-				SEffectManager.DestroyEffect(m_SoundEruptionSecondary);
+			m_GeyserTallParticle.StopParticle();
+			m_SoundEruptionSecondary.Stop();
 			m_bIsEruptingTall = false;
 		}
 	}

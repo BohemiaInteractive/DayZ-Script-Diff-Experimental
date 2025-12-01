@@ -29,18 +29,18 @@ class Defibrillator extends ItemBase
 	float GetTimeNeededToCharge()
 	{
 		string cfg_path = "CfgVehicles " + GetType() + " ";
-		return g_Game.ConfigGetFloat (cfg_path + "defibChargeTime");
+		return GetGame().ConfigGetFloat (cfg_path + "defibChargeTime");
 	}
 	
 	float GetEnergyNeededToCharge()
 	{
 		string cfg_path = "CfgVehicles " + GetType() + " ";
-		return g_Game.ConfigGetFloat (cfg_path + "defibEnergyNeededPerCharge");
+		return GetGame().ConfigGetFloat (cfg_path + "defibEnergyNeededPerCharge");
 	}
 	
 	override void OnWorkStart()
 	{
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 			m_ChargingSound = SEffectManager.PlaySoundOnObject(CHARGING_SOUND, this, 0, 0.15);
 		
 		float energy_needed = m_EnergyNeededToCharge / m_ChargeTime;
@@ -70,7 +70,7 @@ class Defibrillator extends ItemBase
 	{
 		if ( GetCompEM().IsWorking() )
 		{
-			if (!g_Game.IsMultiplayer()  ||  g_Game.IsClient())
+			if (!GetGame().IsMultiplayer()  ||  GetGame().IsClient())
 			{
 				//m_ChargedAlarm = PlaySoundLoop(CHARGED_AND_READY_SOUND, 40);
 				m_ChargedAlarm = SEffectManager.PlaySoundOnObject(CHARGED_AND_READY_SOUND, this);
@@ -85,7 +85,7 @@ class Defibrillator extends ItemBase
 	{
 		if (m_ChargedAlarm)
 		{
-			//g_Game.ObjectDelete(m_ChargedAlarm);
+			//GetGame().ObjectDelete(m_ChargedAlarm);
 			m_ChargedAlarm.SoundStop();
 			m_ChargedAlarm = NULL;
 		}
@@ -128,7 +128,7 @@ class Defibrillator extends ItemBase
 		}
 		*/
 		/*
-		if (!g_Game.IsMultiplayer()  ||  g_Game.IsClient())
+		if (!GetGame().IsMultiplayer()  ||  GetGame().IsClient())
 		{
 			SEffectManager.PlaySoundOnObject(SHOCK_SOUND, this);
 		}*/

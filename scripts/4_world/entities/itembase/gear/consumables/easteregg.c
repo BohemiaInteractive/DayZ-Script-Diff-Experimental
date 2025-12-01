@@ -66,7 +66,7 @@ class EasterEgg : Inventory_Base
 			DayZCreatureAI capAnimal = DayZCreatureAI.Cast( other );
 			if ( capAnimal && capAnimal.IsAlive() )
 			{
-				if ( g_Game.IsServer() )
+				if ( GetGame().IsServer() )
 					Capture( capAnimal );
 			}
 			else
@@ -137,7 +137,7 @@ class EasterEgg : Inventory_Base
 	override void OnInventoryEnter( Man player )
 	{
 		//Make sure to stop particles once in inventory
-		if ( g_Game.IsClient() && m_ParCapture )
+		if ( GetGame().IsClient() && m_ParCapture )
 		{
 			m_ParCapture.Stop();
 			m_ParCapture.Delete();
@@ -184,13 +184,13 @@ class EasterEgg : Inventory_Base
 	
 	private void Release( vector pos )
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			m_CaptureState = eCaptureState.RELEASEFX;
 			m_CreatureHash = 0;
 			SetSynchDirty();
 			
-			g_Game.CreateObject( m_CreatureType, pos, false, true );
+			GetGame().CreateObject( m_CreatureType, pos, false, true );
 			m_CreatureType = "";
 			
 			DecreaseHealth( "", "", GetMaxHealth() * 0.4 );
@@ -211,7 +211,7 @@ class EasterEgg : Inventory_Base
 	// ------------------------------
 	private void PlayVFX()
 	{
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			if ( !m_ParCapture && m_CaptureState != eCaptureState.STASIS )
 			{
@@ -238,7 +238,7 @@ class EasterEgg : Inventory_Base
 	
 	private void PlaySFX( int releaseCase = eCaptureState.CAPTURE )
 	{
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			string soundSet = "";
 			if ( releaseCase == eCaptureState.CAPTURE )

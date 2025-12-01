@@ -28,7 +28,7 @@ class FeverBlurSymptom extends SymptomBase
 		m_IsPersistent = false;
 		m_SyncToClient = true;
 		
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			Class.CastTo(m_Requester,PPERequesterBank.GetRequester(PPERequester_FeverEffects));
 		}

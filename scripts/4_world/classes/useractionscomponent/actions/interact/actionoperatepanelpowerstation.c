@@ -29,7 +29,7 @@ class ActionOperatePanelPowerStation : ActionOperatePanel
 		int leverIndex = powerStation.GetLeverIndexByComponentName(leverName);
 		if (leverIndex)
 		{
-			if (g_Game.IsServer())
+			if (GetGame().IsServer())
 				powerStation.AnimateLever(leverIndex);
 		}
 	}

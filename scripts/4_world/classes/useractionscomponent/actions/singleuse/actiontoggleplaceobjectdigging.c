@@ -3,7 +3,7 @@ class ActionTogglePlaceObjectDigging : ActionTogglePlaceObject
 {
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
 	{	
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{	
 			if (!CfgGameplayHandler.GetDisableColdAreaPlacementCheck() && player.GetInColdArea())
 				return false;	

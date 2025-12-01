@@ -124,7 +124,7 @@ class ActionTakeItem: ActionInteractBase
 	
 	override void OnExecute(ActionData action_data)
 	{
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			ClearActionJuncture(action_data);
 			return;

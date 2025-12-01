@@ -11,14 +11,14 @@ class InspectMenuNew extends UIScriptedMenu
 	
 	void InspectMenuNew()
 	{
-		g_Game.GetMission().AddActiveInputExcludes({"inspect"});
+		GetGame().GetMission().AddActiveInputExcludes({"inspect"});
 	}
 	
 	//--------------------------------------------------------------------------
 	void ~InspectMenuNew()
 	{
-		g_Game.GetDragQueue().RemoveCalls(this);
-		Mission mis = g_Game.GetMission();
+		GetGame().GetDragQueue().RemoveCalls(this);
+		Mission mis = GetGame().GetMission();
 		if (mis)
 		{
 			mis.GetHud().ShowHudUI(true);
@@ -30,7 +30,7 @@ class InspectMenuNew extends UIScriptedMenu
 	//--------------------------------------------------------------------------
 	override Widget Init()
 	{
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/inventory_new/day_z_inventory_new_inspect.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/inventory_new/day_z_inventory_new_inspect.layout");
 		
 		
 		return layoutRoot;
@@ -81,7 +81,7 @@ class InspectMenuNew extends UIScriptedMenu
 		
 		if (w == m_item_widget)
 		{
-			g_Game.GetDragQueue().Call(this, "UpdateRotation");
+			GetGame().GetDragQueue().Call(this, "UpdateRotation");
 			GetMousePos(m_characterRotationX, m_characterRotationY);
 			return true;
 		}

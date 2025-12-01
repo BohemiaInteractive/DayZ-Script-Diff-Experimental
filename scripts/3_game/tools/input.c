@@ -95,7 +95,7 @@ class Input
 	\brief Disable key until end of frame
 	@param key id of key, defined in \ref KeyCode
 	\code
-	g_Game.GetInput().DisableKey(KeyCode.KC_RETURN);
+	GetGame().GetInput().DisableKey(KeyCode.KC_RETURN);
 	\endcode
 	*/
 	proto native void	DisableKey(int key);
@@ -266,12 +266,11 @@ class Input
 		#ifdef PLATFORM_PS4
 		BiosUser user;
 		GetGamepadUser( gamepad, user );
-		if (user && user == g_Game.GetUserManager().GetSelectedUser())
+		if (user && user == GetGame().GetUserManager().GetSelectedUser())
 		{
 			SelectActiveGamepad(gamepad);
-			Mission mission = g_Game.GetMission();
-			if (mission)
-				mission.GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_CONTROLLER); //only for PS, xbox handles it on identification
+			if (GetGame().GetMission())
+				GetGame().GetMission().GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_CONTROLLER); //only for PS, xbox handles it on identification
 		}
 		#endif
 		
@@ -279,9 +278,8 @@ class Input
 		if (gamepad == g_Game.GetPreviousGamepad())
 		{
 			SelectActiveGamepad(g_Game.GetPreviousGamepad());
-			Mission mission = g_Game.GetMission();
-			if (mission)
-				mission.GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_CONTROLLER); //only for PS, xbox handles it on identification
+			if (GetGame().GetMission())
+				GetGame().GetMission().GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_CONTROLLER); //only for PS, xbox handles it on identification
 		}
 		#endif
 	}
@@ -301,9 +299,8 @@ class Input
 				DayZLoadState state = g_Game.GetLoadState();
 				if (state != DayZLoadState.MAIN_MENU_START && state != DayZLoadState.MAIN_MENU_USER_SELECT)
 				{
-					Mission mission = g_Game.GetMission();
-					if (mission)
-						mission.GetOnInputDeviceDisconnected().Invoke(EUAINPUT_DEVICE_CONTROLLER);
+					if (GetGame().GetMission())
+						GetGame().GetMission().GetOnInputDeviceDisconnected().Invoke(EUAINPUT_DEVICE_CONTROLLER);
 				}
 			}
 		}
@@ -323,15 +320,14 @@ class Input
 			SelectActiveGamepad(gamepad);
 			g_Game.SelectUser(gamepad);
 			g_Game.SetPreviousGamepad(gamepad);
-			Mission mission = g_Game.GetMission();
 			if (state == DayZLoadState.MAIN_MENU_START || state == DayZLoadState.MAIN_MENU_USER_SELECT)
 			{
-				if (mission)
-					mission.Reset();
+				if (GetGame().GetMission())
+					GetGame().GetMission().Reset();
 			}
 			
-			if (mission && mission.GetOnInputDeviceConnected())
-				mission.GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_CONTROLLER);
+			if (GetGame() && GetGame().GetMission() && GetGame().GetMission().GetOnInputDeviceConnected())
+				GetGame().GetMission().GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_CONTROLLER);
 		}
 	}
 	
@@ -355,7 +351,7 @@ class Input
 			return false;
 		
 		#ifdef PLATFORM_CONSOLE
-		if (!g_Game.GetUserManager())
+		if (!GetGame().GetUserManager())
 			return false;
 		#ifdef PLATFORM_XBOX
 		return !IsActiveGamepadSelected();
@@ -363,7 +359,7 @@ class Input
 		#ifdef PLATFORM_PS4
 		BiosUser user;
 		GetGamepadUser( gamepad, user );
-		return (user == g_Game.GetUserManager().GetSelectedUser());
+		return (user == GetGame().GetUserManager().GetSelectedUser());
 		#endif
 		#endif
 		return false;
@@ -377,12 +373,12 @@ class Input
 			return;
 		
 		UpdateConnectedInputDeviceList();
-		if (!g_Game.IsLoading() && g_Game.GetMission())
+		if (!g_Game.IsLoading() && GetGame().GetMission())
 		{
 			DayZLoadState state = g_Game.GetLoadState();
 			if (state != DayZLoadState.MAIN_MENU_START && state != DayZLoadState.MAIN_MENU_USER_SELECT)
 			{
-				g_Game.GetMission().GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_MOUSE);
+				GetGame().GetMission().GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_MOUSE);
 			}
 		}
 	}
@@ -395,12 +391,12 @@ class Input
 			return;
 		
 		UpdateConnectedInputDeviceList();
-		if (!g_Game.IsLoading() && g_Game.GetMission())
+		if (!g_Game.IsLoading() && GetGame().GetMission())
 		{
 			DayZLoadState state = g_Game.GetLoadState();
 			if (state != DayZLoadState.MAIN_MENU_START && state != DayZLoadState.MAIN_MENU_USER_SELECT)
 			{
-				g_Game.GetMission().GetOnInputDeviceDisconnected().Invoke(EUAINPUT_DEVICE_MOUSE);
+				GetGame().GetMission().GetOnInputDeviceDisconnected().Invoke(EUAINPUT_DEVICE_MOUSE);
 			}
 		}
 	}
@@ -413,12 +409,12 @@ class Input
 			return;
 		
 		UpdateConnectedInputDeviceList();
-		if (!g_Game.IsLoading() && g_Game.GetMission())
+		if (!g_Game.IsLoading() && GetGame().GetMission())
 		{
 			DayZLoadState state = g_Game.GetLoadState();
 			if (state != DayZLoadState.MAIN_MENU_START && state != DayZLoadState.MAIN_MENU_USER_SELECT)
 			{
-				g_Game.GetMission().GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_KEYBOARD);
+				GetGame().GetMission().GetOnInputDeviceConnected().Invoke(EUAINPUT_DEVICE_KEYBOARD);
 			}
 		}
 	}
@@ -431,12 +427,12 @@ class Input
 			return;
 		
 		UpdateConnectedInputDeviceList();
-		if (!g_Game.IsLoading() && g_Game.GetMission())
+		if (!g_Game.IsLoading() && GetGame().GetMission())
 		{
 			DayZLoadState state = g_Game.GetLoadState();
 			if (state != DayZLoadState.MAIN_MENU_START && state != DayZLoadState.MAIN_MENU_USER_SELECT)
 			{
-				g_Game.GetMission().GetOnInputDeviceDisconnected().Invoke(EUAINPUT_DEVICE_KEYBOARD);
+				GetGame().GetMission().GetOnInputDeviceDisconnected().Invoke(EUAINPUT_DEVICE_KEYBOARD);
 			}
 		}
 	}
@@ -447,9 +443,9 @@ class Input
 		if (!g_Game)
 			return;
 		
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{
-			g_Game.GetMission().GetOnInputDeviceChanged().Invoke(inputDevice);
+			GetGame().GetMission().GetOnInputDeviceChanged().Invoke(inputDevice);
 		}
 	}
 };

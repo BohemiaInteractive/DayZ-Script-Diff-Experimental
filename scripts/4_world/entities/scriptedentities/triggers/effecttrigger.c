@@ -204,7 +204,7 @@ class EffectTrigger : CylinderTrigger
 		bool enableDebug = DiagMenu.GetBool(DiagMenuIDs.TRIGGER_DEBUG);
 		if (enableDebug)
 		{
-			if (g_Game.IsMultiplayer() && g_Game.IsServer())
+			if (GetGame().IsMultiplayer() && GetGame().IsServer())
 				return;
 					
 			if (!m_DebugShapeActive)
@@ -213,7 +213,7 @@ class EffectTrigger : CylinderTrigger
 				m_DebugShapeActive = true;
 			}
 
-			if (g_Game.IsMultiplayer() || g_Game.IsServer())
+			if (GetGame().IsMultiplayer() || GetGame().IsServer())
 				m_dbgInsiders = insiders;
 		
 			if (m_dbgInsiders.Count() > 0)

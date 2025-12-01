@@ -6,7 +6,7 @@ class StaticObj_Roadblock_Wood_Small: House
 	{
 		super.EEInit();
 	
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			m_BlinkingLight = EntranceLight.Cast(ScriptedLightBase.CreateLightAtObjMemoryPoint(Roadblock_Light, this, "Light"));
 		}
@@ -16,7 +16,7 @@ class StaticObj_Roadblock_Wood_Small: House
 	{
 		super.EEDelete(parent);
 		
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			if ( m_BlinkingLight )
 				m_BlinkingLight.Destroy();

@@ -26,7 +26,7 @@ class ActionUngagTarget: ActionContinuousBase
 		PlayerBase targetPlayer;
 		if (Class.CastTo(targetPlayer, target.GetObject()))
 		{
-			if (IsWearingGag(targetPlayer) && null == player.GetEntityInHands()) 
+			if (IsWearingGag(targetPlayer) && null == player.GetHumanInventory().GetEntityInHands()) 
 			{
 				return true;
 			}

@@ -14,7 +14,6 @@ enum EPlayerSoundEventParam
 {
 	SKIP_CONTROLLED_PLAYER 	= 0x00000001,
 	HIGHEST_PRIORITY		= 0x00000002,
-	STOP_PLAYBACK			= 0x00000004,
 	/*
 	STAMINA 	= 0x00000004,
 	DAMAGE 		= 0x00000008,
@@ -91,7 +90,7 @@ class PlayerSoundEventBase extends SoundEventBase
 	
 	bool IsDummyFinished()
 	{
-		return g_Game.GetTime() > (m_DummyStartTime + m_DummySoundLength);
+		return GetGame().GetTime() > (m_DummyStartTime + m_DummySoundLength);
 	}
 	
 	
@@ -193,7 +192,7 @@ class PlayerSoundEventBase extends SoundEventBase
 		}
 		else
 		{
-			m_DummyStartTime = g_Game.GetTime();
+			m_DummyStartTime = GetGame().GetTime();
 			return true;
 		}
 		return false;

@@ -78,9 +78,6 @@ class CCTWaterSurfaceEx : CCTBase
 		if (distSq > m_MaximalActionDistanceSq)
 			return false;
 		
-		if(surfaceType == "" && hitPosition[1] > g_Game.SurfaceGetSeaLevelMax())
-			return false;
-		
 		return Surface.CheckLiquidSource(hitPosition[1], surfaceType, m_AllowedLiquidSource);
 	}
 	

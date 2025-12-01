@@ -195,9 +195,9 @@ class PresetSpawnBase
 	
 	void TakeToHands(EntityAI item)
 	{
-		if (g_Game.IsMultiplayer() && m_Player.GetInstanceType() != DayZPlayerInstanceType.INSTANCETYPE_SERVER)//throws assert otherwise
+		if (GetGame().IsMultiplayer() && m_Player.GetInstanceType() != DayZPlayerInstanceType.INSTANCETYPE_SERVER)//throws assert otherwise
 			return;
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			m_Player.TakeEntityToHandsImpl(InventoryMode.SERVER, item);
 		}

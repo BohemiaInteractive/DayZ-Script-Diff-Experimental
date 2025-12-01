@@ -98,20 +98,11 @@ class WorldEditorTool
 	private void ~WorldEditorTool() {}
 };
 
-typedef string ResourceName;
-class ResourceName : string
+class WorkbenchPlugin
 {
-};
-
-class WorkbenchPlugin : Managed
-{
-	private void WorkbenchPlugin();
-	private void ~WorkbenchPlugin();
-
-	event void Run();
-	event void RunCommandline();
-	event void Configure();
-	event void OnResourceContextMenu(notnull array<ResourceName> resources);
+	void Run() {}
+	void RunCommandline() {}
+	void Configure() {}
 };
 
 class ButtonAttribute

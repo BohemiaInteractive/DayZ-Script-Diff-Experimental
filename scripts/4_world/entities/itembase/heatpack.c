@@ -7,7 +7,7 @@ class Heatpack : ItemBase
 	
 	override void OnWorkStart()
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			SetTemperatureDirect(80);
 		}
@@ -15,7 +15,7 @@ class Heatpack : ItemBase
 	
 	override void OnWork( float consumed_energy )
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			SetTemperatureDirect(80);
 		}
@@ -23,7 +23,7 @@ class Heatpack : ItemBase
 	
 	override void OnWorkStop()
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			SetHealth(0);
 		}

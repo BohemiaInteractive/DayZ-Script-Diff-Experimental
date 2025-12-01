@@ -141,7 +141,7 @@ class ActionFishingNewCB : ActionContinuousBaseCB
 	//! Destroys the effecter, but lets the rest of the particle play out
 	void DestroySplashEffectSynced()
 	{
-		if (g_Game.IsServer() && m_ActionDataFishing.m_SplashUniqueID >= 0)
+		if (GetGame().IsServer() && m_ActionDataFishing.m_SplashUniqueID >= 0)
 		{
 			SEffectManager.DestroyEffecterParticleServer(m_ActionDataFishing.m_SplashUniqueID);
 			m_ActionDataFishing.m_SplashUniqueID = -1;
@@ -313,7 +313,7 @@ class ActionFishingNew: ActionContinuousBase
 		
 	void PlaySplashEffectSynced(FishingActionData actionDataFishing)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			int particleId = actionDataFishing.m_ContextData.GetResultParticleId();
 			if (actionDataFishing.m_SplashUniqueID < 0)
@@ -333,7 +333,7 @@ class ActionFishingNew: ActionContinuousBase
 		bool ret = false;
 		vector cursorPosition = action_data.m_Target.GetCursorHitPos();
 		
-		if (g_Game.SurfaceIsSea(cursorPosition[0], cursorPosition[2]))
+		if (GetGame().SurfaceIsSea(cursorPosition[0], cursorPosition[2]))
 		{
 			ret = true;
 		}
@@ -402,7 +402,7 @@ class ActionFishingNew: ActionContinuousBase
 			{
 				fad.m_ContextData.OnBeforeSpawnSignalHit();
 				
-				if (!g_Game.IsMultiplayer() || g_Game.IsDedicatedServer())
+				if (!GetGame().IsMultiplayer() || GetGame().IsDedicatedServer())
 					TrySpawnCatch(fad);
 				
 				fad.m_ContextData.OnAfterSpawnSignalHit();

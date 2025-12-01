@@ -63,7 +63,7 @@ class AreaDamageTrigger extends AreaDamageTriggerBase
 	{
 		super.OnEnter( obj );
 		
-		if ( g_Game.IsServer() && m_AreaDamageType )
+		if ( GetGame().IsServer() && m_AreaDamageType )
 			 m_AreaDamageType.OnEnter( obj );
 	}
 	
@@ -71,13 +71,13 @@ class AreaDamageTrigger extends AreaDamageTriggerBase
 	{
 		super.OnLeave( obj );
 		
-		if ( g_Game.IsServer() && m_AreaDamageType )
+		if ( GetGame().IsServer() && m_AreaDamageType )
 			 m_AreaDamageType.OnLeave( obj );
 	}
 	
 	override protected void UpdateInsiders(int timeout)
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			for (int n = 0; n < m_insiders.Count(); )
 			{

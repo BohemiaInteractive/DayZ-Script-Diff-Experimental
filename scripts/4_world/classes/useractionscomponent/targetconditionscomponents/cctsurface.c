@@ -12,7 +12,7 @@ class CCTSurface : CCTBase
 		if( !target || (target && target.GetObject()) )
 			return false;
 		
-		if ( g_Game.IsServer() && g_Game.IsMultiplayer() )
+		if ( GetGame().IsServer() && GetGame().IsMultiplayer() )
 			return true;
 		
 		vector hit_pos = target.GetCursorHitPos();

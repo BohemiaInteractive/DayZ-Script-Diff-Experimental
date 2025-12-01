@@ -11,7 +11,7 @@ class PluginDiagMenuServer : PluginDiagMenu
 	// A bit of a hack, because SP creates both Client and Server Plugins
 	override private void RegisterDiags()
 	{
-		if (g_Game.IsMultiplayer())
+		if (GetGame().IsMultiplayer())
 		{
 			super.RegisterDiags();
 		}
@@ -59,7 +59,7 @@ class PluginDiagMenuServer : PluginDiagMenu
 				int subscribedSystems = m_Subscribers.Get(man);
 				if (system & subscribedSystems)
 				{
-					g_Game.RPCSingleParam( target, rpc_type, data, guaranteed, man.GetIdentity() );
+					GetGame().RPCSingleParam( target, rpc_type, data, guaranteed, man.GetIdentity() );
 				}
 			}
 			else

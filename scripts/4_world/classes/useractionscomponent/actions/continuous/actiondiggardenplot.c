@@ -24,7 +24,7 @@ class ActionDigGardenPlot: ActionDeployObject
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
 	{
 		//Client
-		if (!g_Game.IsDedicatedServer())
+		if (!GetGame().IsDedicatedServer())
 		{
 			//Action not allowed if player has broken legs
 			if (player.GetBrokenLegs() == eBrokenLegs.BROKEN_LEGS)
@@ -109,7 +109,7 @@ class ActionDigGardenPlot: ActionDeployObject
 		vector position = action_data.m_Player.GetLocalProjectionPosition();
 		vector orientation = action_data.m_Player.GetLocalProjectionOrientation();
 				
-		if (g_Game.IsMultiplayer())
+		if (GetGame().IsMultiplayer())
 		{
 			m_GardenPlot = GardenPlot.Cast(action_data.m_Player.GetHologramServer().PlaceEntity(entity_for_placing));
 			m_GardenPlot.SetOrientation(orientation);
@@ -120,7 +120,7 @@ class ActionDigGardenPlot: ActionDeployObject
 		}
 			
 		//local singleplayer
-		if (!g_Game.IsMultiplayer())
+		if (!GetGame().IsMultiplayer())
 		{						
 			m_GardenPlot = GardenPlot.Cast(action_data.m_Player.GetHologramLocal().PlaceEntity(entity_for_placing));
 			m_GardenPlot.SetOrientation(orientation);
@@ -130,7 +130,7 @@ class ActionDigGardenPlot: ActionDeployObject
 			m_GardenPlot.OnPlacementComplete(action_data.m_Player);
 		}
 		
-		g_Game.ClearJuncture(action_data.m_Player, entity_for_placing);
+		GetGame().ClearJuncture(action_data.m_Player, entity_for_placing);
 		action_data.m_MainItem.SetIsBeingPlaced(false);
 		poActionData.m_AlreadyPlaced = true;
 		

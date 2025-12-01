@@ -10,7 +10,7 @@ class ActionDeployHuntingTrap : ActionDeployBase
 	override bool ActionCondition( PlayerBase player, ActionTarget target, ItemBase item )
 	{
 		// Client
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 			return item.CanBePlaced( player, player.GetPosition() );
 		
 		// Server
@@ -25,7 +25,7 @@ class ActionDeployHuntingTrap : ActionDeployBase
 	
 	override bool ActionConditionContinue( ActionData action_data )
 	{
-		return g_Game.IsClient() || action_data.m_MainItem.CanBePlaced( action_data.m_Player, action_data.m_Player.GetPosition() );
+		return GetGame().IsClient() || action_data.m_MainItem.CanBePlaced( action_data.m_Player, action_data.m_Player.GetPosition() );
 	}
 	
 	override void MoveEntityToFinalPosition(ActionData action_data, vector position, vector orientation)

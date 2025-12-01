@@ -30,7 +30,7 @@ class CreditsMenu extends UIScriptedMenu
 		float x_f;
 		int x, y;
 		
-		layoutRoot	= g_Game.GetWorkspace().CreateWidgets( "gui/layouts/new_ui/credits/credits_menu.layout", null );
+		layoutRoot	= GetGame().GetWorkspace().CreateWidgets( "gui/layouts/new_ui/credits/credits_menu.layout", null );
 		m_Logo		= ImageWidget.Cast( layoutRoot.FindAnyWidget( "Logo" ) );
 		m_Scroller	= ScrollWidget.Cast( layoutRoot.FindAnyWidget( "CreditsPanel" ) );
 		m_Content	= WrapSpacerWidget.Cast( layoutRoot.FindAnyWidget( "CreditsContent" ) );
@@ -46,9 +46,9 @@ class CreditsMenu extends UIScriptedMenu
 		m_Scroller.VScrollToPos01( 0 );
 		m_Scroller.GetScreenSize( x_f, m_ScrollSize );
 		
-		g_Game.GameScript.Call( this, "LoadDataAsync", null );
+		GetGame().GameScript.Call( this, "LoadDataAsync", null );
 		
-		UpdateInfoPanelText(g_Game.GetInput().GetCurrentInputDevice());
+		UpdateInfoPanelText(GetGame().GetInput().GetCurrentInputDevice());
 		
 		return layoutRoot;
 	}
@@ -135,7 +135,7 @@ class CreditsMenu extends UIScriptedMenu
 		
 		m_CurrentTime += timeslice;
 		
-		if( g_Game.GetInput().LocalRelease("UAUIBack") )
+		if( GetGame().GetInput().LocalRelease("UAUIBack") )
 		{
 			Close();
 		}
@@ -143,7 +143,7 @@ class CreditsMenu extends UIScriptedMenu
 	
 	void UpdateInfoPanelText(int input_device_type)
 	{
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboard() && input_device_type == EInputDeviceType.MOUSE_AND_KEYBOARD)
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboard() && input_device_type == EInputDeviceType.MOUSE_AND_KEYBOARD)
 		{
 			m_InfoPanelText.SetText("ESC " + "#menu_back");
 		}

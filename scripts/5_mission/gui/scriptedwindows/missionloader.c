@@ -46,7 +46,7 @@ class MissionLoader : UIScriptedMenu
 	{
 		m_MissionData = JsonMissionLoaderData.GetData();
 		
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/day_z_mission_loader.layout");	
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/day_z_mission_loader.layout");	
 		
 		m_WgtLstMsnList = TextListboxWidget.Cast( layoutRoot.FindAnyWidget("wgt_lst_missions") );
 		m_WgtBtnMsnPlay = ButtonWidget.Cast( layoutRoot.FindAnyWidget("wgt_btn_mission_play") );
@@ -74,7 +74,7 @@ class MissionLoader : UIScriptedMenu
 		{
 			int rowIndex = m_WgtLstMsnList.GetSelectedRow();
 			string missionPath = m_MissionData.MissionPaths.Get(rowIndex);
-			g_Game.PlayMission(missionPath);
+			GetGame().PlayMission(missionPath);
 			return true;
 		}
 		return false;
@@ -89,7 +89,7 @@ class MissionLoader : UIScriptedMenu
 		{
 			int rowIndex = m_WgtLstMsnList.GetSelectedRow();
 			string missionPath = m_MissionData.MissionPaths.Get(rowIndex);
-			g_Game.PlayMission(missionPath);
+			GetGame().PlayMission(missionPath);
 		}
 		return false;
 	}

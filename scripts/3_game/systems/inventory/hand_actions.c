@@ -120,7 +120,7 @@ class HandActionDestroy extends HandActionBase
 		}
 		#endif
 
-		g_Game.ObjectDelete(e.GetSrcEntity());
+		GetGame().ObjectDelete(e.GetSrcEntity());
 		e.m_Player.OnItemInHandsChanged();
 	}
 };
@@ -150,7 +150,7 @@ class HandActionDestroyAndReplaceWithNew extends HandActionBase
 		}
 		#endif
 		Man player = e.m_Player;
-		EntityAI itemInHands = player.GetEntityInHands();
+		EntityAI itemInHands = player.GetHumanInventory().GetEntityInHands();
 
 		InventoryLocation src = new InventoryLocation;
 		if (itemInHands.GetInventory().GetCurrentInventoryLocation(src))

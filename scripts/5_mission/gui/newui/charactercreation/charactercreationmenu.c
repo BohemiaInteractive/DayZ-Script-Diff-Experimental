@@ -35,7 +35,7 @@ class CharacterCreationMenu extends UIScriptedMenu
 	
 	void CharacterCreationMenu()
 	{
-		MissionMainMenu mission = MissionMainMenu.Cast(g_Game.GetMission());
+		MissionMainMenu mission = MissionMainMenu.Cast(GetGame().GetMission());
 		
 		#ifdef PLATFORM_CONSOLE
 		m_Scene = mission.GetIntroSceneXbox();
@@ -57,17 +57,17 @@ class CharacterCreationMenu extends UIScriptedMenu
 		switch (pInputDeviceType)
 		{
 		case EInputDeviceType.CONTROLLER:
-			if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+			if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 			{
-				g_Game.GetUIManager().ShowUICursor(false);
+				GetGame().GetUIManager().ShowUICursor(false);
 			}
 			CheckNewOptions(); //TODO - pick only the 'focus' bit
 		break;
 
 		default:
-			if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+			if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 			{
-				g_Game.GetUIManager().ShowUICursor(true);
+				GetGame().GetUIManager().ShowUICursor(true);
 			}
 		break;
 		}
@@ -79,10 +79,10 @@ class CharacterCreationMenu extends UIScriptedMenu
 	override Widget Init()
 	{
 		#ifdef PLATFORM_CONSOLE
-			layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/character_creation/xbox/character_creation.layout");
+			layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/character_creation/xbox/character_creation.layout");
 			m_CharacterSaved 				= false;
 		#else
-			layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/character_creation/pc/character_creation.layout");
+			layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/character_creation/pc/character_creation.layout");
 		#endif
 		
 		m_CharacterRotationFrame			= layoutRoot.FindAnyWidget("character_rotation_frame");
@@ -98,7 +98,7 @@ class CharacterCreationMenu extends UIScriptedMenu
 		m_PlayedCharacterInfo 				= layoutRoot.FindAnyWidget("played_char_info");
 		
 		string version;
-		g_Game.GetVersion(version);
+		GetGame().GetVersion(version);
 		#ifdef PLATFORM_CONSOLE
 			version = "#main_menu_version" + " " + version + " (" + g_Game.GetDatabaseID() + ")";
 		#else
@@ -172,7 +172,7 @@ class CharacterCreationMenu extends UIScriptedMenu
 		SetCharacter();
 		CheckNewOptions();
 		
-		g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+		GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 
 		return layoutRoot;
 	}
@@ -199,12 +199,12 @@ class CharacterCreationMenu extends UIScriptedMenu
 			m_Scene.GetIntroCharacter().SaveCharName(name);
 		}
 		
-		MainMenu menu_main = MainMenu.Cast(g_Game.GetUIManager().FindMenu(MENU_MAIN));
+		MainMenu menu_main = MainMenu.Cast(GetGame().GetUIManager().FindMenu(MENU_MAIN));
 		if (menu_main)
 		{
 			menu_main.OnChangeCharacter(false);
 		}
-		g_Game.GetUIManager().Back();
+		GetGame().GetUIManager().Back();
 	}
 	
 	//! saves default character
@@ -226,7 +226,7 @@ class CharacterCreationMenu extends UIScriptedMenu
 	void Back()
 	{
 		//bring back DefaultCharacter, if it exists (it should), or a previously played one.
-		g_Game.GetMenuData().RequestGetDefaultCharacterData();
+		GetGame().GetMenuData().RequestGetDefaultCharacterData();
 		#ifdef PLATFORM_CONSOLE
 			if (m_OriginalCharacterID != GameConstants.DEFAULT_CHARACTER_MENU_ID && m_CharacterSaved)
 			{
@@ -235,14 +235,14 @@ class CharacterCreationMenu extends UIScriptedMenu
 		#endif
 		m_Scene.GetIntroCharacter().SetCharacterID(m_OriginalCharacterID);
 		m_Scene.GetIntroCharacter().CreateNewCharacterById(m_Scene.GetIntroCharacter().GetCharacterID());
-		g_Game.GetUIManager().Back();
+		GetGame().GetUIManager().Back();
 	}
 	
 	void SetCharacter()
 	{
 		if (m_Scene.GetIntroCharacter().IsDefaultCharacter())
 		{
-			g_Game.GetMenuDefaultCharacterData().EquipDefaultCharacter(m_Scene.GetIntroCharacter().GetCharacterObj());
+			GetGame().GetMenuDefaultCharacterData().EquipDefaultCharacter(m_Scene.GetIntroCharacter().GetCharacterObj());
 		}
 	}
 	
@@ -266,11 +266,11 @@ class CharacterCreationMenu extends UIScriptedMenu
 			m_SkinSelector.SetRandomValue();
 		}
 		
-		g_Game.GetMenuDefaultCharacterData().GenerateRandomEquip();
+		GetGame().GetMenuDefaultCharacterData().GenerateRandomEquip();
 		
-		m_TopSelector.SetValue(g_Game.GetMenuDefaultCharacterData().GetAttachmentMap().Get(InventorySlots.BODY),false);
-		m_BottomSelector.SetValue(g_Game.GetMenuDefaultCharacterData().GetAttachmentMap().Get(InventorySlots.LEGS),false);
-		m_ShoesSelector.SetValue(g_Game.GetMenuDefaultCharacterData().GetAttachmentMap().Get(InventorySlots.FEET),false);
+		m_TopSelector.SetValue(GetGame().GetMenuDefaultCharacterData().GetAttachmentMap().Get(InventorySlots.BODY),false);
+		m_BottomSelector.SetValue(GetGame().GetMenuDefaultCharacterData().GetAttachmentMap().Get(InventorySlots.LEGS),false);
+		m_ShoesSelector.SetValue(GetGame().GetMenuDefaultCharacterData().GetAttachmentMap().Get(InventorySlots.FEET),false);
 		
 		Refresh();
 		SetCharacter();
@@ -303,22 +303,22 @@ class CharacterCreationMenu extends UIScriptedMenu
 	
 	void TopChanged()
 	{
-		g_Game.GetMenuDefaultCharacterData().SetDefaultAttachment(InventorySlots.BODY,m_TopSelector.GetStringValue());
-		g_Game.GetMenuDefaultCharacterData().EquipDefaultCharacter(m_Scene.GetIntroCharacter().GetCharacterObj());
+		GetGame().GetMenuDefaultCharacterData().SetDefaultAttachment(InventorySlots.BODY,m_TopSelector.GetStringValue());
+		GetGame().GetMenuDefaultCharacterData().EquipDefaultCharacter(m_Scene.GetIntroCharacter().GetCharacterObj());
 		SetCharacterSaved(false);
 	}
 	
 	void BottomChanged()
 	{
-		g_Game.GetMenuDefaultCharacterData().SetDefaultAttachment(InventorySlots.LEGS,m_BottomSelector.GetStringValue());
-		g_Game.GetMenuDefaultCharacterData().EquipDefaultCharacter(m_Scene.GetIntroCharacter().GetCharacterObj());
+		GetGame().GetMenuDefaultCharacterData().SetDefaultAttachment(InventorySlots.LEGS,m_BottomSelector.GetStringValue());
+		GetGame().GetMenuDefaultCharacterData().EquipDefaultCharacter(m_Scene.GetIntroCharacter().GetCharacterObj());
 		SetCharacterSaved(false);
 	}
 	
 	void ShoesChanged()
 	{
-		g_Game.GetMenuDefaultCharacterData().SetDefaultAttachment(InventorySlots.FEET,m_ShoesSelector.GetStringValue());
-		g_Game.GetMenuDefaultCharacterData().EquipDefaultCharacter(m_Scene.GetIntroCharacter().GetCharacterObj());
+		GetGame().GetMenuDefaultCharacterData().SetDefaultAttachment(InventorySlots.FEET,m_ShoesSelector.GetStringValue());
+		GetGame().GetMenuDefaultCharacterData().EquipDefaultCharacter(m_Scene.GetIntroCharacter().GetCharacterObj());
 		SetCharacterSaved(false);
 	}
 	
@@ -338,7 +338,7 @@ class CharacterCreationMenu extends UIScriptedMenu
 		else if (w == m_Save)
 		{
 			Save();
-			g_Game.GetUIManager().Back();
+			GetGame().GetUIManager().Back();
 			return true;
 		}
 		else if (w == m_RandomizeCharacter)
@@ -503,7 +503,7 @@ class CharacterCreationMenu extends UIScriptedMenu
 	{
 #ifdef PLATFORM_CONSOLE
 		m_GenderSelector.Focus();
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 #endif
 		CheckNewOptions();
 	}
@@ -512,9 +512,9 @@ class CharacterCreationMenu extends UIScriptedMenu
 	{
 		string name;
 		#ifdef PLATFORM_CONSOLE
-			if (g_Game.GetUserManager() && g_Game.GetUserManager().GetSelectedUser())
+			if (GetGame().GetUserManager() && GetGame().GetUserManager().GetSelectedUser())
 			{
-				name = g_Game.GetUserManager().GetSelectedUser().GetName();
+				name = GetGame().GetUserManager().GetSelectedUser().GetName();
 				if (name.LengthUtf8() > 16)
 				{
 					name = name.SubstringUtf8(0, 16);
@@ -530,7 +530,7 @@ class CharacterCreationMenu extends UIScriptedMenu
 		m_NameSelector.SetValue(name);
 		
 		string version;
-		g_Game.GetVersion(version);
+		GetGame().GetVersion(version);
 		#ifdef PLATFORM_CONSOLE
 			version = "#main_menu_version" + " " + version + " (" + g_Game.GetDatabaseID() + ")";
 			
@@ -824,7 +824,7 @@ class CharacterCreationMenu extends UIScriptedMenu
 	protected void UpdateControlsElementVisibility()
 	{
 		#ifdef PLATFORM_CONSOLE
-		bool toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboard() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		bool toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboard() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		layoutRoot.FindAnyWidget("toolbar_bg").Show(toolbarShow);
 		layoutRoot.FindAnyWidget("play_panel_root").Show(!toolbarShow);
 		#endif

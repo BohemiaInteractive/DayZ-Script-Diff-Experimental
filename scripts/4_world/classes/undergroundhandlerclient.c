@@ -36,18 +36,18 @@ class UndergroundHandlerClient
 	
 	void UndergroundHandlerClient(PlayerBase player)
 	{
-		g_Game.GetWorld().LoadUserLightingCfg(UNDERGROUND_LIGHTING, "Underground");
+		GetGame().GetWorld().LoadUserLightingCfg(UNDERGROUND_LIGHTING, "Underground");
 		m_Player = player;
-		m_NVRequester = PPERequester_CameraNV.Cast(PPERequesterBank.GetRequester(PPERequesterBank.REQ_CAMERANV));
+		m_NVRequester = PPERequester_CameraNV.Cast(PPERequesterBank.GetRequester( PPERequesterBank.REQ_CAMERANV));
 	}
 	
 	void ~UndergroundHandlerClient()
 	{
-		if (g_Game)
+		if (GetGame())
 		{
-			g_Game.GetWorld().SetExplicitVolumeFactor_EnvSounds2D(1, 0.5);
-			g_Game.GetWeather().SuppressLightningSimulation(false);
-			g_Game.GetWorld().SetUserLightingLerp(0);
+			GetGame().GetWorld().SetExplicitVolumeFactor_EnvSounds2D(1, 0.5);
+			GetGame().GetWeather().SuppressLightningSimulation(false);
+			GetGame().GetWorld().SetUserLightingLerp(0);
 			if (m_AmbientSound)
 				m_AmbientSound.Stop();
 		}
@@ -67,14 +67,16 @@ class UndergroundHandlerClient
 	{
 		m_InsideTriggers.Insert(trigger);
 		OnTriggerInsiderUpdate();
+		
 	}
 	
 	void OnTriggerLeave(UndergroundTrigger trigger)
 	{
 	 	int index = m_InsideTriggers.Find(trigger);
 		if (index != -1)
+		{
 			m_InsideTriggers.Remove(index);
-
+		}
 		OnTriggerInsiderUpdate();
 	}
 	
@@ -87,7 +89,7 @@ class UndergroundHandlerClient
 		{
 			CalculateLinePointFade();
 		}
-		else if (m_TransitionalTrigger.m_Data.Breadcrumbs.Count() >= 1)
+		else if (m_TransitionalTrigger.m_Data.Breadcrumbs.Count() >= 2)
 		{
 			CalculateBreadCrumbs();
 		}
@@ -100,7 +102,7 @@ class UndergroundHandlerClient
 		array<float> distancesInverted = new array<float>();
 
 		int excludeMask = 0;
-		foreach (int indx, auto crumb : m_TransitionalTrigger.m_Data.Breadcrumbs)
+		foreach (int indx, auto crumb:m_TransitionalTrigger.m_Data.Breadcrumbs)
 		{
 			if (indx > 32)//error handling for exceeding this limit is handled elsewhere
 				break;
@@ -109,35 +111,14 @@ class UndergroundHandlerClient
 			float crumbRadius = m_TransitionalTrigger.m_Data.Breadcrumbs[indx].Radius;
 			float maxRadiusAllowed = DISTANCE_CUTOFF;
 			
-			switch (crumb.ExternalValueController.Type)
-			{
-				case "DoorState":
-				{
-					BreadcrumbDoorStateController ctrl = new BreadcrumbDoorStateController(crumb.ExternalValueController.Params);
-					if (!ctrl || (ctrl && ctrl.SelectionName == ""))
-						break;
-
-					Building building = Building.Cast(m_TransitionalTrigger.GetTriggerParentObject());
-					if (!building)
-						break;
-
-					float animPhase = building.GetAnimationPhase(ctrl.SelectionName);
-					m_LightingLerpTarget = Math.Clamp(Easing.EaseInOutQuint(1 - animPhase), 0.0, 1.0);
-					m_LightingLerp = Easing.EaseInQuint(1 - Math.Remap(0.2, 0.5, 0.0, 1.0, animPhase));
-					m_EyeAccoTarget = Math.Remap(0.2, 0.5, 0.0, m_TransitionalTrigger.m_Data.Breadcrumbs[indx].EyeAccommodation, animPhase * ACCO_MODIFIER);
-
-					return;
-				}
-			}
-			
 			if (crumbRadius != -1)
 				maxRadiusAllowed = crumbRadius;
 			if (dist > maxRadiusAllowed)
 				excludeMask = (excludeMask | (1 << indx));
 			else if (m_TransitionalTrigger.m_Data.Breadcrumbs[indx].UseRaycast)
 			{
-				vector rayStart;
-				MiscGameplayFunctions.GetHeadBonePos(m_Player, rayStart);
+				int idx = m_Player.GetBoneIndexByName("Head");
+				vector rayStart = m_Player.GetBonePositionWS(idx);
 				vector rayEnd = crumb.GetPosition();
 				vector hitPos, hitNormal;
 				float hitFraction;
@@ -186,7 +167,7 @@ class UndergroundHandlerClient
 				if (DiagMenu.GetBool(DiagMenuIDs.UNDERGROUND_SHOW_BREADCRUMB) )
 				{
 					float intensity = (1-ratio) * 255;
-					Debug.DrawLine(g_Game.GetPlayer().GetPosition() + "0 1 0", m_TransitionalTrigger.m_Data.Breadcrumbs[i].GetPosition(),ARGB(0,255,intensity,intensity),ShapeFlags.ONCE);
+					Debug.DrawLine(GetGame().GetPlayer().GetPosition() + "0 1 0", m_TransitionalTrigger.m_Data.Breadcrumbs[i].GetPosition(),ARGB(0,255,intensity,intensity),ShapeFlags.ONCE);
 				}
 				#endif
 				
@@ -297,9 +278,7 @@ class UndergroundHandlerClient
 		#ifdef DIAG_DEVELOPER
 			if (DiagMenu.GetBool(DiagMenuIDs.UNDERGROUND_SHOW_BREADCRUMB))
 			{
-				vector headPosition;
-				MiscGameplayFunctions.GetHeadBonePos(m_Player, headPosition);
-				Debug.DrawLine(headPosition, closestPoint.GetPosition(), COLOR_YELLOW, ShapeFlags.ONCE);
+				Debug.DrawLine(m_Player.GetPosition() + "0 1 0", closestPoint.GetPosition(), COLOR_YELLOW, ShapeFlags.ONCE);
 				if (acco != accoMin && acco != accoMax)
 					Debug.DrawLine(closestPoint.GetPosition(), secondaryPoint.GetPosition(), COLOR_RED, ShapeFlags.ONCE);
 			
@@ -331,14 +310,14 @@ class UndergroundHandlerClient
 		#ifdef DEVELOPER
 		if (!DiagMenu.GetBool(DiagMenuIDs.UNDERGROUND_DISABLE_DARKENING) )
 		{
-			g_Game.GetWorld().SetUserLightingLerp(m_LightingLerp);
+			GetGame().GetWorld().SetUserLightingLerp(m_LightingLerp);
 		}
 		else
 		{
-			g_Game.GetWorld().SetUserLightingLerp(0);
+			GetGame().GetWorld().SetUserLightingLerp(0);
 		}
 		#else
-		g_Game.GetWorld().SetUserLightingLerp(m_LightingLerp);
+		GetGame().GetWorld().SetUserLightingLerp(m_LightingLerp);
 		#endif
 	}
 	
@@ -348,7 +327,7 @@ class UndergroundHandlerClient
 			return;
 		
 		// reduces all env sounds and increases ambient based on eye acco
-		g_Game.GetWorld().SetExplicitVolumeFactor_EnvSounds2D(m_EyeAcco, 0);
+		GetGame().GetWorld().SetExplicitVolumeFactor_EnvSounds2D(m_EyeAcco, 0);
 
 		if (m_AmbientSound)
 		{
@@ -369,7 +348,7 @@ class UndergroundHandlerClient
 		#ifdef DIAG_DEVELOPER
 		if ( DiagMenu.GetBool(DiagMenuIDs.UNDERGROUND_SHOW_BREADCRUMB) )
 		{
-			DisplayDebugInfo(g_Game.GetWorld().GetEyeAccom(), m_LightingLerp);
+			DisplayDebugInfo(GetGame().GetWorld().GetEyeAccom(), m_LightingLerp);
 		}
 		#endif
 		
@@ -469,18 +448,26 @@ class UndergroundHandlerClient
 		if (trigger)
 		{
 			if (trigger.m_Type == EUndergroundTriggerType.OUTER)
+			{
 				newPresence = EUndergroundPresence.OUTER;
+			}
 			else if (trigger.m_Type == EUndergroundTriggerType.TRANSITIONING)
+			{
 				newPresence = EUndergroundPresence.TRANSITIONING;
+			}
 			else if (trigger.m_Type == EUndergroundTriggerType.INNER)
+			{
 				newPresence = EUndergroundPresence.FULL;
+			}
 		}
 		
 		if (newPresence != oldPresence)//was there a change ?
 		{
-			OnUndergroundPresenceUpdate(newPresence, oldPresence);
+			OnUndergroundPresenceUpdate(newPresence,oldPresence);
 			m_Player.SetUnderground(newPresence);
 		}
+				
+		
 	}
 	
 	protected void EnableLights(bool enable)
@@ -514,22 +501,13 @@ class UndergroundHandlerClient
 	
 	protected void PlayAmbientSound()
 	{
-		if (m_BestTrigger)
+		if (m_BestTrigger && m_BestTrigger.m_Data.AmbientSoundType != string.Empty)
 		{
-			if (m_BestTrigger.m_Data.AmbientSoundType != string.Empty)
-			{
-				m_AmbientController = m_BestTrigger.m_Data.AmbientSoundType;
-				SetSoundControllerOverride(m_AmbientController, 1.0, SoundControllerAction.Overwrite);
-			}
-			if (m_BestTrigger.m_Data.AmbientSoundSet != string.Empty)
-			{
-				if (m_AmbientSound && m_BestTrigger.m_Data.AmbientSoundSet != m_AmbientSound.GetSoundSet())
-					StopAmbientSound();
-
-				m_Player.PlaySoundSetLoop(m_AmbientSound, m_BestTrigger.m_Data.AmbientSoundSet, 3, 3);
-			}
-
+			m_AmbientController = m_BestTrigger.m_Data.AmbientSoundType;
+			SetSoundControllerOverride(m_AmbientController, 1.0, SoundControllerAction.Overwrite);
 		}
+		else 
+			m_Player.PlaySoundSetLoop(m_AmbientSound, "Underground_SoundSet",3,3);
 	}
 	
 	protected void StopAmbientSound()
@@ -551,28 +529,28 @@ class UndergroundHandlerClient
 			if (oldPresence == EUndergroundPresence.NONE)
 			{
 				EnableLights(true);
-				if (m_BestTrigger && m_BestTrigger.m_Data)
+				if (m_BestTrigger && m_BestTrigger.m_Data && m_BestTrigger.m_Data.AmbientSoundType != string.Empty)
 					PlayAmbientSound();
 			}
 			if (newPresence > EUndergroundPresence.OUTER && oldPresence <= EUndergroundPresence.OUTER)
 			{
-				g_Game.GetWeather().SuppressLightningSimulation(true);		
+				GetGame().GetWeather().SuppressLightningSimulation(true);		
 				PlayAmbientSound();
 			}
 			if (newPresence == EUndergroundPresence.FULL)
 			{
 				m_AnimTimerLightBlend = new AnimationTimer();
-				m_AnimTimerLightBlend.Run(1.0, this, "OnUpdateTimerIn", "OnUpdateTimerEnd", m_LightingLerp, false, LIGHT_BLEND_SPEED_IN);
+				m_AnimTimerLightBlend.Run(1, this, "OnUpdateTimerIn", "OnUpdateTimerEnd",0, false, LIGHT_BLEND_SPEED_IN);
 			}
 		}
 		if (newPresence < EUndergroundPresence.FULL && oldPresence == EUndergroundPresence.FULL)
 		{
 			m_AnimTimerLightBlend = new AnimationTimer();
-			m_AnimTimerLightBlend.Run(0.0, this, "OnUpdateTimerOut", "OnUpdateTimerEnd", m_LightingLerp, false, LIGHT_BLEND_SPEED_OUT);
+			m_AnimTimerLightBlend.Run(0, this, "OnUpdateTimerOut", "OnUpdateTimerEnd",m_LightingLerp, false, LIGHT_BLEND_SPEED_OUT);
 		}
 		if (newPresence <= EUndergroundPresence.OUTER && oldPresence > EUndergroundPresence.OUTER)
 		{
-			g_Game.GetWeather().SuppressLightningSimulation(false);
+			GetGame().GetWeather().SuppressLightningSimulation(false);
 		}
 		if (newPresence == EUndergroundPresence.NONE)
 		{
@@ -580,7 +558,7 @@ class UndergroundHandlerClient
 			
 			if (oldPresence >= EUndergroundPresence.OUTER)
 			{
-				g_Game.GetWorld().SetUserLightingLerp(0);
+				GetGame().GetWorld().SetUserLightingLerp(0);
 				EnableLights(false);
 			}
 		}

@@ -546,8 +546,8 @@ class Environment
 			temperature += m_WorldData.GetTemperatureComponentValue(temperature, EEnvironmentTemperatureComponent.WIND) * GetWindModifierPerSurface();
 		}
 
-		float temperaturesDiff = temperature - m_UTSAverageTemperature;
-		if (temperaturesDiff * (temperaturesDiff - temperature) > 0.0)
+		// incorporate temperature from temperature sources (buffer)
+		if (Math.AbsFloat(m_UTSAverageTemperature) > 0.0 && m_UTSAverageTemperature > temperature)
 			temperature = m_UTSAverageTemperature;
 		
 		return temperature;
@@ -1355,11 +1355,10 @@ class Environment
 		pHeatComfort = 0;
 		pHeat = 0;
 
-		GameInventory playerInventory = m_Player.GetInventory();
-		int attCount = playerInventory.AttachmentCount();
+		int attCount = m_Player.GetInventory().AttachmentCount();
 		for (int attIdx = 0; attIdx < attCount; ++attIdx)
 		{
-			EntityAI attachment = playerInventory.GetAttachmentFromIndex(attIdx);
+			EntityAI attachment = m_Player.GetInventory().GetAttachmentFromIndex(attIdx);
 			if (attachment.IsClothing())
 			{
 				ItemBase item = ItemBase.Cast(attachment);
@@ -1375,8 +1374,7 @@ class Environment
 					float itemTemperature = 0;
 					
 					// go through any attachments and cargo (only current level, ignore nested containers - they isolate)
-					GameInventory itemInventory = item.GetInventory();
-					int inventoryAttCount = itemInventory.AttachmentCount();
+					int inventoryAttCount = item.GetInventory().AttachmentCount();
 					if (inventoryAttCount > 0)
 					{
 						#ifdef ENABLE_LOGGING
@@ -1384,7 +1382,7 @@ class Environment
 						#endif
 						for (int inAttIdx = 0; inAttIdx < inventoryAttCount; ++inAttIdx)
 						{
-							EntityAI inAttachment = itemInventory.GetAttachmentFromIndex(inAttIdx);
+							EntityAI inAttachment = item.GetInventory().GetAttachmentFromIndex(inAttIdx);
 							ItemBase attachmentItem = ItemBase.Cast(inAttachment);
 							if (attachmentItem && attachmentItem.CanHaveTemperature())
 							{
@@ -1400,11 +1398,9 @@ class Environment
 							}
 						}
 					}
-					
-					CargoBase inventoryItemCargo = itemInventory.GetCargo();
-					if (inventoryItemCargo)
+					if (item.GetInventory().GetCargo())
 					{
-						int inventoryItemCount = inventoryItemCargo.GetItemCount();
+						int inventoryItemCount = item.GetInventory().GetCargo().GetItemCount();
 						
 						if (inventoryItemCount > 0)
 						{
@@ -1413,7 +1409,7 @@ class Environment
 							#endif
 							for (int j = 0; j < inventoryItemCount; ++j)
 							{
-								ItemBase inventoryItem = ItemBase.Cast(inventoryItemCargo.GetItem(j));
+								ItemBase inventoryItem = ItemBase.Cast(item.GetInventory().GetCargo().GetItem(j));
 								if (inventoryItem && inventoryItem.CanHaveTemperature())
 								{
 									itemTemperature = inventoryItem.GetTemperature();
@@ -1963,7 +1959,7 @@ class EnvDebugPlayerData : Param
 	
 	override bool Deserializer(Serializer ctx)
 	{
-		return ctx.Read(m_HeatComfortTarget) && ctx.Read(m_HeatComfortDynamic) && ctx.Read(m_Inside) && ctx.Read(m_Surface) && ctx.Read(m_UnderRoof) && ctx.Read(m_UnderRoofTimer) && ctx.Read(m_WaterLevel);
+		return ctx.Write(m_HeatComfortTarget) && ctx.Read(m_HeatComfortDynamic) && ctx.Read(m_Inside) && ctx.Read(m_Surface) && ctx.Read(m_UnderRoof) && ctx.Read(m_UnderRoofTimer) && ctx.Read(m_WaterLevel);
 	}
 }
 

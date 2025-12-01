@@ -15,10 +15,6 @@ enum BoatFluid
 	FUEL
 };
 
-class BoatType : TransportType
-{
-};
-
 class BoatOwnerState : TransportOwnerState
 {
 };

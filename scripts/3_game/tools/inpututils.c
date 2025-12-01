@@ -137,7 +137,7 @@ class InputUtils
 	
 			//! Asia vs Europe/N.America controller layout
 			#ifdef PLATFORM_PS4		
-			if (g_Game.GetInput().GetEnterButton() == GamepadButton.B)
+			if (GetGame().GetInput().GetEnterButton() == GamepadButton.B)
 			{
 				//! switch confirm button
 				if (parts[2] == "cross")
@@ -209,7 +209,7 @@ class InputUtils
 	static void UpdateConsolePresetID()
 	{
 		string profile_name;
-		g_Game.GetInput().GetProfileName(GetUApi().PresetCurrent(), profile_name);
+		GetGame().GetInput().GetProfileName(GetUApi().PresetCurrent(), profile_name);
 
 		if (profile_name == PRESET_OLD)
 		{

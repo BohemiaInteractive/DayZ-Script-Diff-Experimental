@@ -49,7 +49,7 @@ class ActionRepositionPluggedItem : ActionInteractBase
 		super.Start(action_data);
 
 		ItemBase ntarget = ItemBase.Cast(action_data.m_Target.GetObject());
-		if (g_Game.IsMultiplayer() && g_Game.IsServer())
+		if (GetGame().IsMultiplayer() && GetGame().IsServer())
 			action_data.m_Player.PlacingStartServer(ntarget);
 		else
 			action_data.m_Player.PlacingStartLocal(ntarget);
@@ -59,7 +59,7 @@ class ActionRepositionPluggedItem : ActionInteractBase
 	{	
 		ClearActionJuncture(action_data);
 		
-		if (g_Game.IsMultiplayer())
+		if (GetGame().IsMultiplayer())
 			return;
 		
 		InventoryLocation il = new InventoryLocation();

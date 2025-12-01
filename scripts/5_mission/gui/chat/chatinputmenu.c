@@ -13,7 +13,7 @@ class ChatInputMenu extends UIScriptedMenu
 	override Widget Init()
 	{
 		m_BackInputWrapper = GetUApi().GetInputByID(UAUIBack).GetPersistentWrapper();
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/day_z_chat_input.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/day_z_chat_input.layout");
 		m_edit_box = EditBoxWidget.Cast(layoutRoot.FindAnyWidget("InputEditBoxWidget"));
 		m_channel_text = TextWidget.Cast(layoutRoot.FindAnyWidget("ChannelText"));
 		
@@ -36,13 +36,13 @@ class ChatInputMenu extends UIScriptedMenu
 
 		if (text != "")
 		{
-			g_Game.ChatPlayer(text);
-			if (!g_Game.IsMultiplayer())
+			GetGame().ChatPlayer(text);
+			if (!GetGame().IsMultiplayer())
 			{
 				string name;
-				g_Game.GetPlayerName(name);
+				GetGame().GetPlayerName(name);
 				ChatMessageEventParams chat_params = new ChatMessageEventParams(CCDirect, name, text, "");
-				MissionGameplay.Cast(g_Game.GetMission()).m_Chat.Add(chat_params);
+				MissionGameplay.Cast(GetGame().GetMission()).m_Chat.Add(chat_params);
 			}
 		}
 
@@ -61,10 +61,10 @@ class ChatInputMenu extends UIScriptedMenu
 	override void OnHide()
 	{
 		super.OnHide();
-		g_Game.GetMission().HideChat();
+		GetGame().GetMission().HideChat();
 		
-		if (!g_Game.GetMission().IsVoNActive())
-			g_Game.GetMission().HideVoiceLevelWidgets();
+		if (!GetGame().GetMission().IsVoNActive())
+			GetGame().GetMission().HideVoiceLevelWidgets();
 	}
 	
 	override void Refresh()
@@ -81,7 +81,7 @@ class ChatInputMenu extends UIScriptedMenu
 	
 	void UpdateChannel()
 	{
-		m_channel_text.SetText(GetChannelName(/*g_Game.ChatGetChannel()*/0));	
+		m_channel_text.SetText(GetChannelName(/*GetGame().ChatGetChannel()*/0));	
 	}
 	
 	static string GetChannelName(ChatChannel channel)

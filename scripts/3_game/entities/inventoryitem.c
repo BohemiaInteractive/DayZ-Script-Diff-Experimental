@@ -129,7 +129,7 @@ class InventoryItem extends EntityAI
 			return null;
 
 		so.SetPosition(GetPosition());
-		AbstractWave wave = g_Game.GetSoundScene().Play3D(so, sob);
+		AbstractWave wave = GetGame().GetSoundScene().Play3D(so, sob);
 
 		return wave;
 	}
@@ -175,7 +175,7 @@ class InventoryItem extends EntityAI
 			return surfaceImpact;
 		}
 		string surface;
-		g_Game.SurfaceUnderObjectExCorrectedLiquid(this, surface, surfaceImpact, liquid);
+		GetGame().SurfaceUnderObjectExCorrectedLiquid(this, surface, surfaceImpact, liquid);
 
 		return surfaceImpact;
 	}
@@ -201,7 +201,7 @@ class InventoryItem extends EntityAI
 		if ( impactVelocity < 0.3 )
 			return 0.0;
 		
-		float tickTime = g_Game.GetTickTime();
+		float tickTime = GetGame().GetTickTime();
 		if ( m_SoundContactTickTime + SOUND_CONTACT_SKIP > tickTime )
 			return 0.0;
 		

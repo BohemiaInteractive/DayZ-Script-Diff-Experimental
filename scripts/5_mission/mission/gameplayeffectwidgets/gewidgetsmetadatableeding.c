@@ -189,7 +189,7 @@ class GameplayEffectsDataBleeding extends GameplayEffectsData
 	
 		if (m_RunningIndicators.Count() <= 0)
 		{
-			g_Game.GetMission().GetEffectWidgets().RemoveActiveEffects({EffectWidgetsTypes.BLEEDING_LAYER});
+			GetGame().GetMission().GetEffectWidgets().RemoveActiveEffects({EffectWidgetsTypes.BLEEDING_LAYER});
 			m_WidgetArray.ShuffleArray();
 		}
 	}

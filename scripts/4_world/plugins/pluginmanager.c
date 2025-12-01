@@ -30,7 +30,7 @@ class PluginManager
 			}
 		}
 		
-		g_Game.GetUpdateQueue(CALL_CATEGORY_GAMEPLAY).Remove(this.MainOnUpdate);
+		GetGame().GetUpdateQueue(CALL_CATEGORY_GAMEPLAY).Remove(this.MainOnUpdate);
 	}
 	
 	//=================================
@@ -57,11 +57,7 @@ class PluginManager
 		RegisterPlugin( "PluginAdminLog",								false, 	true );
 		
 		// Developer + Diag
-#ifdef NO_GUI
 		RegisterPluginDiag( "PluginKeyBinding",							true, 	false );
-#else
-		RegisterPluginDiag( "PluginKeyBinding",							true, 	true );
-#endif
 		RegisterPluginDiag( "PluginDeveloper",							true, 	true );
 		RegisterPluginDiag( "PluginDeveloperSync",						true, 	true );
 		RegisterPluginDiag( "PluginDiagMenuClient",						true, 	false );
@@ -95,12 +91,8 @@ class PluginManager
 		//RegisterPluginDebug( "PluginSoundDebug",						false,	false );
 		RegisterPluginDebug( "PluginCameraTools",						true, 	true );
 		RegisterPluginDebug( "PluginNutritionDumper",					true, 	false );
-#ifdef DIAG_DEVELOPER
-		RegisterPluginDebug( "PluginInventoryDebug",					true, 	true );
-#endif
-		RegisterPluginDebug( "PluginInventoryRepair",					true, 	false );
 		
-		g_Game.GetUpdateQueue(CALL_CATEGORY_GAMEPLAY).Insert(MainOnUpdate);
+		GetGame().GetUpdateQueue(CALL_CATEGORY_GAMEPLAY).Insert(MainOnUpdate);
 	}
 	
 	//=================================
@@ -141,8 +133,7 @@ class PluginManager
 	//=================================
 	void MainOnUpdate(float delta_time)
 	{
-		int nPlugins = m_PluginsPtrs.Count();
-		for (int i = 0; i < nPlugins; ++i)
+		for ( int i = 0; i < m_PluginsPtrs.Count(); ++i)
 		{
 			PluginBase plugin = m_PluginsPtrs.GetElement(i);
 			if ( plugin != NULL )
@@ -193,7 +184,7 @@ class PluginManager
 	{
 		if ( !reg_on_client )
 		{
-			if ( g_Game.IsMultiplayer() && g_Game.IsClient() )
+			if ( GetGame().IsMultiplayer() && GetGame().IsClient() )
 			{
 				return;
 			}
@@ -201,9 +192,9 @@ class PluginManager
 		
 		if ( !reg_on_server )
 		{
-			if ( g_Game.IsMultiplayer() )
+			if ( GetGame().IsMultiplayer() )
 			{
-				if ( g_Game.IsServer() )
+				if ( GetGame().IsServer() )
 				{
 					return;
 				}
@@ -212,7 +203,7 @@ class PluginManager
 		
 		if ( !reg_on_release )
 		{
-			if ( !g_Game.IsDebug() )
+			if ( !GetGame().IsDebug() )
 			{
 				return;
 			}
@@ -340,19 +331,6 @@ PluginBase GetPlugin(typename plugin_type)
 			}
 			#endif
 		}
-	}
-	
-	return plugin;
-}
-
-// Inspired by BaseItem::SafeCast, no asserts version
-PluginBase GetPluginSafe(typename plugin_type)
-{
-	PluginBase plugin = null;
-	
-	if ( IsPluginManagerExists() )
-	{
-		plugin = GetPluginManager().GetPluginByType(plugin_type);
 	}
 	
 	return plugin;

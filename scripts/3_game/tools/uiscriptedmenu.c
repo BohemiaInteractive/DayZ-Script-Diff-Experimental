@@ -32,7 +32,7 @@ class UIMenuPanel: Managed
 
 	bool UseMouse()	{
 		#ifdef PLATFORM_CONSOLE
-		return g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
+		return GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
 		#else
 		return true;
 		#endif
@@ -40,7 +40,7 @@ class UIMenuPanel: Managed
 
 	bool UseKeyboard()	{
 		#ifdef PLATFORM_CONSOLE
-		return g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
+		return GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
 		#else
 		return true;
 		#endif
@@ -86,18 +86,18 @@ class UIScriptedMenu extends UIMenuPanel
 
 		if (UseMouse())
 		{
-			g_Game.GetInput().ChangeGameFocus(1, INPUT_DEVICE_MOUSE);
-			g_Game.GetUIManager().ShowUICursor(true);
+			GetGame().GetInput().ChangeGameFocus(1, INPUT_DEVICE_MOUSE);
+			GetGame().GetUIManager().ShowUICursor(true);
 		}
 
 		if (UseKeyboard())
 		{
-			g_Game.GetInput().ChangeGameFocus(1, INPUT_DEVICE_KEYBOARD);
+			GetGame().GetInput().ChangeGameFocus(1, INPUT_DEVICE_KEYBOARD);
 		}
 		
 		if (UseGamepad())
 		{
-			g_Game.GetInput().ChangeGameFocus(1, INPUT_DEVICE_GAMEPAD);
+			GetGame().GetInput().ChangeGameFocus(1, INPUT_DEVICE_GAMEPAD);
 		}
 	}
 	
@@ -110,26 +110,26 @@ class UIScriptedMenu extends UIMenuPanel
 
 		if (UseMouse())
 		{
-			g_Game.GetInput().ChangeGameFocus(-1, INPUT_DEVICE_MOUSE);
+			GetGame().GetInput().ChangeGameFocus(-1, INPUT_DEVICE_MOUSE);
 		}
 
 		if (GetParentMenu() && GetParentMenu().UseMouse())
 		{
-			g_Game.GetUIManager().ShowUICursor(true);
+			GetGame().GetUIManager().ShowUICursor(true);
 		}
 		else
 		{
-			g_Game.GetUIManager().ShowUICursor(false);
+			GetGame().GetUIManager().ShowUICursor(false);
 		}
 
 		if(UseKeyboard())
 		{
-			g_Game.GetInput().ChangeGameFocus(-1, INPUT_DEVICE_KEYBOARD);
+			GetGame().GetInput().ChangeGameFocus(-1, INPUT_DEVICE_KEYBOARD);
 		}
 		
 		if(UseGamepad())
 		{
-			g_Game.GetInput().ChangeGameFocus(-1, INPUT_DEVICE_GAMEPAD);
+			GetGame().GetInput().ChangeGameFocus(-1, INPUT_DEVICE_GAMEPAD);
 		}
 	}
 	

@@ -56,7 +56,7 @@ class ActionDismantleGardenPlot: ActionContinuousBase
 		GardenPlot targetPlot = GardenPlot.Cast( action_data.m_Target.GetObject() );
 		targetPlot.Delete();
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 			MiscGameplayFunctions.DealAbsoluteDmg( action_data.m_MainItem, 10 );
 	}
 };

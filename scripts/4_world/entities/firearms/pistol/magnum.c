@@ -248,7 +248,7 @@ class Magnum_Base extends Weapon_Base
 	{
 		super.EEHealthLevelChanged(oldLevel,newLevel,zone);
 		
-		if (g_Game.IsClient())
+		if (GetGame().IsClient())
 			return;
 		
 		SetAttachmentsHealth();
@@ -298,7 +298,9 @@ class Magnum_Base extends Weapon_Base
 	}
 	
 	override void ShowBullet(int muzzleIndex)
-	{		
+	{
+		super.ShowBullet(muzzleIndex);
+		
 		Magnum_Cylinder cylinder = Magnum_Cylinder.Cast(GetAttachmentByType(Magnum_Cylinder));
 		if (cylinder)
 		{		
@@ -364,7 +366,7 @@ class Magnum extends Magnum_Base
 	
 	override bool OnAction(int action_id, Man player, ParamsReadContext ctx)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (action_id == EActions.SPIN)
 			{

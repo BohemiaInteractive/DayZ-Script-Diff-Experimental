@@ -48,7 +48,7 @@ class PluginPlayerStatus extends PluginBase
 			if ( m_NotifiersIcons.HasKey( key ) )
 			{
 				string icon_name = m_NotifiersIcons.Get( key ).Get( icon_index );
-				Mission mission = g_Game.GetMission();
+				Mission mission = GetGame().GetMission();
 				if ( mission )
 				{
 					Hud hud = mission.GetHud();
@@ -65,7 +65,7 @@ class PluginPlayerStatus extends PluginBase
 	{
 		if ( key )
 		{
-			Mission mission = g_Game.GetMission();
+			Mission mission = GetGame().GetMission();
 			if ( mission )
 			{
 				Hud hud = mission.GetHud();
@@ -80,7 +80,7 @@ class PluginPlayerStatus extends PluginBase
 	void SetStamina( int value , int range )
 	{
 		// Log( String( "SetStamina" + itoa( value) ), LogTemplates.TEMPLATE_JANOSIK );
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if ( mission )
 		{
 			Hud hud = mission.GetHud();
@@ -93,7 +93,7 @@ class PluginPlayerStatus extends PluginBase
 	
 	void SetStance( int value  )
 	{
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if ( mission )
 		{
 			Hud hud = mission.GetHud();

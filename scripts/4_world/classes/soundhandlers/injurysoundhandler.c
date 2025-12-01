@@ -82,14 +82,13 @@ class InjurySoundHandlerClient extends InjurySoundHandlerBase
 	{
 		//Print("injury sound zone:"+ zone);
 		// process sound here
-		int currentTime = g_Game.GetTime();
-		if( currentTime > m_SoundTime)
+		if( GetGame().GetTime() > m_SoundTime)
 		{
 			float offset_time;
 			if(zone == eInjurySoundZones.NONE)
 			{
 				offset_time = 3000;
-				m_SoundTime = currentTime + offset_time;
+				m_SoundTime = GetGame().GetTime() + offset_time;
 				return;
 			}
 			if(zone == eInjurySoundZones.LIGHT)
@@ -104,7 +103,7 @@ class InjurySoundHandlerClient extends InjurySoundHandlerBase
 			{
 				offset_time = Math.RandomFloatInclusive(SOUND_INTERVALS_HEAVY_MIN, SOUND_INTERVALS_HEAVY_MAX) * 1000;
 			}
-			m_SoundTime = g_Game.GetTime() + offset_time;
+			m_SoundTime = GetGame().GetTime() + offset_time;
 			PlaySound(zone);
 		}
 	}

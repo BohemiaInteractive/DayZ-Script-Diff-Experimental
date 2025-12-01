@@ -51,14 +51,14 @@ class ItemActionsWidget extends ScriptedWidgetEventHandler
 		
 		m_UseActionWrapper 		= GetUApi().GetInputByID(UAAction).GetPersistentWrapper();
 		
-		g_Game.GetUpdateQueue(CALL_CATEGORY_GUI).Insert(Update);
-		g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-		g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+		GetGame().GetUpdateQueue(CALL_CATEGORY_GUI).Insert(Update);
+		GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+		GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 	}
 	
 	void ~ItemActionsWidget()
 	{
-		g_Game.GetUpdateQueue(CALL_CATEGORY_GUI).Remove(Update);
+		GetGame().GetUpdateQueue(CALL_CATEGORY_GUI).Remove(Update);
 	}
 	
 	//! DEPRECATED
@@ -120,7 +120,7 @@ class ItemActionsWidget extends ScriptedWidgetEventHandler
 	{
 		bool showConsoleIcons = false;
 		#ifdef PLATFORM_CONSOLE
-		showConsoleIcons = g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER || !g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
+		showConsoleIcons = GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER || !GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
 		#endif
 		
 		ShowXboxHidePCIcons("ia_interact", showConsoleIcons);
@@ -203,7 +203,7 @@ class ItemActionsWidget extends ScriptedWidgetEventHandler
 		GetActions();
 		GetEntityInHands();
 
-		if ((m_EntityInHands || !m_Hidden) && g_Game.GetUIManager().GetMenu() == null)
+		if ((m_EntityInHands || !m_Hidden) && GetGame().GetUIManager().GetMenu() == null)
 		{
 			CheckForActionWidgetOverrides();
 			BuildCursor();
@@ -219,7 +219,7 @@ class ItemActionsWidget extends ScriptedWidgetEventHandler
 	// getters
     protected void GetPlayer()
 	{
-		Class.CastTo(m_Player, g_Game.GetPlayer());
+		Class.CastTo(m_Player, GetGame().GetPlayer());
 	}
 
 	protected void GetActionManager()
@@ -261,7 +261,7 @@ class ItemActionsWidget extends ScriptedWidgetEventHandler
 	{
 		if (!m_Player) return;
 		
-		EntityAI eai = m_Player.GetEntityInHands();
+		EntityAI eai = m_Player.GetHumanInventory().GetEntityInHands();
 		
 		if (eai && !eai.IsInherited(DummyItem))
 		{
@@ -576,7 +576,7 @@ class ItemActionsWidget extends ScriptedWidgetEventHandler
 			Class.CastTo(txtModeWidget, widget.FindAnyWidget(upWidget));
 			Class.CastTo(txtZeroingWidget, widget.FindAnyWidget(downWidget));
 			
-			Weapon w = Weapon.Cast(m_Player.GetEntityInHands());
+			Weapon w = Weapon.Cast(m_Player.GetHumanInventory().GetEntityInHands());
 			string zeroing	= string.Empty;
 			if (w)
 				zeroing	= string.Format("%1 m", w.GetCurrentZeroing(w.GetCurrentMuzzle()));
@@ -734,7 +734,7 @@ class ItemActionsWidget extends ScriptedWidgetEventHandler
 	
 	protected IngameHud GetHud()
 	{
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());

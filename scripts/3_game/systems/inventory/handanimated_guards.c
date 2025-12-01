@@ -95,23 +95,18 @@ int SlotToAnimType(notnull Man player, notnull InventoryLocation src, InventoryL
 	}
 	else if (invloc1.GetType() == InventoryLocationType.CARGO)
 	{
-		EntityAI item = invloc1.GetItem();
-		if (item)
+		if ( invloc1.GetItem() && (invloc1.GetItem().GetInventory().HasInventorySlot(InventorySlots.SHOULDER) || invloc1.GetItem().GetInventory().HasInventorySlot(InventorySlots.MELEE)) )
 		{
-			GameInventory itemInventory = item.GetInventory();
-			if (itemInventory.HasInventorySlot(InventorySlots.SHOULDER) || itemInventory.HasInventorySlot(InventorySlots.MELEE))
+			//Print("Special inventory anim");
+			if (invloc1.GetItem() && invloc1.GetItem().IsWeapon())
 			{
-				//Print("Special inventory anim");
-				if (item.IsWeapon())
-				{
-					return WeaponHideShowTypes.HIDESHOW_SLOT_RFLRIGHTBACK;
-				}
-				else if (item.IsOneHandedBehaviour())
-				{
-					return WeaponHideShowTypes.HIDESHOW_SLOT_1HDRIGHTBACK;
-				}
-				return WeaponHideShowTypes.HIDESHOW_SLOT_2HDRIGHTBACK;
+				return WeaponHideShowTypes.HIDESHOW_SLOT_RFLRIGHTBACK;
 			}
+			else if (invloc1.GetItem() && invloc1.GetItem().IsOneHandedBehaviour())
+			{
+				return WeaponHideShowTypes.HIDESHOW_SLOT_1HDRIGHTBACK;
+			}
+			return WeaponHideShowTypes.HIDESHOW_SLOT_2HDRIGHTBACK;
 		}
 		//Print("Default inventory anim");
 		return WeaponHideShowTypes.HIDESHOW_SLOT_INVENTORY; //default item animation
@@ -214,7 +209,7 @@ class HandSelectAnimationOfMoveFromHandsEvent extends HandGuardBase
 
 	override bool GuardCondition(HandEventBase e)
 	{
-		EntityAI eai = m_Player.GetEntityInHands();
+		EntityAI eai = m_Player.GetHumanInventory().GetEntityInHands();
 		if (eai)
 		{
 			InventoryLocation src = new InventoryLocation;

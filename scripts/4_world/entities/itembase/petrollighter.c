@@ -10,7 +10,7 @@ class PetrolLighter extends ItemBase
 	
 	override void OnIgnitedTarget( EntityAI target_item )
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			AddQuantity( -0.5 );
 		}
@@ -18,7 +18,7 @@ class PetrolLighter extends ItemBase
 	
 	override void OnIgnitedTargetFailed( EntityAI target_item )
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			AddQuantity( -0.5 );
 		}

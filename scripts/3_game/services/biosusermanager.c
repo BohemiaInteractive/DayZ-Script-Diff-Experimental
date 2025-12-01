@@ -102,19 +102,10 @@ class BiosUserManager
 		
 		if (!success)
 		{
-			// Give it a moment and check again (there's a brief moment where the services become unavailable during the user transition) 
-			GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(CheckUserSwitchResult, 100, false, user);
+			NotificationSystem.AddNotification(NotificationType.GENERIC_ERROR, NotificationSystem.DEFAULT_TIME_DISPLAYED);
 		}
 		
 		return success;
-	}
-	
-	void CheckUserSwitchResult(BiosUser expectedUser)
-	{
-		if (GetSelectedUser() != expectedUser)
-		{
-			NotificationSystem.AddNotification(NotificationType.GENERIC_ERROR, NotificationSystem.DEFAULT_TIME_DISPLAYED);
-		}
 	}
 	
 	//! Callback function.
@@ -138,7 +129,7 @@ class BiosUserManager
 	{
 		if ( OnlineServices.ErrorCaught( error ) )
 		{
-			g_Game.GetInput().ResetActiveGamepad();
+			GetGame().GetInput().ResetActiveGamepad();
 			g_Game.DisconnectSessionEx(DISCONNECT_SESSION_FLAGS_FORCE);
 		}
 	}
@@ -152,18 +143,17 @@ class BiosUserManager
 	{
 		if ( !user )
 		{
-			g_Game.GetInput().ResetActiveGamepad();
+			GetGame().GetInput().ResetActiveGamepad();
 			g_Game.GamepadCheck();
 		}
 		else if ( !OnlineServices.ErrorCaught( error ) )
 		{
 			if (SelectUserEx( user ))
 			{
-				Mission mission = g_Game.GetMission();
-				if ( mission )
-					mission.Reset();
+				if ( GetGame().GetMission() )
+					GetGame().GetMission().Reset();
 				OnGameNameChanged( user );
-				g_Game.SelectUser(g_Game.GetInput().GetUserGamepad(user));
+				g_Game.SelectUser(GetGame().GetInput().GetUserGamepad(user));
 			}
 		}
 	}
@@ -172,7 +162,7 @@ class BiosUserManager
 	void OnLoggedOn(BiosUser user)
 	{
 		if ( user && GetSelectedUser() == user )
-			g_Game.SelectUser(g_Game.GetInput().GetUserGamepad(user));
+			g_Game.SelectUser(GetGame().GetInput().GetUserGamepad(user));
 	}
 
 	//! Callback function.
@@ -203,7 +193,7 @@ class BiosUserManager
 		if ( user == GetSelectedUser() )
 		{
 			SelectUserEx( null );
-			g_Game.GetInput().ResetActiveGamepad();
+			GetGame().GetInput().ResetActiveGamepad();
 			g_Game.DisconnectSessionEx(DISCONNECT_SESSION_FLAGS_FORCE & ~DisconnectSessionFlags.SELECT_USER);
 		}
 	}
@@ -234,10 +224,10 @@ class BiosUserManager
 			}
 			else
 			{
-				if ( g_Game.GetUIManager() && g_Game.GetInput().IsActiveGamepadSelected() )
+				if ( GetGame().GetUIManager() && GetGame().GetInput().IsActiveGamepadSelected() )
 				{
-					g_Game.GetUIManager().CloseMenu( MENU_TITLE_SCREEN );
-					g_Game.GetInput().IdentifyGamepad( GamepadButton.BUTTON_NONE );
+					GetGame().GetUIManager().CloseMenu( MENU_TITLE_SCREEN );
+					GetGame().GetInput().IdentifyGamepad( GamepadButton.BUTTON_NONE );
 				}
 				g_Game.SetLoadState( DayZLoadState.JOIN_START );
 				g_Game.GamepadCheck();
@@ -274,17 +264,17 @@ class BiosUserManager
 		}
 
 
-		if (g_Game.GetUIManager())
+		if (GetGame().GetUIManager())
 		{
-			g_Game.GetUIManager().CloseMenu(MENU_TITLE_SCREEN);
+			GetGame().GetUIManager().CloseMenu(MENU_TITLE_SCREEN);
 		}
 		
 		OnlineServices.SetPendingInviteList( invitee_list );
 		if (g_Game.GetGameState() != DayZGameState.IN_GAME && g_Game.GetGameState() != DayZGameState.CONNECTING)
 		{
-			if (!g_Game.GetUIManager().GetMenu() || g_Game.GetUIManager().GetMenu().GetID() != MENU_MAIN)
+			if (!GetGame().GetUIManager().GetMenu() || GetGame().GetUIManager().GetMenu().GetID() != MENU_MAIN)
 			{
-				g_Game.GetUIManager().EnterScriptedMenu(MENU_MAIN, g_Game.GetUIManager().GetMenu());
+				GetGame().GetUIManager().EnterScriptedMenu(MENU_MAIN, GetGame().GetUIManager().GetMenu());
 			}
 			g_Game.SetGameState( DayZGameState.PARTY );
 			g_Game.SetLoadState( DayZLoadState.PARTY_START );
@@ -306,9 +296,9 @@ class BiosUserManager
 			#ifdef PLATFORM_CONSOLE
 				g_Game.SetPlayerGameName( user.GetName() );
 			#endif
-			if ( g_Game.GetUIManager().GetMenu() )
+			if ( GetGame().GetUIManager().GetMenu() )
 			{
-				g_Game.GetUIManager().GetMenu().Refresh();
+				GetGame().GetUIManager().GetMenu().Refresh();
 			}
 		}
 	}

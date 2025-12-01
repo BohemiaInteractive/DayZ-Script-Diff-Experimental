@@ -30,7 +30,7 @@ class ActionUnfoldEntity : ActionSingleUseBase
 
 	override void OnExecuteServer ( ActionData action_data )
 	{
-		if ( !g_Game.IsMultiplayer() )
+		if ( !GetGame().IsMultiplayer() )
 			ClearInventoryReservationEx(action_data);
 
 		ItemBase old_item = action_data.m_MainItem;

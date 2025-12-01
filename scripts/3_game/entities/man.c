@@ -5,10 +5,6 @@ class Person extends Pawn
 };
 #endif
 
-class ManType : EntityAIType
-{
-};
-
 #ifdef FEATURE_NETWORK_RECONCILIATION
 class Man extends Person
 #else
@@ -77,14 +73,10 @@ class Man extends EntityAI
 	///@{ inventory
 	//! Returns player's inventory
 	proto native HumanInventory GetHumanInventory();
-	//! Returns the current entity in hands
-	proto native EntityAI GetEntityInHands();
 	//Called when an item is removed from the cargo of this item
 	protected ref ScriptInvoker		m_OnItemAddedToHands;
 	//Called when an item is moved around in the cargo of this item
 	protected ref ScriptInvoker		m_OnItemRemovedFromHands;
-	
-	protected ref CachedEquipmentStorageBase m_CachedEquipmentStorage;
 	
 	ScriptInvoker GetOnItemAddedToHands()
 	{
@@ -194,7 +186,7 @@ class Man extends EntityAI
 
 	void TakeEntityToHandsImpl (InventoryMode mode, EntityAI item)
 	{
-		if (!g_Game.IsDedicatedServer() )
+		if (!GetGame().IsDedicatedServer() )
 		{
 			InventoryLocation il = new InventoryLocation;
 			il.SetHands(this, item);
@@ -202,7 +194,7 @@ class Man extends EntityAI
 		}
 			
 		if (LogManager.IsSyncLogEnable()) syncDebugPrint("[inv] " + GetDebugName(this) + " STS = " + GetSimulationTimeStamp() + " ::Take2Hands(" + typename.EnumToString(InventoryMode, mode) + ") item=" + Object.GetDebugName(item));
-		EntityAI itemInHands = GetEntityInHands();
+		EntityAI itemInHands = GetHumanInventory().GetEntityInHands();
 		
 		InventoryLocation src_item = new InventoryLocation;
 		if (item.GetInventory().GetCurrentInventoryLocation(src_item))
@@ -222,15 +214,15 @@ class Man extends EntityAI
 
 	void LocalDestroyEntityInHands ()
 	{
-		if (LogManager.IsSyncLogEnable()) syncDebugPrint("[inv] " + GetDebugName(this) + " STS = " + GetSimulationTimeStamp() + " Destroy IH=" + GetEntityInHands());
-		GetHumanInventory().LocalDestroyEntity(GetEntityInHands());
+		if (LogManager.IsSyncLogEnable()) syncDebugPrint("[inv] " + GetDebugName(this) + " STS = " + GetSimulationTimeStamp() + " Destroy IH=" + GetHumanInventory().GetEntityInHands());
+		GetHumanInventory().LocalDestroyEntity(GetHumanInventory().GetEntityInHands());
 		UpdateInventoryMenu();
 	}
 	
 	//! ToDo: Old system method. Might should be adjusted to new system at some point
 	void PredictiveMoveItemFromHandsToInventory ()
 	{
-		if (LogManager.IsSyncLogEnable()) syncDebugPrint("[inv] " + GetDebugName(this) + " STS = " + GetSimulationTimeStamp() + " Stash IH=" + GetEntityInHands());
+		if (LogManager.IsSyncLogEnable()) syncDebugPrint("[inv] " + GetDebugName(this) + " STS = " + GetSimulationTimeStamp() + " Stash IH=" + GetHumanInventory().GetEntityInHands());
 		if (!ScriptInputUserData.CanStoreInputUserData())
 		{
 			Print("[inv] PredictiveMoveItemFromHandsToInventory input data not sent yet, cannot allow another input action");
@@ -238,12 +230,11 @@ class Man extends EntityAI
 		}
 		
 		InventoryMode invMode = InventoryMode.PREDICTIVE;
-		EntityAI entityInHands = GetEntityInHands();
+		EntityAI entityInHands = GetHumanInventory().GetEntityInHands();
 		
 		if (NeedInventoryJunctureFromServer(entityInHands, this, this))
 			invMode = InventoryMode.JUNCTURE;
 
-		HumanInventory humanInventory = GetHumanInventory();
 		//! returns item to previous location, if available
 		if (entityInHands.m_OldLocation && entityInHands.m_OldLocation.IsValid())
 		{
@@ -251,14 +242,13 @@ class Man extends EntityAI
 			entityInHands.GetInventory().GetCurrentInventoryLocation(invLoc);
 			
 			//! Check if old strored location is somewhere on this player
-			EntityAI oldLocationParent = entityInHands.m_OldLocation.GetParent();
-			if (oldLocationParent && oldLocationParent.GetHierarchyRootPlayer())
+			if (entityInHands.m_OldLocation.GetParent() && entityInHands.m_OldLocation.GetParent().GetHierarchyRootPlayer())
 			{
-				humanInventory.ClearInventoryReservation(entityInHands, entityInHands.m_OldLocation);
-				if (humanInventory.LocationCanMoveEntity(invLoc, entityInHands.m_OldLocation))
+				GetHumanInventory().ClearInventoryReservation(entityInHands, entityInHands.m_OldLocation);
+				if (GetHumanInventory().LocationCanMoveEntity(invLoc, entityInHands.m_OldLocation))
 				{
-					EntityAI oldLocEntity = humanInventory.LocationGetEntity(entityInHands.m_OldLocation);
-					if (!oldLocEntity && humanInventory.TakeToDst(invMode, invLoc, entityInHands.m_OldLocation))
+					EntityAI oldLocEntity = GetHumanInventory().LocationGetEntity(entityInHands.m_OldLocation);
+					if (!oldLocEntity && GetHumanInventory().TakeToDst(invMode, invLoc, entityInHands.m_OldLocation))
 					{
 						UpdateInventoryMenu();
 						return;
@@ -266,9 +256,9 @@ class Man extends EntityAI
 					else //! This should not happen after clearing inventory reservation but just in case handle also getting a new location if the old location is obscured by an item.
 					{
 						InventoryLocation newLocation = new InventoryLocation;
-						if (humanInventory.FindFreeLocationFor(entityInHands, FindInventoryLocationType.CARGO, newLocation))
+						if (GetHumanInventory().FindFreeLocationFor(entityInHands, FindInventoryLocationType.CARGO, newLocation))
 						{
-							if (humanInventory.TakeToDst(invMode, invLoc, newLocation))
+							if (GetHumanInventory().TakeToDst(invMode, invLoc, newLocation))
 							{
 								UpdateInventoryMenu();
 								return;
@@ -279,7 +269,7 @@ class Man extends EntityAI
 			}
 		}
 
-		humanInventory.TakeEntityToInventory(invMode, FindInventoryLocationType.ATTACHMENT | FindInventoryLocationType.CARGO, GetEntityInHands());		
+		GetHumanInventory().TakeEntityToInventory(invMode, FindInventoryLocationType.ATTACHMENT | FindInventoryLocationType.CARGO, GetHumanInventory().GetEntityInHands());		
 		UpdateInventoryMenu();
 	}
 
@@ -533,10 +523,8 @@ class Man extends EntityAI
 			return false;
 		}
 
-		EntityAI item1Parent = item1.GetHierarchyParent();
-		EntityAI item2Parent = item2.GetHierarchyParent();
-		bool need_j1 = NeedInventoryJunctureFromServer(item1, item1Parent, item2Parent);
-		bool need_j2 = NeedInventoryJunctureFromServer(item2, item2Parent, item1Parent);
+		bool need_j1 = NeedInventoryJunctureFromServer(item1, item1.GetHierarchyParent(), item2.GetHierarchyParent());
+		bool need_j2 = NeedInventoryJunctureFromServer(item2, item2.GetHierarchyParent(), item1.GetHierarchyParent());
 		if (need_j1 || need_j2)
 			return SwapEntitiesImpl(InventoryMode.JUNCTURE, item1, item2);
 		else
@@ -583,10 +571,8 @@ class Man extends EntityAI
 			return false;
 		}
 
-		EntityAI item1Parent = item1.GetHierarchyParent();
-		EntityAI item2Parent = item2.GetHierarchyParent();
-		bool need_j1 = NeedInventoryJunctureFromServer(item1, item1Parent, item2Parent);
-		bool need_j2 = NeedInventoryJunctureFromServer(item2, item2Parent, item1Parent);
+		bool need_j1 = NeedInventoryJunctureFromServer(item1, item1.GetHierarchyParent(), item2.GetHierarchyParent());
+		bool need_j2 = NeedInventoryJunctureFromServer(item2, item2.GetHierarchyParent(), item1.GetHierarchyParent());
 		if (need_j1 || need_j2)
 			return ForceSwapEntitiesImpl(InventoryMode.JUNCTURE, item1, item2, item2_dst);
 		else
@@ -644,13 +630,11 @@ class Man extends EntityAI
 		}
 		else
 		{
-			GameInventory inventory = GetInventory();
-			GameInventory itemInventory = item.GetInventory();
-			for( int i = 0; i < itemInventory.GetSlotIdCount(); ++i )
+			for( int i = 0; i < item.GetInventory().GetSlotIdCount(); i++ )
 			{
-				int slot_id = itemInventory.GetSlotId(i);
-				EntityAI slot_item = inventory.FindAttachment( slot_id );
-				if( slot_item && inventory.CanSwapEntitiesEx( item, slot_item ) )
+				int slot_id = item.GetInventory().GetSlotId(i);
+				EntityAI slot_item = GetInventory().FindAttachment( slot_id );
+				if( slot_item && GetInventory().CanSwapEntitiesEx( item, slot_item ) )
 				{
 					return PredictiveSwapEntities(item, slot_item);
 				}
@@ -891,11 +875,6 @@ class Man extends EntityAI
 	}
 	
 	void UpdateInventoryMenu();
-	
-	CachedEquipmentStorageBase GetCachedEquipment()
-	{
-		return m_CachedEquipmentStorage;
-	}
 	
 	///@{ Stats
 	//! Registers new stat type for this player.

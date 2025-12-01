@@ -27,10 +27,10 @@ class HudDebugWinTemperature extends HudDebugWinBase
 	override void SetUpdate( bool state )
 	{
 		//Disable update on server (PluginDeveloperSync)
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 		
 		//if client, send RPC
-		if ( g_Game.IsClient() )
+		if ( GetGame().IsClient() )
 		{
 			CachedObjectsParams.PARAM1_BOOL.param1 = state;
 			if ( player )

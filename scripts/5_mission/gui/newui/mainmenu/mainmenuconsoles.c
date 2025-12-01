@@ -26,19 +26,16 @@ class MainMenuConsole extends UIScriptedMenu
 	
 	protected ref Widget			m_LastFocusedButton;
 	
-	protected Widget 				m_DlcFrame;
-		
-	protected ref NewsCarousel      m_NewsCarousel;
-
-	protected Widget 				m_NewsCarouselFrame;
-	protected Widget				m_DisplayCarousel;
-	
-	protected ScreenWidthType		m_WidthType;
-	protected int					m_Width, m_Height;
+	protected ref array<ref ModInfo> 				m_AllDLCs;
+	protected Widget 								m_DlcFrame;
+	protected ref map<string,ref ModInfo> 			m_AllDlcsMap;
+	protected ref JsonDataDLCList 					m_DlcData;
+	protected ref array<ref MainMenuDlcHandlerBase> m_DlcHandlers;
+	protected ref MainMenuDlcHandlerBase 			m_DisplayedDlcHandler;
 
 	override Widget Init()
 	{
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/main_menu_console.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/main_menu_console.layout");
 		
 		m_MainMenuPanel = layoutRoot.FindAnyWidget("main_menu_panel");
 		m_PlayerName = TextWidget.Cast(layoutRoot.FindAnyWidget("character_name_xbox"));
@@ -53,88 +50,137 @@ class MainMenuConsole extends UIScriptedMenu
 		
 		m_DlcFrame = layoutRoot.FindAnyWidget("dlc_Frame");
 		m_Version = TextWidget.Cast(layoutRoot.FindAnyWidget("version"));
-		m_Mission = MissionMainMenu.Cast(g_Game.GetMission());
+		m_Mission = MissionMainMenu.Cast(GetGame().GetMission());
 		m_ShowFeedback = layoutRoot.FindAnyWidget("feedback");
 		m_FeedbackQRCode = ImageWidget.Cast(layoutRoot.FindAnyWidget("qr_image"));
 		m_FeedbackClose = ButtonWidget.Cast(layoutRoot.FindAnyWidget("close_button"));
 		m_FeedbackCloseLabel = RichTextWidget.Cast(layoutRoot.FindAnyWidget("close_button_label"));
 		m_DialogPanel = layoutRoot.FindAnyWidget("main_menu_dialog");
-		m_NewsCarouselFrame = layoutRoot.FindAnyWidget("carousel_Frame");
 		
 		m_LastFocusedButton	= m_Play;
 				
-		g_Game.GetUIManager().ScreenFadeOut(1);
+		GetGame().GetUIManager().ScreenFadeOut(1);
 
 		string launch_done;
-		if (!g_Game.GetProfileString("FirstLaunchDone", launch_done) || launch_done != "true")
+		if (!GetGame().GetProfileString("FirstLaunchDone", launch_done) || launch_done != "true")
 		{
-			g_Game.SetProfileString("FirstLaunchDone", "true");
-			g_Game.GetUIManager().ShowDialog("#main_menu_tutorial", "#main_menu_tutorial_desc", 555, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
-			g_Game.SaveProfile();
+			GetGame().SetProfileString("FirstLaunchDone", "true");
+			GetGame().GetUIManager().ShowDialog("#main_menu_tutorial", "#main_menu_tutorial_desc", 555, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
+			GetGame().SaveProfile();
 		}
 		
 		UpdateControlsElementVisibility();
 		LoadMods();
 		Refresh();
 		
-		CheckWidth();
-		m_NewsCarousel = new NewsCarousel(m_NewsCarouselFrame, this);
-		
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{
-			g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-			g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		}
 		
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 		
-		g_Game.GetContentDLCService().m_OnChange.Insert(OnDLCChange);
+		GetGame().GetContentDLCService().m_OnChange.Insert(OnDLCChange);
 		
 		#ifdef PLATFORM_CONSOLE
 		#ifndef PLATFORM_PS4
-		m_ChangeAccount.Show(g_Game.GetInput().IsEnabledMouseAndKeyboard());
+		m_ChangeAccount.Show(GetGame().GetInput().IsEnabledMouseAndKeyboard());
 		m_FeedbackQRCode.LoadImageFile(0, "gui/textures/feedback_qr_xbox.edds");
 		#else
 		m_FeedbackQRCode.LoadImageFile(0, "gui/textures/feedback_qr_ps.edds");
 		#endif
 		#endif
-		
-		m_DlcFrame.Show(false);
-		
+
 		return layoutRoot;
 	}
 	
 	void ~MainMenuConsole()
 	{
-		if (g_Game.GetMission())
+		if (GetGame().GetMission())
 		{
-			g_Game.GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
-			g_Game.GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
+			GetGame().GetMission().GetOnInputPresetChanged().Remove(OnInputPresetChanged);
+			GetGame().GetMission().GetOnInputDeviceChanged().Remove(OnInputDeviceChanged);
 		}
 		
-		if (g_Game.GetContentDLCService())
-			g_Game.GetContentDLCService().m_OnChange.Remove(OnDLCChange);
+		if (GetGame().GetContentDLCService())
+			GetGame().GetContentDLCService().m_OnChange.Remove(OnDLCChange);
 	}
 	
 	void OnDLCChange(EDLCId dlcId)
 	{
-		MainMenuData.ClearAllDLCs();
+		m_AllDLCs = null;
 		LoadMods();
-		
-		if (m_NewsCarousel)
-		{
-			m_NewsCarousel.Destroy();
-			m_NewsCarousel = null;
-			m_NewsCarousel = new NewsCarousel(m_NewsCarouselFrame, this);
-		}
 	}
 	
 	void LoadMods()
 	{
-		MainMenuData.LoadMods();	
+		if (m_AllDLCs != null)
+			return;
+		
+		m_AllDLCs = new array<ref ModInfo>;
+		
+		GetGame().GetModInfos(m_AllDLCs);
+		if (m_AllDLCs.Count() > 0)
+		{
+			m_AllDLCs.Remove(m_AllDLCs.Count() - 1);
+			m_AllDLCs.Invert();
+		}
+		
+		FilterDLCs(m_AllDLCs);
+		PopulateDlcFrame();
+		
 		UpdateControlsElements();
 	}
 	
+	//! leaves ONLY DLCs
+	void FilterDLCs(inout array<ref ModInfo> modArray)
+	{
+		if (!m_AllDlcsMap)
+			m_AllDlcsMap = new map<string,ref ModInfo>;
+		
+		m_AllDlcsMap.Clear();
+		ModInfo info;
+		int count = modArray.Count();
+		for (int i = count - 1; i >= 0; i--)
+		{
+			info = modArray[i];
+			if (!info.GetIsDLC())
+				modArray.Remove(i);
+			else
+				m_AllDlcsMap.Set(info.GetName(), info);
+		}
+	}
+	
+	void PopulateDlcFrame()
+	{
+		if (!m_DlcHandlers)
+			m_DlcHandlers = new array<ref MainMenuDlcHandlerBase>();
+		else
+		{
+			// TODO: Would be better to update the parts that need updating instead of full recreation
+			// Destroying and then reloading the same video is quite wasteful
+			m_DlcHandlers.Clear();
+		}
+		
+		m_DlcData = DlcDataLoader.GetData();
+		int count = m_DlcData.DLCs.Count();
+		JsonDataDLCInfo data;
+		ModInfo info;
+		
+		for (int i = 0; i < count; i++)
+		{
+			data = m_DlcData.DLCs[i];
+			info = m_AllDlcsMap.Get(data.Name);
+			MainMenuDlcHandlerBase handler = new MainMenuDlcHandlerBase(info, m_DlcFrame, data);
+			
+			handler.ShowInfoPanel(true);
+			m_DisplayedDlcHandler = handler;//TODO: carousel will take care of this later
+			
+			m_DlcHandlers.Insert(handler);
+		}
+	}
+
 	protected void OnInputPresetChanged()
 	{
 		#ifdef PLATFORM_CONSOLE
@@ -147,9 +193,9 @@ class MainMenuConsole extends UIScriptedMenu
 		switch (pInputDeviceType)
 		{
 		case EInputDeviceType.CONTROLLER:
-			if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+			if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 			{
-				g_Game.GetUIManager().ShowUICursor(false);
+				GetGame().GetUIManager().ShowUICursor(false);
 				#ifdef PLATFORM_CONSOLE
 				if (m_LastFocusedButton == m_ShowFeedback || !GetFocus() || GetFocus() == m_FeedbackClose)
 				{
@@ -170,9 +216,9 @@ class MainMenuConsole extends UIScriptedMenu
 		break;
 
 		default:
-			if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+			if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 			{
-				g_Game.GetUIManager().ShowUICursor(true);
+				GetGame().GetUIManager().ShowUICursor(true);
 				#ifdef PLATFORM_CONSOLE
 				m_ShowFeedback.Show(true);
 				m_FeedbackClose.Show(true);
@@ -291,9 +337,9 @@ class MainMenuConsole extends UIScriptedMenu
 	{
 		string name;
 		
-		if (g_Game.GetUserManager() && g_Game.GetUserManager().GetSelectedUser())
+		if (GetGame().GetUserManager() && GetGame().GetUserManager().GetSelectedUser())
 		{
-			name = g_Game.GetUserManager().GetSelectedUser().GetName();
+			name = GetGame().GetUserManager().GetSelectedUser().GetName();
 			if (name.LengthUtf8() > 18)
 			{
 				name = name.SubstringUtf8(0, 18);
@@ -303,7 +349,7 @@ class MainMenuConsole extends UIScriptedMenu
 		m_PlayerName.SetText(name);		
 		
 		string version;
-		g_Game.GetVersion(version);
+		GetGame().GetVersion(version);
 		m_Version.SetText("#main_menu_version" + " " + version + " (" + g_Game.GetDatabaseID() + ")");
 		
 		if (m_DisplayedDlcHandler)
@@ -328,8 +374,8 @@ class MainMenuConsole extends UIScriptedMenu
 		
 		super.OnShow();
 		#ifdef PLATFORM_CONSOLE
-		layoutRoot.FindAnyWidget("ButtonHolderCredits").Show(g_Game.GetInput().IsEnabledMouseAndKeyboard());
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		layoutRoot.FindAnyWidget("ButtonHolderCredits").Show(GetGame().GetInput().IsEnabledMouseAndKeyboard());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 		#endif
 	}
 	
@@ -344,14 +390,12 @@ class MainMenuConsole extends UIScriptedMenu
 	{
 		super.Update(timeslice);
 		
-		CheckWidth();
-		
-		if (g_Game.GetLoadState() != DayZGameState.CONNECTING && !g_Game.GetUIManager().IsDialogVisible())
+		if (g_Game.GetLoadState() != DayZGameState.CONNECTING && !GetGame().GetUIManager().IsDialogVisible())
 		{
 		#ifndef PLATFORM_CONSOLE
 			if (GetUApi().GetInputByID(UAUIBack).LocalPress())
 			{
-				if (!g_Game.GetUIManager().IsDialogHiding())
+				if (!GetGame().GetUIManager().IsDialogHiding())
 					Exit();
 			}
 		#else
@@ -386,26 +430,6 @@ class MainMenuConsole extends UIScriptedMenu
 		if (GetUApi().GetInputByID(UAUIThumbRight).LocalPress())
 		{
 			ToggleFeedbackDialog();
-		}
-		
-		if (m_NewsCarousel)
-		{
-			if (GetUApi().GetInputByID(UAUICtrlX).LocalHold())
-			{
-				m_NewsCarousel.ShowPromotion();
-			}
-			
-			if (GetUApi().GetInputByID(UAUIPadRight).LocalPress())
-			{
-				m_NewsCarousel.OnClickNextArticle();
-			}
-			
-			if (GetUApi().GetInputByID(UAUIPadLeft).LocalPress())
-			{
-				m_NewsCarousel.OnClickPreviousArticle();
-			}
-			
-			m_NewsCarousel.Update(timeslice);
 		}
 	}
 	
@@ -476,20 +500,20 @@ class MainMenuConsole extends UIScriptedMenu
 
 	void ChangeAccount()
 	{
-		BiosUserManager user_manager = g_Game.GetUserManager();
+		BiosUserManager user_manager = GetGame().GetUserManager();
 		if (user_manager)
 		{
 			g_Game.SetLoadState(DayZLoadState.MAIN_MENU_START);
 			#ifndef PLATFORM_WINDOWS
 			user_manager.SelectUserEx(null);
 			#endif
-			g_Game.GetUIManager().Back();
+			GetGame().GetUIManager().Back();
 		}
 	}
 	
 	void Exit()
 	{
-		g_Game.GetUIManager().ShowDialog("#main_menu_exit", "#main_menu_exit_desc", IDC_MAIN_QUIT, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
+		GetGame().GetUIManager().ShowDialog("#main_menu_exit", "#main_menu_exit_desc", IDC_MAIN_QUIT, DBT_YESNO, DBB_YES, DMT_QUESTION, this);
 	}
 		
 	//Coloring functions (Until WidgetStyles are useful)
@@ -525,7 +549,7 @@ class MainMenuConsole extends UIScriptedMenu
 		{
 			if (result == 2)
 			{
-				g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.RequestExit, IDC_MAIN_QUIT);
+				GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(g_Game.RequestExit, IDC_MAIN_QUIT);
 			}
 			
 			return true;
@@ -630,97 +654,9 @@ class MainMenuConsole extends UIScriptedMenu
 	{
 		bool toolbarShow = false;
 		#ifdef PLATFORM_CONSOLE
-		toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboard() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboard() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		#endif
 		
 		layoutRoot.FindAnyWidget("toolbar_bg").Show(toolbarShow);
-	}
-	
-	void CheckWidth()
-	{
-		int w, h;
-		ScreenWidthType widthType; 
-		GetScreenSize(w, h);
-		
-		if(h > 0)
-		{
-			float ratio = w / h;
-			if(ratio > 1.75)
-				widthType = ScreenWidthType.WIDE;
-			else if(ratio > 1.5)
-				widthType = ScreenWidthType.MEDIUM;
-			else
-				widthType = ScreenWidthType.NARROW;
-		}
-		
-		m_Width = w;
-		m_Height = h;
-		
-		if (widthType != m_WidthType)
-		{
-			m_WidthType = widthType;
-			if (m_NewsCarousel)
-			{
-				m_NewsCarousel.Destroy();
-				m_NewsCarousel = null;
-				m_NewsCarousel = new NewsCarousel(m_NewsCarouselFrame, this);
-			}
-		}
-	}
-	
-	//! DEPRICATED
-	protected ref JsonDataDLCList 					m_DlcData;
-	protected ref array<ref MainMenuDlcHandlerBase> m_DlcHandlers;
-	protected ref MainMenuDlcHandlerBase 			m_DisplayedDlcHandler;
-	protected ref array<ref ModInfo> 				m_AllDLCs;
-	protected ref map<string, ref ModInfo> 			m_AllDlcsMap;
-	
-	[Obsolete("No replacement")]
-	void PopulateDlcFrame()
-	{
-		if (!m_DlcHandlers)
-			m_DlcHandlers = new array<ref MainMenuDlcHandlerBase>();
-		else
-		{
-			// TODO: Would be better to update the parts that need updating instead of full recreation
-			// Destroying and then reloading the same video is quite wasteful
-			m_DlcHandlers.Clear();
-		}
-		
-		m_DlcData = DlcDataLoader.GetData();
-		int count = m_DlcData.DLCs.Count();
-		JsonDataDLCInfo data;
-		ModInfo info;
-		
-		for (int i = 0; i < count; i++)
-		{
-			data = m_DlcData.DLCs[i];
-			info = m_AllDlcsMap.Get(data.Name);
-			MainMenuDlcHandlerBase handler = new MainMenuDlcHandlerBase(info, m_DlcFrame, data);
-			
-			handler.ShowInfoPanel(true);
-			m_DisplayedDlcHandler = handler;//TODO: carousel will take care of this later
-			
-			m_DlcHandlers.Insert(handler);
-		}
-	}
-	
-	[Obsolete("No replacement")]
-	void FilterDLCs(inout array<ref ModInfo> modArray)
-	{
-		if (!m_AllDlcsMap)
-			m_AllDlcsMap = new map<string,ref ModInfo>;
-		
-		m_AllDlcsMap.Clear();
-		ModInfo info;
-		int count = modArray.Count();
-		for (int i = count - 1; i >= 0; i--)
-		{
-			info = modArray[i];
-			if (!info.GetIsDLC())
-				modArray.Remove(i);
-			else
-				m_AllDlcsMap.Set(info.GetName(), info);
-		}
 	}
 }

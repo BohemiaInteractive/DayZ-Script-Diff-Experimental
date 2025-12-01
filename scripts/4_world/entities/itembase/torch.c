@@ -43,11 +43,11 @@ class FlammableBase : ItemBase
 		if ( m_BurnTimePerRagEx == 0 || m_BurnTimePerFullLardEx == 0 || m_MaxConsumableLardQuantityEx == 0 || m_MaxConsumableFuelQuantityEx == 0 )
 		{
 			string cfg_path = "CfgVehicles " + GetType();
-			m_BurnTimePerRagEx = g_Game.ConfigGetFloat( cfg_path + " burnTimePerRag" );
-			m_BurnTimePerFullLardEx = g_Game.ConfigGetFloat( cfg_path + " burnTimePerFullLardDose" );
-			m_BurnTimePerFullFuelDoseEx = g_Game.ConfigGetFloat( cfg_path + " burnTimePerFullFuelDose" );
-			m_MaxConsumableLardQuantityEx = g_Game.ConfigGetFloat( cfg_path + " maxConsumableLardDose" );
-			m_MaxConsumableFuelQuantityEx = g_Game.ConfigGetFloat( cfg_path + " maxConsumableFuelDose" );
+			m_BurnTimePerRagEx = GetGame().ConfigGetFloat( cfg_path + " burnTimePerRag" );
+			m_BurnTimePerFullLardEx = GetGame().ConfigGetFloat( cfg_path + " burnTimePerFullLardDose" );
+			m_BurnTimePerFullFuelDoseEx = GetGame().ConfigGetFloat( cfg_path + " burnTimePerFullFuelDose" );
+			m_MaxConsumableLardQuantityEx = GetGame().ConfigGetFloat( cfg_path + " maxConsumableLardDose" );
+			m_MaxConsumableFuelQuantityEx = GetGame().ConfigGetFloat( cfg_path + " maxConsumableFuelDose" );
 		}
 		RegisterNetSyncVariableBool("m_CanReceiveUpgrade");
 	}
@@ -56,7 +56,7 @@ class FlammableBase : ItemBase
 	{		
 		super.EEInit();
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_Updateable			= true;
@@ -85,9 +85,9 @@ class FlammableBase : ItemBase
 	override void EEDelete(EntityAI parent)
 	{
 		super.EEDelete(parent);
-		if ( m_LoopSoundEntity != NULL && g_Game != NULL )
+		if ( m_LoopSoundEntity != NULL && GetGame() != NULL )
 		{
-			g_Game.ObjectDelete( m_LoopSoundEntity );
+			GetGame().ObjectDelete( m_LoopSoundEntity );
 		}
 		
 		StopAllParticles();
@@ -187,7 +187,7 @@ class FlammableBase : ItemBase
 	
 	void UpdateCheckForReceivingUpgrade()
 	{
-		if ( g_Game.IsServer() || !g_Game.IsMultiplayer() )
+		if ( GetGame().IsServer() || !GetGame().IsMultiplayer() )
 		{
 			m_CanReceiveUpgrade = GetRagQuantity() > 0 && m_RagsUpgradedCount < GetRagQuantity() || (m_BurnTimePerRagEx * (m_RagsUpgradedCount + GetRagQuantity()) - GetCompEM().GetEnergy()) > 1;
 			SetSynchDirty();
@@ -211,7 +211,7 @@ class FlammableBase : ItemBase
 			GetCompEM().SwitchOff();
 		}
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			m_UTSource.SetActive(true);
 		}
@@ -219,7 +219,7 @@ class FlammableBase : ItemBase
 	
 	override void OnSwitchOff()
 	{
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			m_UTSource.SetActive(false);
 		}
@@ -396,8 +396,8 @@ class FlammableBase : ItemBase
 	{
 		string surface_type;
 		vector position = GetPosition();
-		g_Game.SurfaceGetType ( position[0], position[2], surface_type );
-		bool is_surface_soft = g_Game.IsSurfaceDigable(surface_type);
+		GetGame().SurfaceGetType ( position[0], position[2], surface_type );
+		bool is_surface_soft = GetGame().IsSurfaceDigable(surface_type);
 		
 		if ( is_surface_soft && !IsRuined() )
 		{
@@ -414,7 +414,7 @@ class FlammableBase : ItemBase
 	
 	void CalculateQuantity()
 	{
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			SetQuantityNormalized(GetCompEM().GetEnergy0To1());
 		}
@@ -447,9 +447,9 @@ class FlammableBase : ItemBase
 
 		if (m_IsBeingDestructed)
 		{
-			if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+			if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 			{
-				EntityAI rags = EntityAI.Cast(g_Game.CreateObjectEx(item.GetType(), GetPosition(), ECE_PLACE_ON_SURFACE));
+				EntityAI rags = EntityAI.Cast(GetGame().CreateObjectEx(item.GetType(), GetPosition(), ECE_PLACE_ON_SURFACE));
 				if( rags )
 					MiscGameplayFunctions.TransferItemProperties(item, rags);
 			}
@@ -458,12 +458,12 @@ class FlammableBase : ItemBase
 		
 		CalculateQuantity();
 		UpdateCheckForReceivingUpgrade();
-		g_Game.GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( TryTransformIntoStick, 100);
+		GetGame().GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( TryTransformIntoStick, 100);
 	}
 	
 	bool CanTransformIntoStick()
 	{
-		if ((g_Game.IsServer() || !g_Game.IsMultiplayer()) && !IsIgnited() && !GetRag() && !IsSetForDeletion() )
+		if ((GetGame().IsServer() || !GetGame().IsMultiplayer()) && !IsIgnited() && !GetRag() && !IsSetForDeletion() )
 			return true;
 		else
 			return false;
@@ -495,7 +495,7 @@ class FlammableBase : ItemBase
 				if ( GetType() == "WoodenStick" )
 					ori = ori + Vector(0,90,0);
 				
-				ItemBase stick = ItemBase.Cast( g_Game.CreateObjectEx(m_DecraftResult, pos, ECE_PLACE_ON_SURFACE) );
+				ItemBase stick = ItemBase.Cast( GetGame().CreateObjectEx(m_DecraftResult, pos, ECE_PLACE_ON_SURFACE) );
 				ApplyResultModifications(stick);
 				stick.SetPosition(pos);
 				stick.PlaceOnSurface();
@@ -507,7 +507,7 @@ class FlammableBase : ItemBase
 				}
 				
 				stick.SetOrientation(ori);
-				g_Game.ObjectDelete(this);
+				GetGame().ObjectDelete(this);
 			}
 		}
 	}
@@ -599,7 +599,7 @@ class FlammableBase : ItemBase
 	override void OnWork( float consumed_energy )
 	{
 		UpdateMaterial();
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (GetCompEM().GetEnergy() < ((GetRagQuantity() + m_RagsUpgradedCount) - 1) * m_BurnTimePerRagEx)
 			{
@@ -638,13 +638,13 @@ class FlammableBase : ItemBase
 			}
 		}
 		
-		if ( !m_LoopSoundEntity && g_Game && ( !g_Game.IsDedicatedServer() ) )
+		if ( !m_LoopSoundEntity && GetGame() && ( !GetGame().IsDedicatedServer() ) )
 		{
 			m_LoopSoundEntity = PlaySoundLoop(GetSoundName(), 50);
 		}
 		
 		// Effect scaling by fuel
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			UpdateLight();
 			UpdateParticle();
@@ -697,9 +697,9 @@ class FlammableBase : ItemBase
 		if (m_Light)
 			m_Light.FadeOut();
 		
-		if ( m_LoopSoundEntity && g_Game && ( !g_Game.IsDedicatedServer() ) )
+		if ( m_LoopSoundEntity && GetGame() && ( !GetGame().IsDedicatedServer() ) )
 		{
-			g_Game.ObjectDelete( m_LoopSoundEntity );
+			GetGame().ObjectDelete( m_LoopSoundEntity );
 			m_LoopSoundEntity = NULL;
 		}
 		
@@ -714,7 +714,7 @@ class FlammableBase : ItemBase
 		
 		LockRags(false);
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (GetRag() && GetCompEM().GetEnergy() == 0 && GetRagQuantity() > 0)
 			{
@@ -805,7 +805,7 @@ class FlammableBase : ItemBase
 	
 	void UpdateMaterial()
 	{
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (GetCompEM().IsWorking())
 			{
@@ -870,7 +870,7 @@ class FlammableBase : ItemBase
 	{
 		if (super.OnAction(action_id, player, ctx))
 			return true;
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (action_id == EActions.ACTIVATE_ENTITY)
 			{
@@ -887,7 +887,7 @@ class FlammableBase : ItemBase
 
 		debug_output = super.GetDebugText();
 		
-		if( g_Game.IsDedicatedServer())
+		if( GetGame().IsDedicatedServer())
 		{
 			debug_output+="m_RagsUpgradedCount:"+m_RagsUpgradedCount+"\n";
 			debug_output+="m_ConsumeRagFlipFlop:"+m_ConsumeRagFlipFlop+"\n";
@@ -946,7 +946,7 @@ class Torch : FlammableBase
 	override void OnWasAttached( EntityAI parent, int slot_id )
 	{
 		super.OnWasAttached(parent, slot_id);
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 			LockRags(true);
 	}
 		
@@ -954,7 +954,7 @@ class Torch : FlammableBase
 	override void OnWasDetached( EntityAI parent, int slot_id )
 	{
 		super.OnWasDetached(parent, slot_id);
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 			LockRags(false);
 	}
 	

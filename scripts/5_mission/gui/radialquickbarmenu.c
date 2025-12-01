@@ -116,14 +116,14 @@ class RadialQuickbarMenu extends UIScriptedMenu
 			instance = this;
 		}
 
-		g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+		GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
 	}
 	
 	void ~RadialQuickbarMenu()
 	{
-		if (g_Game && g_Game.GetMission())
+		if (GetGame() && GetGame().GetMission())
 		{
-			g_Game.GetMission().RemoveActiveInputExcludes({"radialmenu"},false);
+			GetGame().GetMission().RemoveActiveInputExcludes({"radialmenu"},false);
 		}
 	}
 	
@@ -154,13 +154,13 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	//============================================	
 	static void OpenMenu( UIScriptedMenu parent = NULL )
 	{
-		g_Game.GetUIManager().EnterScriptedMenu( MENU_RADIAL_QUICKBAR, parent );
+		GetGame().GetUIManager().EnterScriptedMenu( MENU_RADIAL_QUICKBAR, parent );
 	}
 	
 	static void CloseMenu()
 	{
-		g_Game.GetUIManager().Back();
-		//g_Game.GetMission().RemoveActiveInputExcludes({"radialmenu"},false);
+		GetGame().GetUIManager().Back();
+		//GetGame().GetMission().RemoveActiveInputExcludes({"radialmenu"},false);
 	}
 		
 	//============================================
@@ -168,7 +168,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	//============================================
 	override Widget Init()
 	{
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/radial_menu/radial_quickbar/radial_quickbar_menu.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/radial_menu/radial_quickbar/radial_quickbar_menu.layout");
 		m_ItemCardPanel = layoutRoot.FindAnyWidget(RadialMenu.RADIAL_ITEM_CARD_CONTAINER);
 		
 		//register gestures menu
@@ -196,14 +196,13 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	{
 		super.OnShow();
 		
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
 			if (hud)
 			{
 				hud.ShowQuickbarUI(false);
-				hud.ShowHudUI(false);
 			}
 		}
 		
@@ -215,14 +214,13 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	{
 		super.OnHide();
 		
-		Mission mission = g_Game.GetMission();
+		Mission mission = GetGame().GetMission();
 		if (mission)
 		{
 			IngameHud hud = IngameHud.Cast(mission.GetHud());
 			if (hud)
 			{
 				hud.ShowQuickbarUI(true);
-				hud.ShowHudUI(true);
 			}
 		}
 		
@@ -288,7 +286,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	{
 		items.Clear();
 		
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 		int size = player.GetQuickBarSize();
 		EntityAI entity;
 		
@@ -304,7 +302,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	
 	protected void CheckForLightsAndNVG( out array<ref RadialQuickbarItem> items, int last_idx )
 	{
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 		int count = 0;
 		EntityAI entity;
 		ItemBase headgear = ItemBase.Cast(player.FindAttachmentBySlotName("Headgear"));
@@ -380,7 +378,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 			if (quickbar_item.GetItemCategory() == m_CurrentCategory)
 			{
 				//create item card
-				Widget item_card_widget = Widget.Cast( g_Game.GetWorkspace().CreateWidgets( "gui/layouts/radial_menu/radial_quickbar/radial_quickbar_item_card.layout", m_ItemCardPanel ) );
+				Widget item_card_widget = Widget.Cast( GetGame().GetWorkspace().CreateWidgets( "gui/layouts/radial_menu/radial_quickbar/radial_quickbar_item_card.layout", m_ItemCardPanel ) );
 				quickbar_item.SetRadialItemCard( item_card_widget );
 				
 				//update item card widget
@@ -656,14 +654,14 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	{
 		if ( instance.m_SelectedItem )
 		{
-			if ( !g_Game.IsDedicatedServer() )
+			if ( !GetGame().IsDedicatedServer() )
 			{
 				RadialQuickbarItem quickbar_item;
 				instance.m_SelectedItem.GetUserData( quickbar_item );
 			
 				if ( quickbar_item ) 
 				{
-					PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+					PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 					
 					//ASSIGN ACTION
 					if ( GetItemToAssign() )
@@ -716,14 +714,14 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	{
 		if ( instance.m_SelectedItem && m_CurrentCategory == RadialQuickbarCategory.DEFAULT )
 		{
-			if ( !g_Game.IsDedicatedServer() )
+			if ( !GetGame().IsDedicatedServer() )
 			{
 				RadialQuickbarItem quickbar_item;
 				instance.m_SelectedItem.GetUserData( quickbar_item );
 			
 				if ( quickbar_item ) 
 				{
-					PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+					PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 					EntityAI item = quickbar_item.GetItem();
 					
 					if ( item )
@@ -750,7 +748,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	//-------------------------------------------
 	void HandleLights(RadialQuickbarItem quickbar_item)
 	{
-		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		ItemBase item = ItemBase.Cast(quickbar_item.GetItem());
 		ActionManagerClient mngr_client = ActionManagerClient.Cast(player.GetActionManager());
 		ActionTarget atrg;
@@ -783,7 +781,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 	
 	void HandleNVG(RadialQuickbarItem quickbar_item)
 	{
-		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());
 		ActionManagerClient mngr_client = ActionManagerClient.Cast(player.GetActionManager());
 		ActionTarget atrg;
 		
@@ -815,7 +813,7 @@ class RadialQuickbarMenu extends UIScriptedMenu
 		string backAction;
 		int controllerID;
 		
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer() && g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.MOUSE_AND_KEYBOARD)
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer() && GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.MOUSE_AND_KEYBOARD)
 		{
 			selectAction = "UAMenuSelect";
 			backAction = "UAMenuBack";

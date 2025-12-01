@@ -33,7 +33,7 @@ class M18SmokeGrenade_Red_Contaminated extends M18SmokeGrenade_Red
 	{
 		super.OnWorkStop();
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 			GetCEApi().SpawnGroup( "ContaminatedArea_Dynamic", GetPosition() );
 	}
 }

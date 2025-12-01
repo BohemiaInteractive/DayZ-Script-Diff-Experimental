@@ -7,12 +7,12 @@ class SoundSetMap
 	{
 		string path = "CfgSoundSets";
 		
-		int soundCount = g_Game.ConfigGetChildrenCount(path);
+		int soundCount = GetGame().ConfigGetChildrenCount(path);
 		
 		for (int i = 1; i < soundCount; i++)
 		{
 			string soundClassName;
-			g_Game.ConfigGetChildName(path, i, soundClassName);
+			GetGame().ConfigGetChildName(path, i, soundClassName);
 			m_SoundSetMapIDByID.Insert(i,soundClassName);
 			m_SoundSetMapIDByName.Insert(soundClassName,i);
 			//PrintString(soundClassName);

@@ -135,7 +135,7 @@ class CAContinuousFillFuel : CAContinuousBase
 		}
 		
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			Car car = Car.Cast(action_data.m_Target.GetObject());
 			Boat boat = Boat.Cast(action_data.m_Target.GetObject());	

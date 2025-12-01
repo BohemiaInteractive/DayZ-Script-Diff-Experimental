@@ -28,7 +28,7 @@ class Plastic_Explosive : ExplosivesBase
 	override void EEKilled(Object killer)	
 	{
 		//analytics (behaviour from EntityAI)
-		g_Game.GetAnalyticsServer().OnEntityKilled(killer, this);
+		GetGame().GetAnalyticsServer().OnEntityKilled(killer, this);
 	}
 
 	override bool HasLockedTriggerSlots()
@@ -182,7 +182,7 @@ class Plastic_Explosive : ExplosivesBase
 	{
 		super.EEHealthLevelChanged(oldLevel, newLevel, zone);
 
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (newLevel == GameConstants.STATE_RUINED)
 			{
@@ -235,7 +235,7 @@ class Plastic_Explosive : ExplosivesBase
 	
 	override void OnActivatedByItem(notnull ItemBase item)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (GetHealthLevel("") == GameConstants.STATE_RUINED)
 			{

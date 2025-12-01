@@ -19,16 +19,20 @@ class HeatBufferMdfr : ModifierBase
 	
 	override bool ActivateCondition(PlayerBase player)
 	{
-		PlayerStat<float> heatBufferStat = player.GetStatHeatBuffer();
-		m_Value = heatBufferStat.Get() / heatBufferStat.GetMax();
-		return m_Value > STAGE_THRESHOLDS[0];
+		m_Value = player.GetStatHeatBuffer().Get() / player.GetStatHeatBuffer().GetMax();
+		if (m_Value > STAGE_THRESHOLDS[0])
+			return true;
+	
+		return false;
 	}	
 
 	override bool DeactivateCondition(PlayerBase player)
 	{
-		PlayerStat<float> heatBufferStat = player.GetStatHeatBuffer();
-		m_Value = heatBufferStat.Get() / heatBufferStat.GetMax();;
-		return m_Value <= STAGE_THRESHOLDS[0];
+		m_Value = player.GetStatHeatBuffer().Get() / player.GetStatHeatBuffer().GetMax();;
+		if (m_Value <= STAGE_THRESHOLDS[0])
+			return true;
+
+		return false;
 	}
 
 	override void OnActivate(PlayerBase player)

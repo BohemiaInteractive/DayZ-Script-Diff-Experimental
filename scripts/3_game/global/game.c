@@ -23,10 +23,10 @@ class CGame
 	ref array<ComponentEnergyManager> m_EnergyManagerArray;
 	void EnableEMPlugs(bool enable)
 	{
-		for (int i = 0; i < g_Game.m_EnergyManagerArray.Count(); ++i)
+		for (int i = 0; i < GetGame().m_EnergyManagerArray.Count(); ++i)
 		{
-			if (g_Game.m_EnergyManagerArray[i])
-				g_Game.m_EnergyManagerArray[i].SetDebugPlugs(enable);
+			if (GetGame().m_EnergyManagerArray[i])
+				GetGame().m_EnergyManagerArray[i].SetDebugPlugs(enable);
 		}
 	}
 	#endif
@@ -78,7 +78,6 @@ class CGame
 		
 		// Is initialized in StartupEvent
 		ParticleManager.CleanupInstance();
-		g_Game = null;
 	}
 	
 	proto native WorkspaceWidget GetWorkspace();
@@ -272,7 +271,7 @@ class CGame
 	\n usage:
 	@code
 	TStringArray lastInventoryArray = new TStringArray;
-	g_Game.GetProfileStringList("lastInventory", lastInventoryArray);
+	GetGame().GetProfileStringList("lastInventory", lastInventoryArray);
 	@endcode
 	*/
 	proto native void		GetProfileStringList(string name, out TStringArray values);
@@ -491,7 +490,7 @@ class CGame
 		{
 			string cfg = "CfgVehicles " + class_name + " model";
 			string model_path;
-			if ( g_Game.ConfigGetText(cfg, model_path) )
+			if ( GetGame().ConfigGetText(cfg, model_path) )
 			{
 				int to_substring_end = model_path.Length() - 4; // -4 to leave out the '.p3d' suffix
 				int to_substring_start = 0;
@@ -551,7 +550,7 @@ class CGame
 	\n usage :
 	@code
 	TStringArray characterAnimations = new TStringArray;
-	g_Game.ConfigGetTextArray("CfgMovesMaleSdr2 States menu_idleUnarmed0 variantsPlayer", characterAnimations);
+	GetGame().ConfigGetTextArray("CfgMovesMaleSdr2 States menu_idleUnarmed0 variantsPlayer", characterAnimations);
 	@endcode
 	*/
 	proto native void		ConfigGetTextArray(string path, out TStringArray values);
@@ -563,7 +562,7 @@ class CGame
 	\n usage :
 	@code
 	TStringArray characterAnimations = new TStringArray;
-	g_Game.ConfigGetTextArrayRaw("CfgMovesMaleSdr2 States menu_idleUnarmed0 variantsPlayer", characterAnimations);
+	GetGame().ConfigGetTextArrayRaw("CfgMovesMaleSdr2 States menu_idleUnarmed0 variantsPlayer", characterAnimations);
 	@endcode
 	\note use 'FormatRawConfigStringKeys' method to change localization keys to script-friendly
 	*/
@@ -651,7 +650,7 @@ class CGame
 	@code
 	// you run e.g.: DayZInt.exe -scriptDebug=true
 	string value;
-	if (g_Game.CommandlineGetParam("scriptDebug", value) && value == "true")
+	if (GetGame().CommandlineGetParam("scriptDebug", value) && value == "true")
 	{
 		Print("Script debugging on!");
 	}
@@ -737,11 +736,11 @@ class CGame
 	proto native NoiseSystem GetNoiseSystem();
 	
 	// inventory
-	proto native bool	AddInventoryJuncture(Man player, notnull EntityAI item, InventoryLocation dst, bool test_dst_occupancy, int timeout_ms, Managed userData = null);
+	proto native bool	AddInventoryJuncture(Man player, notnull EntityAI item, InventoryLocation dst, bool test_dst_occupancy, int timeout_ms);
 	
-	bool	AddInventoryJunctureEx(Man player, notnull EntityAI item, InventoryLocation dst, bool test_dst_occupancy, int timeout_ms, Managed userData = null)
+	bool	AddInventoryJunctureEx(Man player, notnull EntityAI item, InventoryLocation dst, bool test_dst_occupancy, int timeout_ms)
 	{
-		bool result = AddInventoryJuncture(player, item, dst, test_dst_occupancy, timeout_ms/*10000000*/, userData);
+		bool result = AddInventoryJuncture(player, item, dst, test_dst_occupancy, timeout_ms/*10000000*/);
 		#ifdef ENABLE_LOGGING
 		if ( LogManager.IsInventoryReservationLogEnable() )
 		{
@@ -756,7 +755,7 @@ class CGame
 	proto native bool 	HasInventoryJunctureItem(notnull EntityAI item);
 	proto native bool   HasInventoryJuncture(Man player, notnull EntityAI item);
 	proto native bool 	HasInventoryJunctureDestination(Man player, notnull InventoryLocation dst);
-	proto native bool	AddActionJuncture(Man player, notnull EntityAI item, int timeout_ms, Managed userData = null);
+	proto native bool	AddActionJuncture(Man player, notnull EntityAI item, int timeout_ms);
 	proto native bool	ExtendActionJuncture(Man player, notnull EntityAI item, int timeout_ms);
 	proto native bool	ClearJuncture(Man player, notnull EntityAI item);
 	
@@ -798,37 +797,31 @@ class CGame
 	/**
 	 * Return the number of gizmos
 	 */
-	[Obsolete("Use GizmoApi.GetCount")]
 	proto native int GizmoGetCount();
 
 	/**
 	 * Return the instance passed in for the gizmo
 	 */
-	[Obsolete("Use GizmoApi.GetInstance")]
 	proto native Class GizmoGetInstance(int index);
 
 	/**
 	 * Return the tracker passed in for the gizmo
 	 */
-	[Obsolete("Use GizmoApi.GetTracker")]
 	proto native Managed GizmoGetTracker(int index);
 
 	/**
 	 * Returned index is invalid if any other Gizmo function is called
 	 */
-	[Obsolete("Use GizmoApi.FindByTracker")]
 	proto native int GizmoFindByTracker(Managed tracker);
 
 	/**
 	 * Clear the gizmo
 	 */
-	[Obsolete("Use GizmoApi.Deselect")]
 	proto native void GizmoClear(int index);
 	
 	/**
 	 * Clear all gizmos 
 	 */
-	[Obsolete("Use GizmoApi.DeselectAll")]
 	proto native void GizmoClearAll();
 
 	/**
@@ -836,7 +829,6 @@ class CGame
 	 * 
 	 * Tracker for 'GizmoFind' is the passed in object
 	 */
-	[Obsolete("Use GizmoApi.SelectObject")]
 	proto native void GizmoSelectObject(Object object);
 
 	/**
@@ -844,9 +836,8 @@ class CGame
 	 * 
 	 * Tracker for 'GizmoFind' is the owned Entity
 	 * 
-	 * Note: Currently, GizmoGetInstance doesn't work due to Script Error: 'Physics' can't be compared against 'Class'
+	 * Note: GizmoGet doesn't work due as 'Physics' can't be compared against 'Class'
 	 */
-	[Obsolete("Use GizmoApi.SelectPhysics")]
 	proto native void GizmoSelectPhysics(Physics physics);
 
 	/**
@@ -856,7 +847,6 @@ class CGame
 	 * 
 	 * Tracker for 'GizmoFind' is the passed in instance
 	 */
-	[Obsolete("Use GizmoApi.SelectUser")]
 	proto native void GizmoSelectUser(Managed instance);
 
 	/**
@@ -981,9 +971,9 @@ class CGame
 	Param1<float> p = new Param1<float>(m_blood_pressure);
 	array<param> params = new array<param>;
 	params.Insert(p);
-	g_Game.RPC(player, RPC_LOW_BLOOD_PRESSURE_EFFECT, params);
+	GetGame().RPC(player, RPC_LOW_BLOOD_PRESSURE_EFFECT, params);
 	// or shortcut
-	g_Game.RPCSingleParam(player, RPC_LOW_BLOOD_PRESSURE_EFFECT, p);
+	GetGame().RPCSingleParam(player, RPC_LOW_BLOOD_PRESSURE_EFFECT, p);
 	...
 	// on client
 	class PlayerBase
@@ -1029,7 +1019,7 @@ class CGame
 	\param colorClass ??
 	\n usage :
 	@code
-		g_Game.Chat("Item splitted", "colorAction");
+		GetGame().Chat("Item splitted", "colorAction");
 	@endcode
 */
 	proto native void		Chat(string text, string colorClass);
@@ -1174,17 +1164,9 @@ class CGame
 	proto native float		SurfaceGetSeaLevelMin();
 	proto native float		SurfaceGetSeaLevelMax();
 	proto native float		SurfaceGetSeaLevel();
-	//! Get max sea wave height
-	proto native float		SurfaceGetSeaWaveMax();
-	//! Get current sea wave height
-	proto native float		SurfaceGetSeaWaveCurrent();
 	proto native bool		SurfaceIsSea(float x, float z);
 	proto native bool		SurfaceIsPond(float x, float z);
 	proto native float      GetWaterDepth(vector posWS);
-	//! Get the nearest water or object surface under a point, ignoring land (without the fake wave that's on top of the real wave)
-	proto native float		GetWaterSurfaceHeightNoFakeWave(vector posWS);
-	//! Get the nearest water or object surface under a point, ignoring land (with the fake wave that's on top of the real wave)
-	proto native float		GetWaterSurfaceHeightWithFakeWave(vector posWS);
 	
 	proto native void 		UpdatePathgraphRegion(vector regionMin, vector regionMax);
 	
@@ -1215,7 +1197,7 @@ class CGame
 	//! Returns tilt of the ground on the given position in degrees, so you can use this value to rotate any item according to terrain.
 	vector GetSurfaceOrientation(float x, float z)
 	{
-		vector normal = g_Game.SurfaceGetNormal(x, z);
+		vector normal = GetGame().SurfaceGetNormal(x, z);
 		vector angles = normal.VectorToAngles();
 		angles[1] = angles[1]+270; // This fixes rotation of item so it stands vertically. Feel free to change, but fix existing use cases.
 		
@@ -1300,7 +1282,7 @@ class CGame
 			excluded_objects.Insert(this);
 			array<Object> nearby_objects = new array<Object>;
 			
-			if(g_Game.IsBoxColliding( pos, orientation, size, excluded_objects, nearby_objects))
+			if(GetGame().IsBoxColliding( pos, orientation, size, excluded_objects, nearby_objects))
 			{
 				for (int i = 0, c = nearby_objects.Count(); i < c; ++i)
 				{
@@ -1332,7 +1314,7 @@ class CGame
 			excluded_objects.Insert(this);
 			array<Object> nearby_objects = new array<Object>;
 			
-			if(g_Game.IsBoxCollidingGeometry( pos, orientation, size, ObjIntersectView, ObjIntersectGeom, excluded_objects, nearby_objects))
+			if(GetGame().IsBoxCollidingGeometry( pos, orientation, size, ObjIntersectView, ObjIntersectGeom, excluded_objects, nearby_objects))
 			{
 				for (int i = 0, c = nearby_objects.Count(); i < c; ++i)
 				{
@@ -1403,7 +1385,7 @@ class CGame
 	\param cfg_parent_name \p Parent Config Class name ("DZ_LightAI")
 	\returns \p bool is class name inherited from parent class name
 	@code
-		bool is_kind = g_Game.IsKindOf( "Animal_CervusElaphus", "DZ_LightAI");
+		bool is_kind = GetGame().IsKindOf( "Animal_CervusElaphus", "DZ_LightAI");
 		PrintString(ToString(is_kind));
 		
 		>> 1
@@ -1436,8 +1418,7 @@ class CGame
 		}
 		
 		cfg_parent_name.ToLower();
-		int nFullPath = full_path.Count();
-		for (int i = 0; i < nFullPath; i++)
+		for (int i = 0; i < full_path.Count(); i++)
 		{
 			string tmp = full_path.Get(i);
 			tmp.ToLower();
@@ -1456,7 +1437,7 @@ class CGame
 	\param cfg_parent_name \p Parent Config Class name ("DZ_LightAI")
 	\returns \p bool is object inherited from parent class name
 	@code
-		bool is_kind = g_Game.IsKindOf( my_animal, "DZ_LightAI");
+		bool is_kind = GetGame().IsKindOf( my_animal, "DZ_LightAI");
 		PrintString(ToString(is_kind));
 		
 		>> 1
@@ -1469,8 +1450,7 @@ class CGame
 	
 		cfg_parent_name.ToLower();
 	
-		int nFullPath = full_path.Count();
-		for (int i = 0; i < nFullPath; i++)
+		for (int i = 0; i < full_path.Count(); i++)
 		{
 			string tmp = full_path.Get(i);
 			tmp.ToLower();
@@ -1517,9 +1497,9 @@ class CGame
 	\n CALL_CATEGORY_GAMEPLAY - calls & timers in this queue are processed only during mission, when game is not paused
 	\n usage:
 	* @code
-	* g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(this, "Refresh"); // calls "Refresh" function on "this" with no arguments
-	* g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(this, "Show", new Param1<bool>(true)); // calls "Show" function on "this" with one bool argument
-	* g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(this, "SetPos", new Param2<float, float>(0.2, 0.5)); // calls "SetPos" function on "this" with two float arguments
+	* GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(this, "Refresh"); // calls "Refresh" function on "this" with no arguments
+	* GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(this, "Show", new Param1<bool>(true)); // calls "Show" function on "this" with one bool argument
+	* GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(this, "SetPos", new Param2<float, float>(0.2, 0.5)); // calls "SetPos" function on "this" with two float arguments
 	* @endcode
 	*/
 	ScriptCallQueue GetCallQueue(int call_category) {}
@@ -1573,8 +1553,8 @@ class CGame
 		if (!m_CharacterData)
 		{
 			m_CharacterData = new MenuDefaultCharacterData;
-			if (fill_data && !g_Game.IsDedicatedServer())
-				GetMenuData().RequestGetDefaultCharacterData(); //fills the structure
+			if (fill_data)
+				GetGame().GetMenuData().RequestGetDefaultCharacterData(); //fills the structure
 		}
 		return m_CharacterData;
 	}
@@ -1589,9 +1569,4 @@ class CGame
 	{
 		return m_AnalyticsManagerClient;
 	}
-	
-	/*
-	Returns the value set in server config for the length of the exit button timeout after cancelling the previous logout attempt (consoles only)
-	*/
-	proto native int GetLogoutAfterCancelTimeout();
 };

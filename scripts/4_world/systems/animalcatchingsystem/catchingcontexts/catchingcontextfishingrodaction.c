@@ -122,36 +122,36 @@ class CatchingContextFishingRodAction : CatchingContextFishingBase
 			return;
 		
 		string path = "" + CFG_VEHICLESPATH + " " + item.GetType() + " Fishing";
-		if (g_Game.ConfigIsExisting(path))
+		if (GetGame().ConfigIsExisting(path))
 		{
-			if (g_Game.ConfigIsExisting(path + " resultQuantityBaseMod"))
-				m_QualityBaseMod += g_Game.ConfigGetFloat(path + " resultQuantityBaseMod");
-			if (g_Game.ConfigIsExisting(path + " resultQuantityDispersionMin"))
-				m_QualityDispersionMinMod += g_Game.ConfigGetFloat(path + " resultQuantityDispersionMin");
-			if (g_Game.ConfigIsExisting(path + " resultQuantityDispersionMax"))
-				m_QualityDispersionMaxMod += g_Game.ConfigGetFloat(path + " resultQuantityDispersionMax");
-			if (g_Game.ConfigIsExisting(path + " hookLossChanceMod"))
-				m_HookLossChanceMod += g_Game.ConfigGetFloat(path + " hookLossChanceMod");
-			if (g_Game.ConfigIsExisting(path + " baitLossChanceMod"))
-				m_BaitLossChanceMod += g_Game.ConfigGetFloat(path + " baitLossChanceMod");
+			if (GetGame().ConfigIsExisting(path + " resultQuantityBaseMod"))
+				m_QualityBaseMod += GetGame().ConfigGetFloat(path + " resultQuantityBaseMod");
+			if (GetGame().ConfigIsExisting(path + " resultQuantityDispersionMin"))
+				m_QualityDispersionMinMod += GetGame().ConfigGetFloat(path + " resultQuantityDispersionMin");
+			if (GetGame().ConfigIsExisting(path + " resultQuantityDispersionMax"))
+				m_QualityDispersionMaxMod += GetGame().ConfigGetFloat(path + " resultQuantityDispersionMax");
+			if (GetGame().ConfigIsExisting(path + " hookLossChanceMod"))
+				m_HookLossChanceMod += GetGame().ConfigGetFloat(path + " hookLossChanceMod");
+			if (GetGame().ConfigIsExisting(path + " baitLossChanceMod"))
+				m_BaitLossChanceMod += GetGame().ConfigGetFloat(path + " baitLossChanceMod");
 			
-			if (g_Game.ConfigIsExisting(path + " signalDurationMin"))
+			if (GetGame().ConfigIsExisting(path + " signalDurationMin"))
 			{
 				if (m_SignalDurationMin == -1)
 					m_SignalDurationMin = 0;
-				m_SignalDurationMin += g_Game.ConfigGetFloat(path + " signalDurationMin");
+				m_SignalDurationMin += GetGame().ConfigGetFloat(path + " signalDurationMin");
 			}
-			if (g_Game.ConfigIsExisting(path + " signalDurationMax"))
+			if (GetGame().ConfigIsExisting(path + " signalDurationMax"))
 			{
 				if (m_SignalDurationMax == -1)
 					m_SignalDurationMax = 0;
-				m_SignalDurationMax += g_Game.ConfigGetFloat(path + " signalDurationMax");
+				m_SignalDurationMax += GetGame().ConfigGetFloat(path + " signalDurationMax");
 			}
 			
-			if (g_Game.ConfigIsExisting(path + " signalCycleTargetAdjustment"))
-				m_SignalCycleTargetAdjustment += g_Game.ConfigGetFloat(path + " signalCycleTargetAdjustment");
-			if (g_Game.ConfigIsExisting(path + " signalCycleTargetEndAdjustment"))
-				m_SignalCycleTargetEndAdjustment += g_Game.ConfigGetFloat(path + " signalCycleTargetEndAdjustment");
+			if (GetGame().ConfigIsExisting(path + " signalCycleTargetAdjustment"))
+				m_SignalCycleTargetAdjustment += GetGame().ConfigGetFloat(path + " signalCycleTargetAdjustment");
+			if (GetGame().ConfigIsExisting(path + " signalCycleTargetEndAdjustment"))
+				m_SignalCycleTargetEndAdjustment += GetGame().ConfigGetFloat(path + " signalCycleTargetEndAdjustment");
 			
 			int slotID;
 			string slotName;
@@ -324,7 +324,7 @@ class CatchingContextFishingRodAction : CatchingContextFishingBase
 	
 	protected void TryDamageItems()
 	{
-		if (!g_Game.IsMultiplayer() || g_Game.IsDedicatedServer())
+		if (!GetGame().IsMultiplayer() || GetGame().IsDedicatedServer())
 		{
 			if (m_Hook && !m_Hook.IsSetForDeletion())
 				m_Hook.AddHealth("","Health",-UAFishingConstants.DAMAGE_HOOK);

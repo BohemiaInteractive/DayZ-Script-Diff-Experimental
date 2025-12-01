@@ -1,11 +1,6 @@
 /*!
 	Base native class of all vehicles in game.
 */
-class TransportType : EntityAIType
-{
-
-};
-
 #ifdef FEATURE_NETWORK_RECONCILIATION
 
 class TransportOwnerState : PawnOwnerState
@@ -159,57 +154,6 @@ class Transport extends EntityAI
 		\param[in] player The player that left the driver seat
 	*/
 	void OnDriverExit(Human player) {}
-
-	//! Returns true when lights are on, false otherwise.
-	proto native bool LightIsOn();
-
-	//! Signals for LightIsOn to return true
-	proto native void LightOn();
-
-	//! Signals for LightIsOn to return false
-	proto native void LightOff();
-
-	//! Calls LightOn/LightOff depending on current light state
-	proto native void LightToggle();
-
-	/*!
-		Is called by native every time the game wants to turn on the light
-
-		\return true if the light can turn on, false otherwise.
-	*/
-	bool OnBeforeLightOn()
-	{
-		// light can turn on by default
-		return true;
-	}
-
-	/*!
-		Is called by native every time the game wants to update the light
-	*/
-	void OnUpdateLight()
-	{
-		UpdateLights();
-	}
-	
-	//! ---------------- deterministic physics ------------------------
-
-	//! Applies constant force on the physics body (at origin).
-	proto void ApplyForce(vector force);
-
-	//! Applies constant torque on the physics body.
-	proto void ApplyTorque(vector force);
-
-	//! Applies constant force on the physics body at a position (world space coordinates).
-	proto void ApplyForceAt(vector pos, vector force);
-
-	//! Applies impulse on the physics body (at origin).
-	proto void ApplyCentralImpulse(vector centralImpulse);
-
-	//! Applies impulse torque on the physics body.
-	proto void ApplyTorqueImpulse(vector torqueImpulse);
-	
-	//! Applies impulse on the physics body at a position (world space coordinates).
-	proto void ApplyImpulseAt(vector pos, vector force);
 	
 	//! ---------------- deterministic random numbers ------------------------
 
@@ -266,9 +210,6 @@ class Transport extends EntityAI
 		\param[in] dt delta time since last called in seconds
 	*/
 	void OnUpdate(float dt) {}
-
-	// Scripted function
-	void UpdateLights(int new_gear = -1) {}
 
 	override bool IsTransport()
 	{
@@ -354,7 +295,7 @@ class Transport extends EntityAI
 		avgPosition = avgPosition * 0.25;
 		
 		// get depth of the water to determine if we should use the roadway surface normal or just up vector
-		float depth = g_Game.GetWaterDepth(avgPosition);
+		float depth = GetGame().GetWaterDepth(avgPosition);
 		
 		vector normal = vector.Up;
 		vector dirUp = GetDirectionUp();
@@ -380,7 +321,7 @@ class Transport extends EntityAI
 			{
 				ctx.m_SurfaceParams.position = corners[i];
 				
-				g_Game.GetSurface(ctx.m_SurfaceParams, ctx.m_SurfaceResult);
+				GetGame().GetSurface(ctx.m_SurfaceParams, ctx.m_SurfaceResult);
 				
 				corners[i][1] = ctx.m_SurfaceResult.height;
 			}
@@ -603,22 +544,20 @@ class Transport extends EntityAI
 		if (super.OnAction(action_id, player, ctx))
 			return true;
 
-		if (g_Game.IsClient() || !g_Game.IsMultiplayer())
+		if (GetGame().IsClient() || !GetGame().IsMultiplayer())
 		{
 			switch (action_id)
 			{
 				case EActions.GIZMO_OBJECT:
-					if (GetGizmoApi())
-						GetGizmoApi().SelectObject(this);
+					GetGame().GizmoSelectObject(this);
 					return true;
 				case EActions.GIZMO_PHYSICS:
-					if (GetGizmoApi())
-						GetGizmoApi().SelectPhysics(GetPhysics());
+					GetGame().GizmoSelectPhysics(GetPhysics());
 					return true;
 			}
 		}
 
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			switch (action_id)
 			{
@@ -657,7 +596,7 @@ class Transport extends EntityAI
 		
 		excluded.Insert(this);
 		
-		g_Game.IsBoxColliding(position, orientation, extents, excluded, collided);
+		GetGame().IsBoxColliding(position, orientation, extents, excluded, collided);
 		
 		orientation.RotationMatrixFromAngles(transform);
 		transform[3] = position;

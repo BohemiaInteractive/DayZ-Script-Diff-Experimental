@@ -119,7 +119,7 @@ class VicinityContainer: CollapsibleContainer
 			return;
 		}
 
-		if ( ipw.GetItem() && g_Game.GetPlayer().CanDropEntity( ipw.GetItem() ) && ipw.GetItem().GetInventory().CanRemoveEntity() && m_ShowedItemIcons.Find( ipw.GetItem() ) == -1 )
+		if ( ipw.GetItem() && GetGame().GetPlayer().CanDropEntity( ipw.GetItem() ) && ipw.GetItem().GetInventory().CanRemoveEntity() && m_ShowedItemIcons.Find( ipw.GetItem() ) == -1 )
 		{
 			ColorManager.GetInstance().SetColor( w, ColorManager.GREEN_COLOR );
 			ItemManager.GetInstance().HideDropzones();
@@ -186,7 +186,7 @@ class VicinityContainer: CollapsibleContainer
 				ItemManager.GetInstance().GetLeftDropzone().SetAlpha( 1 );
 				return;
 			}
-			/*else if( g_Game.GetPlayer().CanDropEntity( ipw.GetItem() ) )
+			/*else if( GetGame().GetPlayer().CanDropEntity( ipw.GetItem() ) )
 			{
 				ColorManager.GetInstance().SetColor( w, ColorManager.GREEN_COLOR );
 				ItemManager.GetInstance().HideDropzones();
@@ -226,7 +226,7 @@ class VicinityContainer: CollapsibleContainer
 			return;
 		}
 		
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 
 		if ( !item.GetInventory().CanRemoveEntity() )
 			return;
@@ -251,7 +251,7 @@ class VicinityContainer: CollapsibleContainer
 		ItemManager.GetInstance().SetIsDragging( false );
 		PrepareOwnedTooltip(item);
 
-		InventoryMenu menu = InventoryMenu.Cast( g_Game.GetUIManager().FindMenu( MENU_INVENTORY ) );
+		InventoryMenu menu = InventoryMenu.Cast( GetGame().GetUIManager().FindMenu( MENU_INVENTORY ) );
 		if ( menu )
 		{
 			menu.RefreshQuickbar();
@@ -299,7 +299,7 @@ class VicinityContainer: CollapsibleContainer
 		if (!item.GetInventory().CanRemoveEntity() || m_ShowedItemIcons.Find(item) > -1)
 			return;
 		
-		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());		
+		PlayerBase player = PlayerBase.Cast(GetGame().GetPlayer());		
 		if (player.CanDropEntity(item))
 		{
 			ItemBase itemBase = ItemBase.Cast(item);
@@ -312,7 +312,7 @@ class VicinityContainer: CollapsibleContainer
 			}
 		}
 
-		InventoryMenu menu = InventoryMenu.Cast( g_Game.GetUIManager().FindMenu( MENU_INVENTORY ) );
+		InventoryMenu menu = InventoryMenu.Cast( GetGame().GetUIManager().FindMenu( MENU_INVENTORY ) );
 		if ( menu )
 		{
 			menu.RefreshQuickbar();
@@ -321,7 +321,7 @@ class VicinityContainer: CollapsibleContainer
 
 	override void UpdateInterval()
 	{
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 		
 		if (!player)
 			return;
@@ -431,7 +431,7 @@ class VicinityContainer: CollapsibleContainer
 				{
 					string config = "CfgVehicles " + entity.GetType() + " GUIInventoryAttachmentsProps";
 
-					if ( g_Game.ConfigIsExisting( config ) )
+					if ( GetGame().ConfigIsExisting( config ) )
 					{
 						AttachmentCategoriesContainer ac = new AttachmentCategoriesContainer( m_Parent, -1 );
 						ac.SetEntity( entity );

@@ -73,7 +73,6 @@
                     "SectionLines": [
                         "Alberto Paparella",
                         "Arthur Joanin",
-			"Jan Pazdera",
                         "Jan Tomášik",
                         "Jana Unzeitigová",
                         "Marek Žilavý",
@@ -136,7 +135,6 @@
                         "Martin Hochman",
                         "Martin Pezlar",
                         "Michael Docherty",
-			"Nejc Kokalj",
                         "Petr Sedláček",
                         "Radim Vitek",
                         "Suvi Lankila"
@@ -170,7 +168,6 @@
                         "Aleš Stupka",
                         "Eduard Pribula",
                         "Elias Mittet Hernes",
-			"Filip Vondrášek",
                         "Floris Leysen",
                         "František Bidlo",
                         "Jacob Kumar",
@@ -236,7 +233,7 @@
                         "Jakub Mirola",
                         "Jamie Foster",
                         "Jan Kudrnáč",
-                        "José Luis Revuelta",
+                        "Jan Pazdera",
                         "Kristýna Duhárová",
                         "Marcin Pindara",
                         "Marián Ferko",
@@ -402,8 +399,7 @@
                 {
                     "SectionName": "#quality_assurance_specialists",
                     "SectionLines": [
-                        "Bogdan Ciobanu",
-			"Daniel Fialka",
+                        "Daniel Fialka",
                         "Dominik Novák",
                         "Erik Vrškový",
                         "Jan Jirák",
@@ -537,6 +533,7 @@
                         "Maelika Eberhard",
                         "Mark Fitzhenry",
                         "Míša Krejčíková",
+                        "Rudolf Klenovský",
                         "Sarah Giercksky",
                         "Seif Jamoussi",
                         "Sigurbjörg Lovísa Árnadóttir",
@@ -877,8 +874,8 @@
                         "Lalisa Leakakul",
                         "Le Do",
                         "Lucie Svobodová",
-			"Lukáš Jaro",
-			"Marek Hvizdoš",
+						"Lukáš Jaro",
+						"Marek Hvizdoš",
                         "Marek Vítek",
                         "Marie Pazourová",
                         "Marta Hlinková",
@@ -888,11 +885,11 @@
                         "Martin Juráš",
                         "Martin Mayer",
                         "Martin Mokrejš",
-			"Martin Pivon",
+						"Martin Pivon",
                         "Martin Suriak",
                         "Matěj Müller",
                         "Matěj Potůček",
-			"Matouš Hrdlicka",
+						"Matouš Hrdlicka",
                         "Matyáš Soviš",
                         "Max Hejtmánek",
                         "Michal Jandura",
@@ -900,7 +897,7 @@
                         "Michal Měřinský",
                         "Michal Rychetník",
                         "Michal Skramuský",
-			"Miroslav Kovář",
+						"Miroslav Kovář",
                         "Nuthapon Pudpaput",
                         "Oldřich Kalous",
                         "Ondřej Borz",
@@ -909,7 +906,7 @@
                         "Ondřej Vanča",
                         "Pankaj Singh",
                         "Patrik Bartošík",
-			"Pavel Fronek",
+						"Pavel Fronek",
                         "Pavel Hamata",
                         "Pavol Sočuvka",
                         "Pavel Štaud",
@@ -937,7 +934,7 @@
                         "Soňa Cicoňová",
                         "Stanislav Zolotuchin",
                         "Štěpán Riedl",
-			"Štěpán Šach",
+						"Štěpán Šach",
                         "Štěpán Šikýř",
                         "Tadeáš Varga",
                         "Teo Kryštůfek",
@@ -1232,12 +1229,6 @@
                     "SectionName": "Data compression by oberhumer.com",
                     "SectionLines": [
                         ""
-                    ]
-                },
-		{
-                    "SectionName": "",
-                    "SectionLines": [
-                        "Portions of this software are copyright © 2017 The FreeType Project (www.freetype.org).  All rights reserved."
                     ]
                 },
                 {

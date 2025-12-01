@@ -25,6 +25,10 @@ class HealthNotfr: NotifierBase
 	{
 		return eNotifiers.NTF_HEALTHY;
 	}
+
+	override void DisplayBadge()
+	{
+	}
 	
 	override void DisplayTendency(float delta)
 	{
@@ -44,8 +48,18 @@ class HealthNotfr: NotifierBase
 		}
 	}
 
+	override void HideBadge()
+	{
+		
+		////GetVirtualHud().SetStatus(eDisplayElements.DELM_NTFR_HEALTHY,DELM_LVL_0);
+	}
+
 	override protected float GetObservedValue()
 	{
-		return m_Player.GetHealth("","Health");
+		float health = m_Player.GetHealth("","Health");
+		//PrintString("health:" + health);
+		return health;
 	}
+	
+
 };

@@ -151,7 +151,7 @@ class DropEquipAndDestroyRootLambda : ReplaceItemWithNewLambdaBase
 				
 				m_Player.LocalTakeToDst(child_src, child_dst);
 												
-				g_Game.RemoteObjectTreeCreate(child); // this forces server to send CreateVehicle Message to client. This is needed for preserving the appearance of network operations on client (so that DeleteObject(old) arrives before CreateVehicle(new)). @NOTE: this does not delete the object on server, only it's network representation.
+				GetGame().RemoteObjectTreeCreate(child); // this forces server to send CreateVehicle Message to client. This is needed for preserving the appearance of network operations on client (so that DeleteObject(old) arrives before CreateVehicle(new)). @NOTE: this does not delete the object on server, only it's network representation.
 			}
 		}
 	}
@@ -176,12 +176,12 @@ class MoveEquipToExistingItemAndDestroyOldRootLambda : ReplaceItemWithNewLambdaB
 	override protected void RemoveNetworkObjectInfo ()
 	{
 		super.RemoveNetworkObjectInfo();
-		g_Game.RemoteObjectTreeDelete(m_NewItem);
+		GetGame().RemoteObjectTreeDelete(m_NewItem);
 	}
 	override protected void UndoRemoveNetworkObjectInfo ()
 	{
 		super.UndoRemoveNetworkObjectInfo();
-		g_Game.RemoteObjectTreeCreate(m_NewItem);
+		GetGame().RemoteObjectTreeCreate(m_NewItem);
 	}
 	
 	override void CopyOldPropertiesToNew (notnull EntityAI old_item, EntityAI new_item)
@@ -195,7 +195,7 @@ class MoveEquipToExistingItemAndDestroyOldRootLambda : ReplaceItemWithNewLambdaB
 	override protected void CreateNetworkObjectInfo (EntityAI new_item)
 	{
 		super.CreateNetworkObjectInfo(new_item);
-		g_Game.RemoteObjectTreeCreate(m_NewItem);
+		GetGame().RemoteObjectTreeCreate(m_NewItem);
 	}
 };
 
@@ -276,7 +276,7 @@ class MiscGameplayFunctions
 		if (transfer_variables)
 			MiscGameplayFunctions.TransferEntityVariables(source, target, exclude_quantity);
 		
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (transfer_health)
 			{
@@ -375,7 +375,7 @@ class MiscGameplayFunctions
 				if (drop)
 				{
 					player.LocalDropEntity(child);
-					g_Game.RemoteObjectTreeCreate(child);
+					GetGame().RemoteObjectTreeCreate(child);
 					result = TransferInventoryResult.DroppedSome;
 				}
 			}
@@ -421,7 +421,7 @@ class MiscGameplayFunctions
 		if ( ItemBase.GetDebugActionsMask() & DebugActionType.UNLIMITED_AMMO )
 		{
 			Magazine magazine;
-			if ( g_Game.IsServer() )
+			if ( GetGame().IsServer() )
 			{
 				magazine = weapon.GetMagazine(weapon.GetCurrentMuzzle());
 			
@@ -491,9 +491,9 @@ class MiscGameplayFunctions
 		for (int i = 0; i < full_piles_count; ++i)
 		{
 			if (floaty_spawn)
-				pile = ItemBase.Cast(g_Game.CreateObjectEx(item_name, ground_position, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH));
+				pile = ItemBase.Cast(GetGame().CreateObjectEx(item_name, ground_position, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH));
 			else
-				pile = ItemBase.Cast(g_Game.CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
+				pile = ItemBase.Cast(GetGame().CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
 			pile.SetQuantity(max_stack_size);
 			pile.SetHealth(health);
 			item_piles.Insert(pile);
@@ -502,9 +502,9 @@ class MiscGameplayFunctions
 		if (rest > 0)
 		{
 			if (floaty_spawn)
-				pile = ItemBase.Cast(g_Game.CreateObjectEx(item_name, ground_position, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH));
+				pile = ItemBase.Cast(GetGame().CreateObjectEx(item_name, ground_position, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH));
 			else
-				pile = ItemBase.Cast(g_Game.CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
+				pile = ItemBase.Cast(GetGame().CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
 			pile.SetQuantity(rest);
 			pile.SetHealth(health);
 			item_piles.Insert(pile);
@@ -533,7 +533,7 @@ class MiscGameplayFunctions
 		for (int i = 0; i < full_piles_count; ++i)
 		{
 			randomizedPos = MiscGameplayFunctions.GetRandomizedPositionVerified(starPos,targetPos,radius,ignoreObjectCollison);
-			pile = ItemBase.Cast(g_Game.CreateObjectEx(item_name, randomizedPos, ECE_PLACE_ON_SURFACE));
+			pile = ItemBase.Cast(GetGame().CreateObjectEx(item_name, randomizedPos, ECE_PLACE_ON_SURFACE));
 			pile.SetQuantity(max_stack_size);
 			pile.SetHealth(health);
 			item_piles.Insert(pile);
@@ -542,7 +542,7 @@ class MiscGameplayFunctions
 		if (rest > 0)
 		{
 			randomizedPos = MiscGameplayFunctions.GetRandomizedPositionVerified(starPos,targetPos,radius,ignoreObjectCollison);
-			pile = ItemBase.Cast(g_Game.CreateObjectEx(item_name, randomizedPos, ECE_PLACE_ON_SURFACE));
+			pile = ItemBase.Cast(GetGame().CreateObjectEx(item_name, randomizedPos, ECE_PLACE_ON_SURFACE));
 			pile.SetQuantity(rest);
 			pile.SetHealth(health);
 			item_piles.Insert(pile);
@@ -564,13 +564,13 @@ class MiscGameplayFunctions
 		
 		for (int i = 0; i < piles_count; ++i)
 		{
-			pile = Magazine.Cast(g_Game.CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
+			pile = Magazine.Cast(GetGame().CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
 			pile.ServerSetAmmoCount(stack_size);
 			items.Insert(pile);
 		}
 		if (rest > 0)
 		{
-			pile = Magazine.Cast(g_Game.CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
+			pile = Magazine.Cast(GetGame().CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
 			pile.ServerSetAmmoCount(rest);
 			items.Insert(pile);
 		}
@@ -594,7 +594,7 @@ class MiscGameplayFunctions
 		for (int i = 0; i < piles_count; ++i)
 		{
 			randomizedPos = MiscGameplayFunctions.GetRandomizedPositionVerified(starPos,targetPos,radius,ignoreObjectCollison);
-			pile = Magazine.Cast(g_Game.CreateObjectEx(item_name, randomizedPos, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH));
+			pile = Magazine.Cast(GetGame().CreateObjectEx(item_name, randomizedPos, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH));
 			pile.ServerSetAmmoCount(stack_size);
 			items.Insert(pile);
 		}
@@ -602,7 +602,7 @@ class MiscGameplayFunctions
 		if (rest > 0)
 		{
 			randomizedPos = MiscGameplayFunctions.GetRandomizedPositionVerified(starPos,targetPos,radius,ignoreObjectCollison);
-			pile = Magazine.Cast(g_Game.CreateObjectEx(item_name, randomizedPos, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH));
+			pile = Magazine.Cast(GetGame().CreateObjectEx(item_name, randomizedPos, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH));
 			pile.ServerSetAmmoCount(rest);
 			items.Insert(pile);
 		}
@@ -628,14 +628,14 @@ class MiscGameplayFunctions
 		
 			for (int i = 0; i < piles_count; ++i)
 			{
-				pile = Magazine.Cast(g_Game.CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
+				pile = Magazine.Cast(GetGame().CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
 				pile.ServerSetAmmoCount(stack_size);
 				items.Insert(pile);
 			}
 			
 			if (rest > 0)
 			{
-				pile = Magazine.Cast(g_Game.CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
+				pile = Magazine.Cast(GetGame().CreateObjectEx(item_name, ground_position, ECE_PLACE_ON_SURFACE));
 				pile.ServerSetAmmoCount(rest);
 				items.Insert(pile);
 			}
@@ -661,7 +661,7 @@ class MiscGameplayFunctions
 		float health_normalized = health / 100;
 		string config_path = CFG_WEAPONSPATH + " " + class_name + " DamageSystem" + " GlobalHealth" + " healthLabels";
 		CachedObjectsArrays.ARRAY_FLOAT.Clear();
-		g_Game.ConfigGetFloatArray(config_path, CachedObjectsArrays.ARRAY_FLOAT);
+		GetGame().ConfigGetFloatArray(config_path, CachedObjectsArrays.ARRAY_FLOAT);
 		for(int i = 0; i < CachedObjectsArrays.ARRAY_FLOAT.Count(); ++i)
 		{
 			if( health_normalized >= CachedObjectsArrays.ARRAY_FLOAT.Get(i) )
@@ -677,20 +677,20 @@ class MiscGameplayFunctions
 		float max_health;
 		string cfg_path;
 		
-		if ( g_Game.ConfigIsExisting(CFG_VEHICLESPATH+" "+class_name) )
+		if ( GetGame().ConfigIsExisting(CFG_VEHICLESPATH+" "+class_name) )
 		{
 			cfg_path = CFG_VEHICLESPATH;
 		}
-		else if ( g_Game.ConfigIsExisting(CFG_WEAPONSPATH+" "+class_name) )
+		else if ( GetGame().ConfigIsExisting(CFG_WEAPONSPATH+" "+class_name) )
 		{
 			cfg_path = CFG_WEAPONSPATH;
 		}
-		else if ( g_Game.ConfigIsExisting(CFG_MAGAZINESPATH+" "+class_name) )
+		else if ( GetGame().ConfigIsExisting(CFG_MAGAZINESPATH+" "+class_name) )
 		{
 			cfg_path = CFG_MAGAZINESPATH;
 		}
 		cfg_path = cfg_path + " "+class_name+" DamageSystem GlobalHealth " + health_type + " hitpoints";
-		max_health = g_Game.ConfigGetFloat(cfg_path);
+		max_health = GetGame().ConfigGetFloat(cfg_path);
 		
 		return max_health;
 	}
@@ -954,7 +954,7 @@ class MiscGameplayFunctions
 					//Camera check (client-only)
 					if ( camera_check )
 					{
-						if ( g_Game && ( !g_Game.IsDedicatedServer() ) )
+						if ( GetGame() && ( !GetGame().IsDedicatedServer() ) )
 						{
 							return !base_building.IsFacingCamera( constrution_part.GetMainPartName() );
 						}
@@ -1093,11 +1093,10 @@ class MiscGameplayFunctions
 	
 	static void DropAllItemsInInventoryInBounds(ItemBase ib, vector halfExtents)
 	{
-		if (!g_Game.IsServer())
+		if (!GetGame().IsServer())
 			return;
 		array<EntityAI> items = new array<EntityAI>;
-		GameInventory ibInventory = ib.GetInventory();
-		ibInventory.EnumerateInventory(InventoryTraversalType.LEVELORDER, items);
+		ib.GetInventory().EnumerateInventory(InventoryTraversalType.LEVELORDER, items);
 		
 		vector direction = ib.GetDirection();
 		float dot = vector.Dot(direction, vector.Forward);
@@ -1115,7 +1114,7 @@ class MiscGameplayFunctions
 		{
 			item = items.Get(i);
 			if ( item )
-				ibInventory.DropEntityInBounds(InventoryMode.SERVER, ib, item, halfExtents, angle, cos, sin);					
+				ib.GetInventory().DropEntityInBounds(InventoryMode.SERVER, ib, item, halfExtents, angle, cos, sin);					
 		}
 	}
 	
@@ -1136,19 +1135,17 @@ class MiscGameplayFunctions
 		array<EntityAI> ents = new array<EntityAI>;
 		int count, i;
 		//atts
-		GameInventory parentInventory = parent.GetInventory();
-		count = parentInventory.AttachmentCount();
+		count = parent.GetInventory().AttachmentCount();
 		for (i = 0; i < count; ++i)
 		{
-			ents.Insert(parentInventory.GetAttachmentFromIndex(i));
+			ents.Insert(parent.GetInventory().GetAttachmentFromIndex(i));
 		}
 		
 		//cargo
-		CargoBase parentCargo = parentInventory.GetCargo();
-		count = parentCargo.GetItemCount();
+		count = parent.GetInventory().GetCargo().GetItemCount();
 		for (i = 0; i < count; ++i)
 		{
-			ents.Insert(parentCargo.GetItem(i));
+			ents.Insert(parent.GetInventory().GetCargo().GetItem(i));
 		}
 		
 		//now throw them all
@@ -1164,11 +1161,10 @@ class MiscGameplayFunctions
 	static void ThrowEntityFromInventory(notnull EntityAI entity, vector position, float direction[4], vector force, int flags)
 	{	
 		InventoryMode invMode = InventoryMode.SERVER;
-		if ( !g_Game.IsMultiplayer() )
+		if ( !GetGame().IsMultiplayer() )
 			invMode = InventoryMode.LOCAL;
 		
 		ItemBase entityIB;
-		GameInventory entityInventory = entity.GetInventory();
 		if (CastTo(entityIB, entity))
 		{
 			InventoryLocation dst = new InventoryLocation;	
@@ -1206,15 +1202,15 @@ class MiscGameplayFunctions
 				}
 				
 				InventoryLocation src = new InventoryLocation;
-				entityInventory.GetCurrentInventoryLocation(src);
+				entity.GetInventory().GetCurrentInventoryLocation(src);
 				
-				entityInventory.TakeToDst(invMode, src, dst);
+				entity.GetInventory().TakeToDst(invMode, src, dst);
 				entityIB.ThrowPhysically(null, force, false);
 			}
 		}
 		else
 		{
-			entityInventory.DropEntity(invMode, entity.GetHierarchyRoot(), entity);
+			entity.GetInventory().DropEntity(invMode, entity.GetHierarchyRoot(), entity);
 			dBodyApplyImpulse(entity, force);
 		}
 	}
@@ -1304,14 +1300,14 @@ class MiscGameplayFunctions
 	{
 		array<Object> vicinityObjects= new array<Object>;
 		vicinityObjects.Copy(objects);
-
+		
 		int i = 0;
 		int j = 0;
 		int k = 0;			
 		int mCount = vicinityObjects.Count();
 		
 		if (!filteredObjects)
-			filteredObjects = new array<Object>();
+			filteredObjects = new array<Object>;
 		
 		// Remove objects that are too far from the player anyways
 		if ( doDistanceCheck )
@@ -1325,9 +1321,9 @@ class MiscGameplayFunctions
 		}
 
 		// Sort obstructingObjects to have the furthest one first
-		array<Object> sortedObstructingObjects = new array<Object>();
-		array<float> distanceHelper = new array<float>();
-		array<float> distanceHelperUnsorted = new array<float>();
+		array<Object> sortedObstructingObjects = new array<Object>;
+		array<float> distanceHelper = new array<float>;
+		array<float> distanceHelperUnsorted = new array<float>;
 		float distance, dist1, dist2;
 
 		for ( i = 0; i < obstructingObjects.Count(); ++i )
@@ -1342,8 +1338,8 @@ class MiscGameplayFunctions
 		for ( i = distanceHelper.Count() - 1; i >= 0; --i )
 			sortedObstructingObjects.Insert(obstructingObjects[distanceHelperUnsorted.Find(distanceHelper[i])]);
 
-		array<ref array<Object>> tempGroups = new array<ref array<Object>>();
-		array<ref array<Object>> objectGroups = new array<ref array<Object>>();
+		array<ref array<Object>> tempGroups = new array<ref array<Object>>;
+		array<ref array<Object>> objectGroups = new array<ref array<Object>>;
 		array<Object> group;
 		
 		float cos = Math.Cos(90);
@@ -1370,7 +1366,7 @@ class MiscGameplayFunctions
 				half = (max - min) * 0.5;
 				half = Vector(Math.AbsFloat(half[0]), Math.AbsFloat(half[1]), Math.AbsFloat(half[2]));
 
-				group = new array<Object>();
+				group = new array<Object>;
 
 				// Group objects within the above box
 				for ( j = vicinityObjects.Count() - 1; j >= 0; --j )
@@ -1399,19 +1395,18 @@ class MiscGameplayFunctions
 		// Split initial groups by distance
 		SplitArrayIntoGroupsByDistance(vicinityObjects, objectGroups, distanceDelta);
 
-		// Raycast items in groups (previously sample item in group which is not enough, sadly)
+		// Raycast accordingly to groups		
 		IsObjectObstructedCache cache = new IsObjectObstructedCache(origin, mCount);
-		foreach (array<Object> objectGroup : objectGroups)
+		for ( i = 0; i < objectGroups.Count(); ++i )
 		{
-			foreach (Object filteredObject : objectGroup)
-			{
-				if (!IsObjectObstructedEx(filteredObject, cache))
-					filteredObjects.Insert(filteredObject);
-			}
+			array<Object> objectGroup = objectGroups[i];
+			Object sampleObject = objectGroup[0];
 
+			if ( !IsObjectObstructedEx(sampleObject, cache) )
+				filteredObjects.InsertAll(objectGroup);
+
+			cache.ClearCache();
 		}
-
-		cache.ClearCache();
 	}
 
 	static void SplitArrayIntoGroupsByDistance(array<Object> objects, array<ref array<Object>> objectGroups, float squaredDistanceDelta)
@@ -1451,7 +1446,7 @@ class MiscGameplayFunctions
 	static bool IsObjectObstructed(Object object, bool doDistanceCheck = false, vector distanceCheckPos = "0 0 0", float maxDist = 0)
 	{
 		vector rayStart;
-		MiscGameplayFunctions.GetHeadBonePos(PlayerBase.Cast(g_Game.GetPlayer()), rayStart);
+		MiscGameplayFunctions.GetHeadBonePos(PlayerBase.Cast(GetGame().GetPlayer()), rayStart);
 		IsObjectObstructedCache cache = new IsObjectObstructedCache(rayStart, 1);
 
 		return IsObjectObstructedEx(object, cache, doDistanceCheck, distanceCheckPos, maxDist);
@@ -1489,8 +1484,7 @@ class MiscGameplayFunctions
 							if (cache.HitProxyObjects[0].parent)
 							{
 								EntityAI proxyParent = EntityAI.Cast(cache.HitProxyObjects[0].parent);
-								GameInventory proxyInventory = proxyParent.GetInventory();
-								if (proxyInventory && proxyInventory.GetCargo())
+								if (proxyParent.GetInventory() && proxyParent.GetInventory().GetCargo())
 									return true;
 							}
 						}	
@@ -1562,7 +1556,7 @@ class MiscGameplayFunctions
 		int geometry = ObjIntersectFire; //default for the RV raycast
 		if (geometryTypeOverride != -1)
 			geometry = geometryTypeOverride;
-		DayZPhysics.RaycastRV(cache.RaycastStart, cache.ObjectCenterPos, cache.ObjectContactPos, cache.ObjectContactDir, cache.ContactComponent, cache.HitObjects, object, g_Game.GetPlayer(), false, false, geometry, 0.0, CollisionFlags.ALLOBJECTS);
+		DayZPhysics.RaycastRV(cache.RaycastStart, cache.ObjectCenterPos, cache.ObjectContactPos, cache.ObjectContactDir, cache.ContactComponent, cache.HitObjects, object, GetGame().GetPlayer(), false, false, geometry, 0.0, CollisionFlags.ALLOBJECTS);
 		count = cache.HitObjects.Count();
 		for (i = 0; i < count; ++i)
 		{
@@ -1580,13 +1574,13 @@ class MiscGameplayFunctions
 		int liquidType;
 		float adjustedDamage;
 		
-		g_Game.SurfaceUnderObject(player, surfaceType, liquidType);
+		GetGame().SurfaceUnderObject(player, surfaceType, liquidType);
 		float modifierSurface = Surface.GetParamFloat(surfaceType, "toolDamage"); // toolDamage
 		if (modifierSurface == 0)
 			modifierSurface = 1;
 		
 		if (player.GetInColdArea())
-			adjustedDamage = baseDamage * (modifierSurface + g_Game.GetMission().GetWorldData().GetColdAreaToolDamageModifier());
+			adjustedDamage = baseDamage * (modifierSurface + GetGame().GetMission().GetWorldData().GetColdAreaToolDamageModifier());
 		else 
 			adjustedDamage = baseDamage * modifierSurface;
 			
@@ -1648,7 +1642,7 @@ class MiscGameplayFunctions
 			{	
 				MiscGameplayFunctions.TransferItemProperties(attachment,new_item);
 				
-				if (g_Game.IsServer())
+				if (GetGame().IsServer())
 				{
 					//Lower health level of splint after use
 					if (new_item.GetHealthLevel() < 4)
@@ -1699,11 +1693,11 @@ class MiscGameplayFunctions
 			
 			if (player_pos!=closest_safe_pos)
 			{
-				closest_safe_pos[1] = g_Game.SurfaceY(closest_safe_pos[0], closest_safe_pos[2]);
+				closest_safe_pos[1] = GetGame().SurfaceY(closest_safe_pos[0], closest_safe_pos[2]);
 				
 				player.SetPosition( closest_safe_pos );//...so lets teleport them somewhere safe
 				//DeveloperTeleport.SetPlayerPosition(player, closest_safe_pos);
-				g_Game.RPCSingleParam(player, ERPCs.RPC_WARNING_TELEPORT, null, true, player.GetIdentity());
+				GetGame().RPCSingleParam(player, ERPCs.RPC_WARNING_TELEPORT, null, true, player.GetIdentity());
 				
 				PluginAdminLog adminLog = PluginAdminLog.Cast(GetPlugin(PluginAdminLog));
 				if (adminLog)
@@ -1742,7 +1736,7 @@ class MiscGameplayFunctions
 		if (playerPos != safePos)
 		{
 			player.SetPosition(safePos);
-			g_Game.RPCSingleParam(player, ERPCs.RPC_WARNING_TELEPORT, null, true, player.GetIdentity());
+			GetGame().RPCSingleParam(player, ERPCs.RPC_WARNING_TELEPORT, null, true, player.GetIdentity());
 			
 			return true;
 		}
@@ -1752,12 +1746,12 @@ class MiscGameplayFunctions
 	
 	static void GenerateAINoiseAtPosition(vector position, float lifeTime, NoiseParams noiseParams)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
-			NoiseSystem noise = g_Game.GetNoiseSystem();
+			NoiseSystem noise = GetGame().GetNoiseSystem();
 			if (noise)
 			{
-				noise.AddNoiseTarget(position, lifeTime, noiseParams, NoiseAIEvaluate.GetNoiseReduction(g_Game.GetWeather()));
+				noise.AddNoiseTarget(position, lifeTime, noiseParams, NoiseAIEvaluate.GetNoiseReduction(GetGame().GetWeather()));
 			}
 		}
 	}
@@ -1792,7 +1786,7 @@ class MiscGameplayFunctions
 		
 	static string GetItemDisplayName(string type)
 	{
-		return g_Game.ConfigGetTextOut("CfgVehicles " + type + " displayName");
+		return GetGame().ConfigGetTextOut("CfgVehicles " + type + " displayName");
 	}
 
 	static bool IsComponentInSelection(array<Selection> pSelection, string pCompName)

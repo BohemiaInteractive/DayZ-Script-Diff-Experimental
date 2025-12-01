@@ -10,19 +10,19 @@ class PresetsMenu extends UIScriptedMenu
 
 	override Widget Init()
 	{
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/day_z_options_controls_preset.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/day_z_options_controls_preset.layout");
 		
 		m_schemes_list = TextListboxWidget.Cast( layoutRoot.FindAnyWidget("PresetListboxWidget") );
 		
-		int c = g_Game.GetInput().GetProfilesCount();
+		int c = GetGame().GetInput().GetProfilesCount();
 		for (int i = 0; i < c; i++)
 		{
 			string tmp;
-			g_Game.GetInput().GetProfileName(i, tmp);
+			GetGame().GetInput().GetProfileName(i, tmp);
 			m_schemes_list.AddItem(tmp, NULL, 0);
 		}
 
-		i = g_Game.GetInput().GetCurrentProfile();
+		i = GetGame().GetInput().GetCurrentProfile();
 		if (i >= 0 && i < c)
 		{
 			m_schemes_list.SelectRow(i);
@@ -46,8 +46,8 @@ class PresetsMenu extends UIScriptedMenu
 			int index = m_schemes_list.GetSelectedRow();
 			if (index != -1)
 			{
-				g_Game.GetInput().SetProfile(index);
-				g_Game.GetMission().GetOnInputPresetChanged().Invoke();
+				GetGame().GetInput().SetProfile(index);
+				GetGame().GetMission().GetOnInputPresetChanged().Invoke();
 				Close();
 			}
 			

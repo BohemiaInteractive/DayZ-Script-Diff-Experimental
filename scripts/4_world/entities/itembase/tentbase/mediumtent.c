@@ -53,11 +53,11 @@ class MediumTent extends TentBase
 		
 		PlayerBase pb = PlayerBase.Cast( player );
 				
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			if ( !m_ClutterCutter )
 			{
-				m_ClutterCutter = g_Game.CreateObjectEx( "MediumTentClutterCutter", pb.GetLocalProjectionPosition(), ECE_PLACE_ON_SURFACE );	
+				m_ClutterCutter = GetGame().CreateObjectEx( "MediumTentClutterCutter", pb.GetLocalProjectionPosition(), ECE_PLACE_ON_SURFACE );	
 				m_ClutterCutter.SetOrientation( pb.GetLocalProjectionOrientation() );
 			}
 		}	

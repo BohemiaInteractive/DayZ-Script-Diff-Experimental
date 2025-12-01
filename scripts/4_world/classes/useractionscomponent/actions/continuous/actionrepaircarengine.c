@@ -26,7 +26,7 @@ class ActionRepairCarEngine : ActionRepairVehiclePartBase
 		if (!car || car.EngineIsOn())
 			return false;
 	
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 			return true;
 			
 		if (m_LastValidType != target.Type() || m_LastValidComponentIndex != target.GetComponentIndex() || m_CurrentDamageZone == "")

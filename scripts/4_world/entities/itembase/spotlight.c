@@ -336,7 +336,7 @@ class Spotlight extends ItemBase
 		PlayerBase playerPB = PlayerBase.Cast(player);
 		foreach (string selection : selections)
 		{		
-			if (g_Game.IsMultiplayer() && g_Game.IsServer())
+			if (GetGame().IsMultiplayer() && GetGame().IsServer())
 				playerPB.GetHologramServer().SetSelectionToRefresh(selection);		
 			else
 				playerPB.GetHologramLocal().SetSelectionToRefresh(selection);

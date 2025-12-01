@@ -49,7 +49,7 @@ class ShockHandler
 		//periodical update, just in case
 		if (m_TimeSinceLastTick > VALUE_CHECK_INTERVAL)
 		{
-			if (g_Game.IsClient())
+			if (GetGame().IsClient())
 			{
 				//ShockHitEffect(m_PrevVignette * m_ShockValueMax);
 				m_PrevVignette = m_Player.m_CurrentShock / m_ShockValueMax;
@@ -59,7 +59,7 @@ class ShockHandler
 			m_TimeSinceLastTick = 0;
 		}
 		
-		if (g_Game.IsClient())
+		if (GetGame().IsClient())
 		{
 			float valAdjusted = BaseEffectIntensityCalc();
 			
@@ -100,7 +100,7 @@ class ShockHandler
 	//Inflict shock damage
 	private void DealShock()
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 			m_Player.GiveShock(-m_CumulatedShock);
 	}
 	
@@ -112,7 +112,7 @@ class ShockHandler
 		if (forceUpdate)
 			m_PrevVignette = NormalizeShockVal(m_Player.m_CurrentShock);
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (m_CumulatedShock >= UPDATE_THRESHOLD || forceUpdate)
 			{

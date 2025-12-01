@@ -165,9 +165,10 @@ class Crossbow_Base : Archery_Base
 	
 	override void OnDebugSpawnEx(DebugSpawnParams params)
 	{
-		SpawnAmmo("Ammo_HuntingBolt",SAMF_DEFAULT);
-		GameInventory inventory = GetInventory();
+		//super.OnDebugSpawn();
+
 		
+
 		GetInventory().CreateInInventory( "ACOGOptic_6x" );
 		
 		EntityAI entity;

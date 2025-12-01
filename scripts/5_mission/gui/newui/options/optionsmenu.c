@@ -34,13 +34,13 @@ class OptionsMenu extends UIScriptedMenu
 		m_Options		= new GameOptions();
 		
 		#ifdef PLATFORM_XBOX
-		layoutRoot		= g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/options/xbox/options_menu.layout", null);
+		layoutRoot		= GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/options/xbox/options_menu.layout", null);
 		#else
 		#ifdef PLATFORM_PS4
-		layoutRoot		= g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/options/ps/options_menu.layout", null);
+		layoutRoot		= GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/options/ps/options_menu.layout", null);
 		#else
 		#ifdef PLATFORM_WINDOWS
-		layoutRoot		= g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/options/pc/options_menu.layout", null);
+		layoutRoot		= GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/options/pc/options_menu.layout", null);
 		#endif
 		#endif
 		#endif
@@ -70,7 +70,7 @@ class OptionsMenu extends UIScriptedMenu
 		m_CanToggle = false;
 		
 		string version;
-		g_Game.GetVersion(version);
+		GetGame().GetVersion(version);
 		#ifdef PLATFORM_CONSOLE
 		version = "#main_menu_version" + " " + version + " (" + g_Game.GetDatabaseID() + ")";
 		#else
@@ -87,8 +87,8 @@ class OptionsMenu extends UIScriptedMenu
 		m_Tabber.m_OnTabSwitch.Insert(OnTabSwitch);
 		m_Tabber.m_OnAttemptTabSwitch.Insert(OnAttemptTabSwitch);
 		
-		g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-		g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+		GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+		GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		OnChanged();
 		
 		return layoutRoot;
@@ -108,22 +108,22 @@ class OptionsMenu extends UIScriptedMenu
 	protected void OnInputDeviceChanged(EInputDeviceType pInputDeviceType)
 	{
 		#ifdef PLATFORM_CONSOLE
-		bool mk = g_Game.GetInput().IsEnabledMouseAndKeyboard();
-		bool mkServer = g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
+		bool mk = GetGame().GetInput().IsEnabledMouseAndKeyboard();
+		bool mkServer = GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
 		
 		switch (pInputDeviceType)
 		{
 		case EInputDeviceType.CONTROLLER:
 			if (mk && mkServer)
 			{
-				g_Game.GetUIManager().ShowUICursor(false);
+				GetGame().GetUIManager().ShowUICursor(false);
 			}
 		break;
 
 		default:
 			if (mk && mkServer)
 			{
-				g_Game.GetUIManager().ShowUICursor(true);
+				GetGame().GetUIManager().ShowUICursor(true);
 			}
 		break;
 		}
@@ -219,7 +219,7 @@ class OptionsMenu extends UIScriptedMenu
 		// save input configuration
 		GetUApi().Export();
 		
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboard()) //useless on consoles
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboard()) //useless on consoles
 		{
 			m_Apply.SetFlags(WidgetFlags.IGNOREPOINTER);
 			ColorDisable(m_Apply);
@@ -233,9 +233,9 @@ class OptionsMenu extends UIScriptedMenu
 		UpdateControlsElementVisibility();
 		
 		IngameHud hud;
-		if (g_Game.GetMission() && Class.CastTo(hud,g_Game.GetMission().GetHud()))
+		if (GetGame().GetMission() && Class.CastTo(hud,GetGame().GetMission().GetHud()))
 		{
-			hud.ShowQuickBar(g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer());
+			hud.ShowQuickBar(GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer());
 		}
 		#endif
 		
@@ -257,8 +257,8 @@ class OptionsMenu extends UIScriptedMenu
 			else
 			{
 				m_Options.Revert();
-				g_Game.EndOptionsVideo();
-				g_Game.GetUIManager().Back();
+				GetGame().EndOptionsVideo();
+				GetGame().GetUIManager().Back();
 			}
 		}
 	}
@@ -299,7 +299,7 @@ class OptionsMenu extends UIScriptedMenu
 	{
 		bool changed = IsAnyTabChanged();
 		
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 		{
 			if (changed)
 			{
@@ -340,7 +340,7 @@ class OptionsMenu extends UIScriptedMenu
 		if (m_Options.IsChanged())
 			m_Options.Revert();
 		
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 		{
 			m_Apply.SetFlags(WidgetFlags.IGNOREPOINTER);
 			ColorDisable(m_Apply);
@@ -397,7 +397,7 @@ class OptionsMenu extends UIScriptedMenu
 			m_Options.Revert();
 		}
 		
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 		{
 			m_Apply.SetFlags(WidgetFlags.IGNOREPOINTER);
 			ColorDisable(m_Apply);
@@ -449,7 +449,7 @@ class OptionsMenu extends UIScriptedMenu
 				break;
 		}
 		
-		if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+		if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 		{
 			m_Reset.ClearFlags(WidgetFlags.IGNOREPOINTER);
 			ColorNormal(m_Reset);
@@ -525,8 +525,8 @@ class OptionsMenu extends UIScriptedMenu
 			if (result == 2)
 			{
 				m_Options.Revert();
-				g_Game.EndOptionsVideo();
-				g_Game.GetUIManager().Back();
+				GetGame().EndOptionsVideo();
+				GetGame().GetUIManager().Back();
 			}
 			ret = true;
 		}
@@ -618,7 +618,7 @@ class OptionsMenu extends UIScriptedMenu
 	override void Refresh()
 	{
 		string version;
-		g_Game.GetVersion(version);
+		GetGame().GetVersion(version);
 		#ifdef PLATFORM_CONSOLE
 		version = "#main_menu_version" + " " + version + " (" + g_Game.GetDatabaseID() + ")";
 		#else
@@ -628,7 +628,7 @@ class OptionsMenu extends UIScriptedMenu
 		m_Version.SetText(version);
 		
 		#ifdef PLATFORM_CONSOLE
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 		UpdateControlsElementVisibility();
 		#endif
 	}
@@ -858,7 +858,7 @@ class OptionsMenu extends UIScriptedMenu
 	{
 		bool toolbarShow = false;
 		#ifdef PLATFORM_CONSOLE
-		toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		#endif
 		
 		layoutRoot.FindAnyWidget("toolbar_bg").Show(toolbarShow);

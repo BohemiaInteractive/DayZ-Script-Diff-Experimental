@@ -75,7 +75,7 @@ class ActionBuildPart: ActionContinuousBase
 		if (target.GetObject() && (!target.GetObject().CanUseConstructionBuild() || target.GetObject().CanUseHandConstruction()))
 			return false;
 		
-		if ((!g_Game.IsDedicatedServer()))
+		if ((!GetGame().IsDedicatedServer()))
 		{
 			if (MiscGameplayFunctions.ComplexBuildCollideCheckClient(player, target, item, m_VariantID))
 			{
@@ -97,7 +97,7 @@ class ActionBuildPart: ActionContinuousBase
 		check_data.m_AdditionalExcludes.Insert(action_data.m_Player);
 		
 		bool canBuild = construction.CanBuildPart(part_name, action_data.m_MainItem, true);
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			bool collides = construction.IsCollidingEx(check_data);
 			
@@ -147,7 +147,7 @@ class ActionBuildPart: ActionContinuousBase
 		{
 			SetBuildingAnimation(item);
 			
-			if (!g_Game.IsDedicatedServer())
+			if (!GetGame().IsDedicatedServer())
 			{
 				ConstructionActionData construction_action_data = action_data.m_Player.GetConstructionActionData();
 				BuildPartActionData.Cast(action_data).m_PartType = construction_action_data.GetBuildPartAtIndex(m_VariantID).GetPartName();

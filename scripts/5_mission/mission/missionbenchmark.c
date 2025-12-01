@@ -62,21 +62,21 @@ class BenchmarkConfig
 		loc.SetPosition(pos);
 		loc.SetLookAtPosition(lookAtPos);
 		
-		AddLocation(loc);
+		m_Locations.Insert(loc);
 	}
 	
 	void AddTeleport()
 	{
 		BenchmarkLocation loc = new BenchmarkLocation("Teleport");
 		loc.SetDummyTeleport();
-		AddLocation(loc);
+		m_Locations.Insert(loc);
 	}
 	
 	void AddWait()
 	{
 		BenchmarkLocation loc = new BenchmarkLocation("Wait");
 		loc.SetDummyWait();
-		AddLocation(loc);
+		m_Locations.Insert(loc);
 	}
 	
 	// false = csv, true = rpt
@@ -156,7 +156,7 @@ class MissionBenchmark : MissionGameplay
 	}
 	
 	void Start()
-	{
+	{		
 		DisableWeatherChange();
 		
 		if (!m_Config || m_Config.m_Locations.Count() <= 1)
@@ -257,9 +257,7 @@ class MissionBenchmark : MissionGameplay
 		float lerpX, lerpZ, lerpY;
 		
 		vector target = m_NextLocation.m_StartPos;
-		m_StepDistance = vector.Distance(m_CurrentLocation.m_StartPos, target);
 		float camSpeedAdjust = m_CurrentLocation.m_CamSpeedMultiplier * 5 * m_TimeCounter * 1/m_StepDistance;
-		float distanceMulti = 1/Math.Max(0.001, m_StepDistance);
 		
 		lerpX = Math.Lerp(m_CurrentLocation.m_StartPos[0], target[0], camSpeedAdjust);
 		lerpZ = Math.Lerp(m_CurrentLocation.m_StartPos[1], target[1], camSpeedAdjust);
@@ -282,7 +280,7 @@ class MissionBenchmark : MissionGameplay
 	}
 	
 	protected void OnLocationSwitch()
-	{
+	{		
 		if (m_LocIndex >= (m_Config.m_Locations.Count() - 1))
 		{
 			OnBenchmarkEnd("Test finished!");
@@ -292,9 +290,10 @@ class MissionBenchmark : MissionGameplay
 		m_MeasureStepTimer = 1; // tick first measurement straight after preload
 		m_SumFPS = 0;
 		m_MeasuringStep = 0;
-		m_TimeCounter = 0;
+		m_TimeCounter = 0;	
 		m_CurrentLocation = m_Config.m_Locations[m_LocIndex];
 		m_NextLocation = m_Config.m_Locations[m_LocIndex+1];
+		m_StepDistance = vector.Distance(m_CurrentLocation.m_StartPos, m_NextLocation.m_StartPos);
 		
 		if (!GetGame().GetPlayer())
 		{
@@ -363,13 +362,12 @@ class MissionBenchmark : MissionGameplay
 	
 	protected void CreatePlayer()
 	{
-		Entity playerEnt = GetGame().CreatePlayer(null, "SurvivorF_Eva", m_CurrentLocation.m_StartPos - "0 2.5 0", 0, "NONE");
+		Entity playerEnt = GetGame().CreatePlayer(NULL, "SurvivorF_Eva", m_CurrentLocation.m_StartPos - "0 2.5 0", 0, "NONE");
 		PlayerBase player = PlayerBase.Cast(playerEnt);
 		GetGame().SelectPlayer(NULL, player);
 		
 		player.GetStatWater().Set(3000);
 		player.GetStatEnergy().Set(3000);
-		player.SetModifiers(false);
 		player.SetAllowDamage(false);
 		player.SetCanBeDestroyed(false);
 		player.DisableSimulation(true);
@@ -391,7 +389,7 @@ class MissionBenchmark : MissionGameplay
 		if (m_Config.m_DoDevPrints)
 			Print("Benchmark .csv created");
 		
-		FPrintln(m_CSVLog, "location,FPS,time");
+		FPrintln(m_CSVLog, "Location,FPS,Time");
 	}
 	
 	protected void FPSLog( string position, float frames )

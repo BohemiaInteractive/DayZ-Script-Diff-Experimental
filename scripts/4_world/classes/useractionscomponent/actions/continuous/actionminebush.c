@@ -27,7 +27,7 @@ class ActionMineBush : ActionMineBase
 	
 	override bool ActionCondition( PlayerBase player, ActionTarget target, ItemBase item )
 	{
-		if ( g_Game.IsMultiplayer() && g_Game.IsServer() )
+		if ( GetGame().IsMultiplayer() && GetGame().IsServer() )
 			return true;
 		
 		Object targetObject = target.GetObject();

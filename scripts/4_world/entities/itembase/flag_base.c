@@ -15,7 +15,7 @@ class Flag_Base extends ItemBase
 	// --- SYNCHRONIZATION
 	void Synchronize()
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			SetSynchDirty();
 		}

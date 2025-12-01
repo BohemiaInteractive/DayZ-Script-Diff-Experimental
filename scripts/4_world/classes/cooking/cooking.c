@@ -485,7 +485,7 @@ class Cooking
 	//add temperature to item
 	protected void AddTemperatureToItem( ItemBase cooked_item, ItemBase cooking_equipment, float min_temperature )
 	{
-		if (!g_Game.IsServer())
+		if (!GetGame().IsServer())
 			return;
 		
 		if (cooked_item == cooking_equipment) //solves direct cooking double heating
@@ -518,7 +518,7 @@ class Cooking
 	
 	protected void DecreaseCookedItemQuantity(notnull Edible_Base pItem, float pAmount = 0.0)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			float quantity = pItem.GetQuantity() - pAmount;
 			quantity = Math.Clamp(quantity, 0, pItem.GetQuantityMax());

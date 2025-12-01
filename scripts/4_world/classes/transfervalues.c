@@ -49,7 +49,7 @@ class TransferValues extends Managed
 		#endif
 		#endif
 		
-		if ( g_Game.IsClient() ) return;
+		if ( GetGame().IsClient() ) return;
 		
 		m_TimeSinceLastTick += deltatime;
 		
@@ -147,7 +147,7 @@ class TransferValues extends Managed
 		CachedObjectsParams.PARAM2_INT_FLOAT.param1 = value_type;
 		CachedObjectsParams.PARAM2_INT_FLOAT.param2 = value;
 		
-		g_Game.RPCSingleParam(m_Player, ERPCs.RPC_DAMAGE_VALUE_SYNC, CachedObjectsParams.PARAM2_INT_FLOAT, true, m_Player.GetIdentity());
+		GetGame().RPCSingleParam(m_Player, ERPCs.RPC_DAMAGE_VALUE_SYNC, CachedObjectsParams.PARAM2_INT_FLOAT, true, m_Player.GetIdentity());
 	}
 
 	void ReceiveValue(int value_type, float value)

@@ -101,7 +101,7 @@ class SmokeGrenadeBase extends Grenade_Base
 	{
 		SetSmokeGrenadeState(ESmokeGrenadeState.NO_SMOKE);
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			SetHealth("", "", 0);
 		}
@@ -176,14 +176,14 @@ class SmokeGrenadeBase extends Grenade_Base
 	{
 		SetSmokeGrenadeState(ESmokeGrenadeState.START);
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			m_NoisePar = new NoiseParams();
 			m_NoisePar.LoadFromPath("cfgVehicles " + GetType() + " NoiseSmokeGrenade");
-			NoiseSystem noise = g_Game.GetNoiseSystem();
+			NoiseSystem noise = GetGame().GetNoiseSystem();
 			if ( noise )
 			{
-				noise.AddNoisePos( this, GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(g_Game.GetWeather()) );
+				noise.AddNoisePos( this, GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(GetGame().GetWeather()) );
 			}
 		}
 
@@ -194,12 +194,12 @@ class SmokeGrenadeBase extends Grenade_Base
 	//When grenade makes smoke
 	override void OnWork(float consumed_energy)
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
-			NoiseSystem noise = g_Game.GetNoiseSystem();
+			NoiseSystem noise = GetGame().GetNoiseSystem();
 			if ( noise )
 			{
-				noise.AddNoisePos( this, GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(g_Game.GetWeather()));
+				noise.AddNoisePos( this, GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(GetGame().GetWeather()));
 			}
 		}
 	}
@@ -256,7 +256,7 @@ class SmokeGrenadeBase extends Grenade_Base
 	{
 		//Print("Setting SGS to: " + typename.EnumToString(ESmokeGrenadeState, state));
 
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			if ( m_SmokeGrenadeState != state )
 			{

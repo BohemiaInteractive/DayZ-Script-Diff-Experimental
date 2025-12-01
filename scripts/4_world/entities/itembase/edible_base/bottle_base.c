@@ -250,7 +250,7 @@ class Bottle_Base extends Edible_Base
 	
 	void ParticleCookingStop()
 	{
-		if (m_ParticleCooking && g_Game && !g_Game.IsDedicatedServer())
+		if (m_ParticleCooking && GetGame() && !GetGame().IsDedicatedServer())
 		{
 			m_ParticleCooking.Stop();
 			m_ParticleCooking = null;
@@ -292,10 +292,10 @@ class Bottle_Base extends Edible_Base
 	string GetEmptyingLoopSoundset()
 	{		
 		vector pos = GetPosition();
-		string surfaceType = g_Game.GetPlayer().GetSurfaceType();
+		string surfaceType = GetGame().GetPlayer().GetSurfaceType();
 		string soundSet = "";
 		
-		bool diggable = g_Game.IsSurfaceDigable(surfaceType);
+		bool diggable = GetGame().IsSurfaceDigable(surfaceType);
 		
 		if (!diggable)
 		{
@@ -305,7 +305,7 @@ class Bottle_Base extends Edible_Base
 		{
 			soundSet = GetEmptyingLoopSoundsetSoft();
 		}
-		else if (g_Game.SurfaceIsPond(pos[0], pos[2]) || g_Game.SurfaceIsSea(pos[0], pos[2]))
+		else if (GetGame().SurfaceIsPond(pos[0], pos[2]) || GetGame().SurfaceIsSea(pos[0], pos[2]))
 		{
 			soundSet = GetEmptyingLoopSoundsetWater();
 		}
@@ -316,10 +316,10 @@ class Bottle_Base extends Edible_Base
 	string GetEmptyingEndSoundset()
 	{		
 		vector pos = GetPosition();
-		string surfaceType = g_Game.GetPlayer().GetSurfaceType();
+		string surfaceType = GetGame().GetPlayer().GetSurfaceType();
 		string soundSet = "";
 		
-		bool diggable = g_Game.IsSurfaceDigable(surfaceType);
+		bool diggable = GetGame().IsSurfaceDigable(surfaceType);
 		
 		if (!diggable)
 		{
@@ -329,7 +329,7 @@ class Bottle_Base extends Edible_Base
 		{
 			soundSet = GetEmptyingEndSoundsetSoft();
 		}
-		else if (g_Game.SurfaceIsPond(pos[0], pos[2]) || g_Game.SurfaceIsSea(pos[0], pos[2]))
+		else if (GetGame().SurfaceIsPond(pos[0], pos[2]) || GetGame().SurfaceIsSea(pos[0], pos[2]))
 		{
 			soundSet = GetEmptyingEndSoundsetWater();
 		}

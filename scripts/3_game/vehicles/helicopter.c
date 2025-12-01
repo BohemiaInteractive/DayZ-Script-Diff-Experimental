@@ -1,11 +1,6 @@
 /*!
 	Base native class for helicopter.
 */
-class HelicopterType : TransportType
-{
-
-};
-
 class Helicopter extends Transport
 {
 };

@@ -128,7 +128,7 @@ class SymptomBase
 
 	void MakeParamObjectPersistent(Param object)
 	{
-		if ( !g_Game.IsServer() && !g_Game.IsMultiplayer() ) return;
+		if ( !GetGame().IsServer() && !GetGame().IsMultiplayer() ) return;
 		
 		m_PersistentParams.Insert(object);
 	}
@@ -175,10 +175,10 @@ class SymptomBase
 	void Activate()
 	{
 		m_IsActivated = true;
-		if ( g_Game && g_Game.IsServer() )
+		if ( GetGame() && GetGame().IsServer() )
 		{
 			OnGetActivatedServer(m_Player);
-			if ( g_Game.IsMultiplayer() )
+			if ( GetGame().IsMultiplayer() )
 			{
 				if ( IsSyncToClient() ) 
 					SyncToClientActivated( GetType(), GetUID() );
@@ -187,7 +187,7 @@ class SymptomBase
 				#endif
 			}
 		}
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			OnGetActivatedClient(m_Player);
 		}
@@ -195,17 +195,17 @@ class SymptomBase
 	
 	void Deactivate()
 	{
-		if ( !g_Game ) return;
+		if ( !GetGame() ) return;
 		m_IsActivated = false;
-		if ( g_Game.IsServer() ) 
+		if ( GetGame().IsServer() ) 
 		{
 			OnGetDeactivatedServer(m_Player);
-			if ( g_Game.IsMultiplayer() && IsSyncToClient() )
+			if ( GetGame().IsMultiplayer() && IsSyncToClient() )
 			{
 				SyncToClientDeactivated( GetType(), GetUID() );
 			}
 		}
-		if ( !g_Game.IsDedicatedServer() )
+		if ( !GetGame().IsDedicatedServer() )
 		{
 			OnGetDeactivatedClient(m_Player);
 		}
@@ -221,7 +221,7 @@ class SymptomBase
 	
 	void Update(float deltatime)
 	{
-		if ( g_Game.IsServer() ) 
+		if ( GetGame().IsServer() ) 
 		{
 			m_ServerUpdateDelta += deltatime;
 			if (m_ServerUpdateDelta > m_ServerUpdateInterval )
@@ -231,11 +231,11 @@ class SymptomBase
 				m_ServerUpdateDelta = 0;
 			}
 		}
-		if ( g_Game.IsClient() )
+		if ( GetGame().IsClient() )
 		{
 			OnUpdateClient(m_Player, deltatime);
 		}
-		if ( g_Game.IsServer() && !g_Game.IsMultiplayer() && !g_Game.IsMissionMainMenu() )
+		if ( GetGame().IsServer() && !GetGame().IsMultiplayer() && !GetGame().IsMissionMainMenu() )
 		{
 			OnUpdateClient(m_Player, deltatime);
 		}
@@ -259,12 +259,6 @@ class SymptomBase
 		GetPlayer().RequestSoundEvent(id);
 		m_PlayedSound = true;
 	}
-	
-	void StopSound(EPlayerSoundEventID id)
-	{
-		GetPlayer().RequestSoundEventStop(id);
-		m_PlayedSound = false;
-	}
 
 	void SyncToClientActivated( int SYMPTOM_id, int uid )
 	{
@@ -272,7 +266,7 @@ class SymptomBase
 		
 		CachedObjectsParams.PARAM2_INT_INT.param1 = SYMPTOM_id;
 		CachedObjectsParams.PARAM2_INT_INT.param2 = uid;
-		g_Game.RPCSingleParam(GetPlayer(), ERPCs.RPC_PLAYER_SYMPTOM_ON, CachedObjectsParams.PARAM2_INT_INT,true,GetPlayer().GetIdentity() );
+		GetGame().RPCSingleParam(GetPlayer(), ERPCs.RPC_PLAYER_SYMPTOM_ON, CachedObjectsParams.PARAM2_INT_INT,true,GetPlayer().GetIdentity() );
 	}
 	
 	void SyncToClientDeactivated( int SYMPTOM_id, int uid )
@@ -280,12 +274,12 @@ class SymptomBase
 		if ( !GetPlayer() ) return;
 		CachedObjectsParams.PARAM2_INT_INT.param1 = SYMPTOM_id;
 		CachedObjectsParams.PARAM2_INT_INT.param2 = uid;
-		g_Game.RPCSingleParam(GetPlayer(), ERPCs.RPC_PLAYER_SYMPTOM_OFF, CachedObjectsParams.PARAM2_INT_INT,true,GetPlayer().GetIdentity() );
+		GetGame().RPCSingleParam(GetPlayer(), ERPCs.RPC_PLAYER_SYMPTOM_OFF, CachedObjectsParams.PARAM2_INT_INT,true,GetPlayer().GetIdentity() );
 	}
 
 	void CheckSoundFinished()
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (m_PlayedSound && m_ActivatedTime >= m_Duration)
 				RequestDestroy();

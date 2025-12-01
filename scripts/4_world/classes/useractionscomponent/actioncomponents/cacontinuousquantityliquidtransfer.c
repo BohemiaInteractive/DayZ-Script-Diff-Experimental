@@ -133,7 +133,7 @@ class CAContinuousQuantityLiquidTransfer : CAContinuousBase
 		ItemBase target_item = ItemBase.Cast(action_data.m_Target.GetObject());
 		m_SpentQuantity_total += m_SpentQuantity;
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (m_SpentUnits)
 			{

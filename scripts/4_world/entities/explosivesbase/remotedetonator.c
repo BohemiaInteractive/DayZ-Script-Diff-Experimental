@@ -124,7 +124,7 @@ class RemoteDetonatorTrigger : RemoteDetonator
 
 	override void OnActivatedByItem(notnull ItemBase item)
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (m_RAIB.IsPaired() && !IsRuined())
 			{

@@ -118,7 +118,7 @@ class BaseBuildingBase extends ItemBase
 	// --- SYNCHRONIZATION
 	void SynchronizeBaseState()
 	{
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			SetSynchDirty();
 		}
@@ -129,7 +129,7 @@ class BaseBuildingBase extends ItemBase
 		if (LogManager.IsBaseBuildingLogEnable()) bsbDebugPrint("[bsb] " + GetDebugName(this) + " OnVariablesSynchronized");
 		super.OnVariablesSynchronized();
 
-		g_Game.GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( OnSynchronizedClient, 100, false );
+		GetGame().GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( OnSynchronizedClient, 100, false );
 	}
 	
 	protected void OnSynchronizedClient()
@@ -375,7 +375,7 @@ class BaseBuildingBase extends ItemBase
 	//--- CONSTRUCTION KIT
 	ItemBase CreateConstructionKit()
 	{
-		ItemBase construction_kit = ItemBase.Cast( g_Game.CreateObjectEx( GetConstructionKitType(), GetKitSpawnPosition(), ECE_PLACE_ON_SURFACE ) );
+		ItemBase construction_kit = ItemBase.Cast( GetGame().CreateObjectEx( GetConstructionKitType(), GetKitSpawnPosition(), ECE_PLACE_ON_SURFACE ) );
 		if ( m_ConstructionKitHealth > 0 )
 		{
 			construction_kit.SetHealth( m_ConstructionKitHealth );
@@ -406,14 +406,14 @@ class BaseBuildingBase extends ItemBase
 	void DestroyConstructionKit( ItemBase construction_kit )
 	{
 		m_ConstructionKitHealth = construction_kit.GetHealth();
-		g_Game.ObjectDelete( construction_kit );
+		GetGame().ObjectDelete( construction_kit );
 	}
 	
 	//--- CONSTRUCTION
 	void DestroyConstruction()
 	{
 		if (LogManager.IsBaseBuildingLogEnable()) bsbDebugPrint("[bsb] " + GetDebugName(this) + " DestroyConstruction");
-		g_Game.ObjectDelete( this );
+		GetGame().ObjectDelete( this );
 	}	
 	
 	// --- EVENTS
@@ -500,7 +500,7 @@ class BaseBuildingBase extends ItemBase
 		
 		super.EEHealthLevelChanged(oldLevel,newLevel,zone);
 		
-		if (g_Game.IsMultiplayer() && !g_Game.IsServer())
+		if (GetGame().IsMultiplayer() && !GetGame().IsServer())
 			return;
 		
 		Construction construction = GetConstruction();
@@ -531,7 +531,7 @@ class BaseBuildingBase extends ItemBase
 	{
 		if (m_FixDamageSystemInit)
 		{
-			g_Game.GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( SetPartsAfterStoreLoad, 500, false, this );
+			GetGame().GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( SetPartsAfterStoreLoad, 500, false, this );
 		}
 		
 		super.EEOnAfterLoad();
@@ -614,7 +614,7 @@ class BaseBuildingBase extends ItemBase
 		UpdateVisuals();
 		
 		//reset action sync data
-		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetActionSyncData, 100, false, this);
+		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetActionSyncData, 100, false, this);
 	}
 	
 	void OnPartBuiltClient(string part_name, int action_id)
@@ -647,13 +647,13 @@ class BaseBuildingBase extends ItemBase
 		UpdateVisuals();
 		
 		//reset action sync data
-		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetActionSyncData, 100, false, this);
+		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetActionSyncData, 100, false, this);
 		
 		//check base state
 		if (construtionPart.IsBase())
 		{
 			//Destroy construction
-			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DestroyConstruction, 200, false, this);
+			GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DestroyConstruction, 200, false, this);
 		}
 	}
 	
@@ -687,13 +687,13 @@ class BaseBuildingBase extends ItemBase
 		UpdateVisuals();
 		
 		//reset action sync data
-		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetActionSyncData, 100, false, this);
+		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetActionSyncData, 100, false, this);
 		
 		//check base state
 		if (construtionPart.IsBase())
 		{
 			//Destroy construction
-			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DestroyConstruction, 200, false, this);
+			GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DestroyConstruction, 200, false, this);
 		}
 	}
 	
@@ -905,7 +905,7 @@ class BaseBuildingBase extends ItemBase
 	protected void UpdateNavmesh()
 	{
 		SetAffectPathgraph( true, false );
-		g_Game.GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( g_Game.UpdatePathgraphRegionByObject, 100, false, this );
+		GetGame().GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( GetGame().UpdatePathgraphRegionByObject, 100, false, this );
 	}
 	
 	override bool CanUseConstruction()
@@ -940,9 +940,9 @@ class BaseBuildingBase extends ItemBase
 	void GetAttachmentSlots( EntityAI entity, out array<string> attachment_slots )
 	{
 		string config_path = "CfgVehicles" + " " + entity.GetType() + " " + "attachments";
-		if ( g_Game.ConfigIsExisting( config_path ) )
+		if ( GetGame().ConfigIsExisting( config_path ) )
 		{
-			g_Game.ConfigGetTextArray( config_path, attachment_slots );
+			GetGame().ConfigGetTextArray( config_path, attachment_slots );
 		}
 	}
 
@@ -1085,7 +1085,7 @@ class BaseBuildingBase extends ItemBase
 	//Damage triggers (barbed wire)
 	void CreateAreaDamage( string slot_name, float rotation_angle = 0 )
 	{
-		if ( g_Game && g_Game.IsServer() )
+		if ( GetGame() && GetGame().IsServer() )
 		{
 			//destroy area damage if some already exists
 			DestroyAreaDamage( slot_name );
@@ -1152,7 +1152,7 @@ class BaseBuildingBase extends ItemBase
 		
 	void DestroyAreaDamage( string slot_name )
 	{
-		if (g_Game && g_Game.IsServer())
+		if (GetGame() && GetGame().IsServer())
 		{
 			AreaDamageLoopedDeferred_NoVehicle areaDamage;
 			if (m_DamageTriggers.Find(slot_name, areaDamage))
@@ -1225,7 +1225,7 @@ class BaseBuildingBase extends ItemBase
 	//misc
 	void CheckForHybridAttachments( EntityAI item, string slot_name )
 	{
-		if (!g_Game.IsMultiplayer() || g_Game.IsServer())
+		if (!GetGame().IsMultiplayer() || GetGame().IsServer())
 		{
 			//if this is a hybrid attachment, set damage of appropriate damage zone. Zone name must match slot name...WIP
 			if (m_HybridAttachments && m_HybridAttachments.Find(slot_name) != -1)
@@ -1276,11 +1276,11 @@ class BaseBuildingBase extends ItemBase
 		
 		#ifdef SERVER
 		array<Man> players = new array<Man>;
-		g_Game.GetWorld().GetPlayerList(players);
+		GetGame().GetWorld().GetPlayerList(players);
 		if (players.Count())
 			p = players[0];
 		#else
-		p = g_Game.GetPlayer();
+		p = GetGame().GetPlayer();
 		#endif
 		
 		foreach (ConstructionPart part : parts)

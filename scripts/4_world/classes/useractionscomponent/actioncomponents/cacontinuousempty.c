@@ -99,7 +99,7 @@ class CAContinuousEmpty : CAContinuousBase
 	void CalcAndSetQuantity( ActionData action_data )
 	{
 		m_SpentQuantity_total += m_SpentQuantity;
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if ( m_SpentUnits )
 			{

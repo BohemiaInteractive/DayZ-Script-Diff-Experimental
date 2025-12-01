@@ -74,7 +74,7 @@ class PluginDeveloperSync extends PluginBase
 	{
 		super.OnInit();
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			//create timer
 			m_UpdateTimer = new Timer( CALL_CATEGORY_GAMEPLAY );
@@ -269,7 +269,7 @@ class PluginDeveloperSync extends PluginBase
 	//================================================================ 
 	void OnRPC( PlayerBase player, int rpc_type, ParamsReadContext ctx )
 	{
-		if ( !g_Game.IsDebug() )
+		if ( !GetGame().IsDebug() )
 		{
 			return;
 		}
@@ -955,11 +955,11 @@ class PluginDeveloperSync extends PluginBase
 
 	void OnRPCTemp( ParamsReadContext ctx , PlayerBase player)
 	{
-		if (g_Game.IsServer() && g_Game.IsMultiplayer())
+		if (GetGame().IsServer() && GetGame().IsMultiplayer())
 		{
 			EnableUpdate( GetRPCUpdateState( ctx ), ERPCs.DEV_TEMP_UPDATE, player );
 		}
-		else if (!g_Game.IsMultiplayer() || g_Game.IsClient())
+		else if (!GetGame().IsMultiplayer() || GetGame().IsClient())
 		{
 			if ( ctx.Read(CachedObjectsParams.PARAM1_STRING) )
 			{
@@ -976,7 +976,7 @@ class PluginDeveloperSync extends PluginBase
 	void SendRPCAgents( PlayerBase player )
 	{
 		//write and send values
-		if ( ( player && player.GetIdentity() && player.m_AgentPool != null ) || ( player && !g_Game.IsMultiplayer() && player.m_AgentPool != null ) )
+		if ( ( player && player.GetIdentity() && player.m_AgentPool != null ) || ( player && !GetGame().IsMultiplayer() && player.m_AgentPool != null ) )
 		{
 			
 			//get agent pool data
@@ -1064,27 +1064,27 @@ class PluginDeveloperSync extends PluginBase
 	//================================================================ 
 	void CaptureFocus()
 	{
-		g_Game.GetInput().ChangeGameFocus( 1 );
-		g_Game.GetUIManager().ShowUICursor( true );
+		GetGame().GetInput().ChangeGameFocus( 1 );
+		GetGame().GetUIManager().ShowUICursor( true );
 	}
 	
 	void ReleaseFocus()
 	{
-		g_Game.GetInput().ChangeGameFocus( -1 );
-		g_Game.GetUIManager().ShowUICursor( false );
+		GetGame().GetInput().ChangeGameFocus( -1 );
+		GetGame().GetUIManager().ShowUICursor( false );
 	}
 	
 	void ToggleFocus()
 	{
-		if ( g_Game.GetInput().HasGameFocus() )
+		if ( GetGame().GetInput().HasGameFocus() )
 		{
-			g_Game.GetInput().ChangeGameFocus( 1 );
-			g_Game.GetUIManager().ShowUICursor( true );
+			GetGame().GetInput().ChangeGameFocus( 1 );
+			GetGame().GetUIManager().ShowUICursor( true );
 		}
 		else
 		{
-			g_Game.GetInput().ResetGameFocus();
-			g_Game.GetUIManager().ShowUICursor( false );
+			GetGame().GetInput().ResetGameFocus();
+			GetGame().GetUIManager().ShowUICursor( false );
 		}
 	}
 }

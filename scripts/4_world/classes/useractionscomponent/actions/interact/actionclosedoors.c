@@ -63,11 +63,11 @@ class ActionCloseDoors: ActionInteractBase
 		
 		m_NoisePar = new NoiseParams();
 		m_NoisePar.LoadFromPath("CfgVehicles SurvivorBase NoiseActionDefault");
-		NoiseSystem noise = g_Game.GetNoiseSystem();
+		NoiseSystem noise = GetGame().GetNoiseSystem();
 		if (noise)
 		{
 			if (action_data.m_Player)
-				noise.AddNoisePos(action_data.m_Player, action_data.m_Target.GetObject().GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(g_Game.GetWeather()));
+				noise.AddNoisePos(action_data.m_Player, action_data.m_Target.GetObject().GetPosition(), m_NoisePar, NoiseAIEvaluate.GetNoiseReduction(GetGame().GetWeather()));
 		}
 	}
 	

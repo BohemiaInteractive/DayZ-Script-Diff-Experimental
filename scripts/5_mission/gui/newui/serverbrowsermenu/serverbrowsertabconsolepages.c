@@ -27,7 +27,7 @@ class ServerBrowserTabConsolePages extends ServerBrowserTab
 	
 	protected override void Construct(Widget parent, ServerBrowserMenuNew menu, TabType type)
 	{
-		m_Root = g_Game.GetWorkspace().CreateWidgets("gui/layouts/new_ui/server_browser/xbox/server_browser_tab_console_pages.layout", parent);
+		m_Root = GetGame().GetWorkspace().CreateWidgets("gui/layouts/new_ui/server_browser/xbox/server_browser_tab_console_pages.layout", parent);
 		
 		m_ServerListScroller = ScrollWidget.Cast( m_Root.FindAnyWidget("server_list_scroller"));
 		m_ServerList = SpacerBaseWidget.Cast(m_ServerListScroller.FindAnyWidget("server_list_content"));
@@ -99,9 +99,9 @@ class ServerBrowserTabConsolePages extends ServerBrowserTab
 		m_Root.SetHandler(this);
 		m_FilterSearchTextBox.SetHandler(this);
 		
-		g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+		GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 
 		m_Details = new ServerBrowserDetailsContainer(m_Root.FindAnyWidget("details_content"), this);
 	}
@@ -148,7 +148,7 @@ class ServerBrowserTabConsolePages extends ServerBrowserTab
 		break;
 
 		default:
-			if (g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer())
+			if (GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer())
 			{
 				bool isFavoriteTab = m_TabType == TabType.FAVORITE;	
 				m_WidgetNavFilters.Show(false);
@@ -193,7 +193,6 @@ class ServerBrowserTabConsolePages extends ServerBrowserTab
 		string msg = "#servers_found: " + m_TotalLoadedServers;
 		if (m_TotalLoadedServers == 0)
 		{
-			
 			msg = "#server_browser_tab_unable_to_get_server";
 		}
 
@@ -376,11 +375,10 @@ class ServerBrowserTabConsolePages extends ServerBrowserTab
 	
 	void RefreshServerList()
 	{
-		int currentTime = g_Game.GetTime();
-		if (m_TabType != TabType.FAVORITE && (currentTime - m_TimeLastServerRefresh) < 1000)
+		if (m_TabType != TabType.FAVORITE && (GetGame().GetTime() - m_TimeLastServerRefresh) < 1000)
 			return;
 			
-		m_TimeLastServerRefresh = currentTime;
+		m_TimeLastServerRefresh = GetGame().GetTime();
 		if (m_IsFilterChanged)
 		{
 			SetCurrentPage(1);
@@ -435,10 +433,9 @@ class ServerBrowserTabConsolePages extends ServerBrowserTab
 	{
 		if (!m_IsFilterFocused && !m_IsDetailsFocused)
 		{
-			int currentTime = g_Game.GetTime();
-			if ( (currentTime - m_TimeLastServerRefreshHoldButton) > 100 )
+			if ( (GetGame().GetTime() - m_TimeLastServerRefreshHoldButton) > 100 )
 			{
-				m_TimeLastServerRefreshHoldButton = currentTime;
+				m_TimeLastServerRefreshHoldButton = GetGame().GetTime();
 				Left();
 			}
 		}		
@@ -470,10 +467,9 @@ class ServerBrowserTabConsolePages extends ServerBrowserTab
 	{
 		if (!m_IsFilterFocused && !m_IsDetailsFocused)
 		{
-			int currentTime = g_Game.GetTime();
-			if ( (currentTime - m_TimeLastServerRefreshHoldButton) > 100 )
+			if ( (GetGame().GetTime() - m_TimeLastServerRefreshHoldButton) > 100 )
 			{				
-				m_TimeLastServerRefreshHoldButton = currentTime;
+				m_TimeLastServerRefreshHoldButton = GetGame().GetTime();
 				Right();
 			}
 		}

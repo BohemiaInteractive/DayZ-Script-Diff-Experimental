@@ -34,7 +34,7 @@ class BroomBase : FlammableBase
 	
 	override bool CanTransformIntoStick()
 	{
-		if ( g_Game.IsServer() && !IsIgnited() && GetEnergy() < 1 && !IsSetForDeletion())
+		if ( GetGame().IsServer() && !IsIgnited() && GetEnergy() < 1 && !IsSetForDeletion())
 			return true;
 		else
 			return false;
@@ -51,7 +51,7 @@ class BroomBase : FlammableBase
 	
 	override void CalculateQuantity()
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			float currentHealth01 = GetHealth01();
 			float currentEnergy01 = GetCompEM().GetEnergy0To1();
@@ -105,7 +105,7 @@ class BroomBase : FlammableBase
 	{
 		if (super.OnAction(action_id, player, ctx))
 			return true;
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (action_id == EActions.BROOM_BURN_VERY_SHORT)
 			{

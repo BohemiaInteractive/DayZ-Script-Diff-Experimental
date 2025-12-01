@@ -89,9 +89,9 @@ class PluginSceneManager extends PluginBase
 	{	
 		m_IsOpen = true;
 
-		DeveloperFreeCamera.EnableFreeCameraSceneEditor( PlayerBase.Cast( g_Game.GetPlayer() ) );
+		DeveloperFreeCamera.EnableFreeCameraSceneEditor( PlayerBase.Cast( GetGame().GetPlayer() ) );
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.FreeCameraControlDisable);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(this.FreeCameraControlDisable);
 		
 		EditorUpdate();
 	}
@@ -121,7 +121,7 @@ class PluginSceneManager extends PluginBase
 		}
 			
 		// Direction Vector from current active Camera
-		vector dir = g_Game.GetPointerDirection();
+		vector dir = GetGame().GetPointerDirection();
 		
 		// Raycast from
 		vector from = FreeDebugCamera.GetInstance().GetPosition(); 
@@ -185,7 +185,7 @@ class PluginSceneManager extends PluginBase
 		if ( GetSelectedSceneObject() != NULL )
 		{
 			// Direction Vector from current active Camera
-			vector dir = g_Game.GetPointerDirection();
+			vector dir = GetGame().GetPointerDirection();
 			
 			// Raycast from
 			vector from = FreeDebugCamera.GetInstance().GetPosition(); 
@@ -248,7 +248,7 @@ class PluginSceneManager extends PluginBase
 		if ( GetSelectedSceneObject() != NULL )
 		{
 			// Direction Vector from current active Camera
-			vector dir = g_Game.GetPointerDirection();
+			vector dir = GetGame().GetPointerDirection();
 			
 			// Raycast from
 			vector from = FreeDebugCamera.GetInstance().GetPosition(); 
@@ -281,7 +281,7 @@ class PluginSceneManager extends PluginBase
 		}
 		
 		// Direction Vector from current active Camera
-		vector dir = g_Game.GetPointerDirection();
+		vector dir = GetGame().GetPointerDirection();
 		
 		// Raycast from
 		vector from = FreeDebugCamera.GetInstance().GetPosition(); 
@@ -311,7 +311,7 @@ class PluginSceneManager extends PluginBase
 	//==========================================
 	void InitLoad()
 	{		
-		PLAYER = PlayerBase.Cast( g_Game.GetPlayer() );
+		PLAYER = PlayerBase.Cast( GetGame().GetPlayer() );
 		
 		SceneLoad( PluginMissionConfig.GetInstance().GetSceneEditorName() );
 		
@@ -369,7 +369,7 @@ class PluginSceneManager extends PluginBase
 	{	
 		//Log("EditorToggle");
 
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 		{
 			return;
 		}
@@ -377,12 +377,12 @@ class PluginSceneManager extends PluginBase
 		if ( IsOpened() )
 		{
 			// Close UI Scene Editor Menu
-			g_Game.GetUIManager().Back();
+			GetGame().GetUIManager().Back();
 		}
 		else
 		{
 			// Open UI Scene Editor Menu
-			g_Game.GetUIManager().EnterScriptedMenu(MENU_SCENE_EDITOR, NULL);
+			GetGame().GetUIManager().EnterScriptedMenu(MENU_SCENE_EDITOR, NULL);
 			EditorUpdate();
 		}
 	}
@@ -409,13 +409,13 @@ class PluginSceneManager extends PluginBase
 	void FreeCameraControlEnable()
 	{
 		// Enable Camera control
-		g_Game.GetInput().ChangeGameFocus(-1);
+		GetGame().GetInput().ChangeGameFocus(-1);
 		
 		// Disable Cursor
-		g_Game.GetUIManager().ShowUICursor(false);
+		GetGame().GetUIManager().ShowUICursor(false);
 		
-		if( g_Game.GetUIManager().GetMenu() )
-			g_Game.GetUIManager().GetMenu().OnHide();
+		if( GetGame().GetUIManager().GetMenu() )
+			GetGame().GetUIManager().GetMenu().OnHide();
 	}
 
 	//==========================================
@@ -424,13 +424,13 @@ class PluginSceneManager extends PluginBase
 	void FreeCameraControlDisable()
 	{
 		// Disable Camera control
-		g_Game.GetInput().ChangeGameFocus(1);
+		GetGame().GetInput().ChangeGameFocus(1);
 		
 		// Enable Cursor
-		g_Game.GetUIManager().ShowUICursor(true);
+		GetGame().GetUIManager().ShowUICursor(true);
 		
-		if( g_Game.GetUIManager().GetMenu() )
-			g_Game.GetUIManager().GetMenu().OnShow();
+		if( GetGame().GetUIManager().GetMenu() )
+			GetGame().GetUIManager().GetMenu().OnShow();
 	}
 	
 	//==========================================
@@ -758,7 +758,7 @@ class PluginSceneManager extends PluginBase
 		PluginMissionConfig.GetInstance().SetSceneEditorName(scene_name);
 		m_SceneData = m_ModuleConfigScene.SceneDataLoad(scene_name);
 		
-		if ( !(g_Game.IsMultiplayer() && g_Game.IsServer()) )
+		if ( !(GetGame().IsMultiplayer() && GetGame().IsServer()) )
 		{
 			EditorUpdate();
 		}
@@ -883,7 +883,7 @@ class PluginSceneManager extends PluginBase
 		array<ref SceneObject> scene_objects = GetSceneObjects();
 		for ( int i = 0; i < scene_objects.Count(); i++ )
 		{
-			if ( scene_objects.Get(i).GetObject() == g_Game.GetPlayer() )
+			if ( scene_objects.Get(i).GetObject() == GetGame().GetPlayer() )
 			{
 				SelectObject( scene_objects.Get(i) );
 				SelectedObjectFocus();
@@ -902,7 +902,7 @@ class PluginSceneManager extends PluginBase
 			string cls = scene_object.GetObject().ClassName();
 			string wrapped_script = "void scMngMain() \n{\n PluginSceneManager se = GetPlugin(Type(\"PluginSceneManager\")); \n SceneObject this_obj = se.GetSceneObjectByIndex(" + index.ToString() + "); \n " + cls + " this_eai = this_obj.GetObject(); \n " + script + "\n}\n";
 			
-			g_Game.ExecuteEnforceScript(wrapped_script, "scMngMain");
+			GetGame().ExecuteEnforceScript(wrapped_script, "scMngMain");
 		}
 	}
 	
@@ -1092,7 +1092,7 @@ class PluginSceneManager extends PluginBase
 	{		
 		if ( obj != NULL )
 		{
-			if ( obj.GetObject() != g_Game.GetPlayer() )
+			if ( obj.GetObject() != GetGame().GetPlayer() )
 			{
 				obj.UnlinkAll();
 				
@@ -1144,7 +1144,7 @@ class PluginSceneManager extends PluginBase
 	//------------------------------------------
 	protected void EditorUpdate()
 	{
-		if ( g_Game.IsMultiplayer() )
+		if ( GetGame().IsMultiplayer() )
 		{
 			return;
 		}
@@ -1262,7 +1262,7 @@ class PluginSceneManager extends PluginBase
 	//------------------------------------------
 	private vector GetMousePositionInScene()
 	{
-		vector dir = g_Game.GetPointerDirection();
+		vector dir = GetGame().GetPointerDirection();
 		vector from = FreeDebugCamera.GetInstance().GetPosition(); 
 		vector to = from + ( dir * 10000 );   
 		vector contact_pos;

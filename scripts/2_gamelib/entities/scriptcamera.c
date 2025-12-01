@@ -55,9 +55,9 @@ class ScriptCamera: GenericEntity
 
 	override protected void EOnFrame(IEntity other, float timeSlice) //EntityEvent.FRAME
 	{
-		g_Game.GetInputManager().ActivateContext("ScriptCameraContext");
+		GetGame().GetInputManager().ActivateContext("ScriptCameraContext");
 		
-		if (g_Game.GetInputManager().GetActionTriggered("CamFreeFly"))
+		if (GetGame().GetInputManager().GetActionTriggered("CamFreeFly"))
 		{
 			FreeFly = !FreeFly;
 		}
@@ -85,7 +85,7 @@ class ScriptCamera: GenericEntity
 		vector angles = GetYawPitchRoll();
 		vector camMat[4];
 		GetTransform(camMat);	
-		InputManager imanager = g_Game.GetInputManager();
+		InputManager imanager = GetGame().GetInputManager();
 		imanager.ActivateContext("ScriptCameraFreeFlyContext");
 		
 		// get input
@@ -137,7 +137,7 @@ class ScriptCamera: GenericEntity
 
 	protected void DebugInfo()
 	{
-		InputManager imanager = g_Game.GetInputManager();
+		InputManager imanager = GetGame().GetInputManager();
 		DbgUI.Begin(String("Camera #" + Index.ToString()), 0, Index * 300);
 
 		DbgUI.Text(String("Position : " + GetOrigin().ToString()));

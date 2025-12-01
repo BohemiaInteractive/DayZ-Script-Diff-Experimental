@@ -38,7 +38,7 @@ class DayZPlayerMeleeFightLogic_LightHeavy
 		m_DZPlayer					= player;
 		m_Player 					= PlayerBase.Cast(player);
 		m_MeleeCombat				= m_Player.GetMeleeCombat();
-		m_Mission					= g_Game.GetMission();
+		m_Mission					= GetGame().GetMission();
 
 		m_IsInBlock 				= false;
 		m_IsEvading	 				= false;
@@ -648,7 +648,7 @@ class DayZPlayerMeleeFightLogic_LightHeavy
 		
 		if (m_MeleeCombat.GetFinisherType() > -1)
 		{
-			if (g_Game.IsServer())
+			if (GetGame().IsServer())
 				DamageSystem.CloseCombatDamage(m_Player, target, m_MeleeCombat.GetHitZoneIdx(), DetermineFinisherAmmo(m_MeleeCombat.GetFinisherType()), m_MeleeCombat.GetHitPos(), ProcessDirectDamageFlags.NO_ATTACHMENT_TRANSFER);
 				
 			return true;
@@ -692,7 +692,7 @@ class DayZPlayerMeleeFightLogic_LightHeavy
 		else
 		{
 			//! play hit animation for dummy hits
-			if (g_Game.IsServer() && targetEntity)
+			if (GetGame().IsServer() && targetEntity)
 			{
 				DummyHitSelector(m_HitType, ammo);
 				hitPosWS = targetEntity.ModelToWorld(targetEntity.GetDefaultHitPosition()); //! override hit pos by pos defined in type
@@ -737,8 +737,10 @@ class DayZPlayerMeleeFightLogic_LightHeavy
 			ammo = weapon.GetRuinedMeleeAmmoType();
 			return true;
 		}
-		
-		return false;
+		else
+		{
+			return false;
+		}
 	}
 
 	protected void GetTargetData(out EntityAI target, out EMeleeTargetType targetType)
@@ -822,7 +824,7 @@ class DayZPlayerMeleeFightLogic_LightHeavy
 			return;
 		
 		//Check if server side
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			int randNum;
 			

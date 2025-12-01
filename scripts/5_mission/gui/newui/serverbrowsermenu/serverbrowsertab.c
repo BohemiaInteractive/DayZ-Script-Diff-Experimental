@@ -1,9 +1,9 @@
 enum TabType
 {
-	FAVORITE,
 	OFFICIAL,
 	COMMUNITY,
 	LAN,
+	FAVORITE,
 	NONE
 }
 
@@ -121,11 +121,6 @@ class ServerBrowserTab extends ScriptedWidgetEventHandler
 	bool GetIsServerLoadingFinished()
 	{
 		return m_LoadingFinished;
-	}
-	
-	bool IsLoadingServers()
-	{
-		return m_Loading;
 	}
 
 	void OnDLCChange(EDLCId dlcId)
@@ -607,21 +602,15 @@ class ServerBrowserTab extends ScriptedWidgetEventHandler
 		return -1;
 	}
 	
-	void Unfavorite(string uid)
+	void Unfavorite( string uid )
 	{
 		ServerBrowserEntry entry;
-		if (m_EntryWidgets.Find(uid, entry))
+		if ( m_EntryWidgets.Find( uid, entry ) )
 		{
-			entry.SetFavorite(false);
-			
-			// If this is an entry in favorites tab, hide it
-			if (m_TabType == TabType.FAVORITE)
-			{
-				entry.Show(false);
-			}
+			entry.SetFavorite( false );
 		}
 	}
-		
+	
 	TabType GetTabType()
 	{
 		return m_TabType;

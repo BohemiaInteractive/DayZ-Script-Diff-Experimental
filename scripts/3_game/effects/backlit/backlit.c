@@ -160,9 +160,8 @@ class Backlit
 		if( !m_BacklitActive )
 			return;	// always return when backlit not present!
 	
-		UAInputAPI api = GetUApi();
-		api.Backlit_Remove(EUABLAYER_ALL);
-		api.Backlit_Background(0,0xff211202,0xff110800);
+		GetUApi().Backlit_Remove(EUABLAYER_ALL);
+		GetUApi().Backlit_Background(0,0xff211202,0xff110800);
 	}
 
 	// ...
@@ -172,11 +171,10 @@ class Backlit
 			return;	// always return when backlit not present!
 	
 		// force update player
-		if( g_Game.GetMission().GetHud() )
+		if( GetGame().GetMission().GetHud() )
 		{
-			UAInputAPI api = GetUApi();
-			api.Backlit_Remove(EUABLAYER_ALL);
-			api.Backlit_Background(0,0xff220000,0xff222222);
+			GetUApi().Backlit_Remove(EUABLAYER_ALL);
+			GetUApi().Backlit_Background(0,0xff220000,0xff222222);
 
 			UpdatePlayer(true);
 		}
@@ -188,11 +186,10 @@ class Backlit
 		if( !m_BacklitActive )
 			return;	// always return when backlit not present!
 	
-		UAInputAPI api = GetUApi();
 		// reset queue
-		api.Backlit_EmptyQueue();
+		GetUApi().Backlit_EmptyQueue();
 		// play hit animation
-		api.Backlit_Animation("Water/",0,0xff00ffff,0xffffffff);
+		GetUApi().Backlit_Animation("Water/",0,0xff00ffff,0xffffffff);
 	}
 
 	// ...
@@ -201,7 +198,7 @@ class Backlit
 		if( !m_BacklitActive )
 			return;	// always return when backlit not present!
 	
-		if( g_Game.GetMission().GetHud() )
+		if( GetGame().GetMission().GetHud() )
 		{		
 			// enqueue background
 			GetUApi().Backlit_Background(0,0xff220000,0xff222222);
@@ -358,21 +355,20 @@ class Backlit
 		if( m_HealthNew == m_HealthBefore && m_BloodNew == m_BloodBefore )
 			return;
 
-		UAInputAPI api = GetUApi();
 		// remove previous layers
-		api.Backlit_Remove(EUABLAYER_ALL);
+		GetUApi().Backlit_Remove(EUABLAYER_ALL);
 
 		// set keys to layer CUSTOM
-		api.Backlit_KeyByName("kW",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff0000ff);
-		api.Backlit_KeyByName("kA",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff0000cf);
-		api.Backlit_KeyByName("kS",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff0000af);
-		api.Backlit_KeyByName("kD",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff00008f);
+		GetUApi().Backlit_KeyByName("kW",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff0000ff);
+		GetUApi().Backlit_KeyByName("kA",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff0000cf);
+		GetUApi().Backlit_KeyByName("kS",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff0000af);
+		GetUApi().Backlit_KeyByName("kD",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff00008f);
 
-		api.Backlit_KeyByName("kX",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff3f3f3f);
-		api.Backlit_KeyByName("kC",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff3f3f3f);
+		GetUApi().Backlit_KeyByName("kX",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff3f3f3f);
+		GetUApi().Backlit_KeyByName("kC",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff3f3f3f);
 
-		api.Backlit_KeyByName("kQ",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff7f7f0f);
-		api.Backlit_KeyByName("kE",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff7f7f0f);
+		GetUApi().Backlit_KeyByName("kQ",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff7f7f0f);
+		GetUApi().Backlit_KeyByName("kE",EUABLAYER_CUSTOM,EUABACKLIT_ON,0xff7f7f0f);
 
 		// health
 		VisualiseHealth(m_HealthNew);
@@ -380,7 +376,7 @@ class Backlit
 		VisualiseBlood(m_BloodNew);
 
 		// animation
-		api.Backlit_Background(0,0xff220000,0xff222222);
+		GetUApi().Backlit_Background(0,0xff220000,0xff222222);
 		
 		// save level
 		m_BloodBefore = m_BloodNew;

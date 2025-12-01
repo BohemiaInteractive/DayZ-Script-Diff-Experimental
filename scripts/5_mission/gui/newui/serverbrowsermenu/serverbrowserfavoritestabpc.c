@@ -61,9 +61,9 @@ class ServerBrowserFavoritesTabPc extends ServerBrowserTabPc
 			offlineRow.m_SteamQueryPort = queryPort;
 			offlineRow.m_HostPort = connPort;
 			offlineRow.m_Favorite = true;
-			offlineRow.m_IsSelected = (offlineRow.GetIpPort() == m_CurrentSelectedServer);
+			offlineRow.m_IsSelected = (offlineRow.m_Id == m_CurrentSelectedServer);
 			
-			ServerBrowserEntry entry = GetServerEntryByIndex(index, offlineRow.GetIpPort());
+			ServerBrowserEntry entry = GetServerEntryByIndex(index, offlineRow.m_Id);
 			entry.Show(true);
 			entry.SetIsOnline(false);
 			entry.FillInfo(offlineRow);

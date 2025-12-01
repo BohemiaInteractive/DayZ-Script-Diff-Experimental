@@ -30,7 +30,7 @@ class FlareSimulation : Managed
 		
 	void OnActivation(Entity flare)
 	{
-		if ( !g_Game.IsServer() || !g_Game.IsMultiplayer() )
+		if ( !GetGame().IsServer() || !GetGame().IsMultiplayer() )
 		{
 			m_FlareLight = FlareLight.Cast( ScriptedLightBase.CreateLight( m_ScriptedLight, Vector(0,0,0) ) );
 			if ( m_FlareLight )
@@ -48,7 +48,7 @@ class FlareSimulation : Managed
 			flare.PlaySoundSetLoop( m_BurningSound, "roadflareLoop_SoundSet", 0, 0 );
 		}
 		
-		if ( g_Game.IsServer() )
+		if ( GetGame().IsServer() )
 		{
 			// Create and load noise parameters
 			m_NoisePar = new NoiseParams();
@@ -69,7 +69,7 @@ class FlareSimulation : Managed
 	
 	void Simulate( Entity flare )
 	{	
-		DayZPlayer player = g_Game.GetPlayer();
+		DayZPlayer player = GetGame().GetPlayer();
 		if ( player )
 			vector playerPos = player.GetPosition();
 
@@ -97,7 +97,7 @@ class FlareSimulation : Managed
 		float cos = Math.Cos(angleRad);
 		
 		vector newFlarePos = m_ParMainFire.GetOrigin();
-		float surfacePos = g_Game.SurfaceY(newFlarePos[0], newFlarePos[2]);
+		float surfacePos = GetGame().SurfaceY(newFlarePos[0], newFlarePos[2]);
 		
 		if (newFlarePos[1] - surfacePos < 1) // reached ground
 		{
@@ -123,13 +123,11 @@ class FlareSimulation : Managed
 	
 	void CastFlareAINoise( vector position )
 	{
-		int currentTime = g_Game.GetTime();
-		float timeAdjusted = currentTime * 0.0033;
 		if ( m_LastNoiseTime < 0 )
-			m_LastNoiseTime = timeAdjusted;
+			m_LastNoiseTime = GetGame().GetTime() * 0.0033;
 
-		float delta_time = timeAdjusted - m_LastNoiseTime;
-		m_LastNoiseTime = timeAdjusted;
+		float delta_time = GetGame().GetTime() * 0.0033 - m_LastNoiseTime;
+		m_LastNoiseTime = GetGame().GetTime() * 0.0033;
 		
 		m_NoiseTimer += delta_time;
 

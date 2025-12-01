@@ -70,22 +70,22 @@ class ControlsXboxNew extends UIScriptedMenu
 	
 	protected void OnInputDeviceChanged(EInputDeviceType pInputDeviceType)
 	{
-		bool mk = g_Game.GetInput().IsEnabledMouseAndKeyboard();
-		bool mkServer = g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
+		bool mk = GetGame().GetInput().IsEnabledMouseAndKeyboard();
+		bool mkServer = GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer();
 		
 		switch (pInputDeviceType)
 		{
 		case EInputDeviceType.CONTROLLER:
 			if (mk && mkServer)
 			{
-				g_Game.GetUIManager().ShowUICursor(false);
+				GetGame().GetUIManager().ShowUICursor(false);
 			}
 		break;
 
 		default:
-			if (g_Game.GetInput().IsEnabledMouseAndKeyboard())
+			if (GetGame().GetInput().IsEnabledMouseAndKeyboard())
 			{
-				g_Game.GetUIManager().ShowUICursor(true);
+				GetGame().GetUIManager().ShowUICursor(true);
 			}
 		break;
 		}
@@ -95,7 +95,7 @@ class ControlsXboxNew extends UIScriptedMenu
 	
 	void Back()
 	{
-		g_Game.GetUIManager().Back();
+		GetGame().GetUIManager().Back();
 	}
 	
 	void UpdateTabContent(int tab_index)
@@ -180,7 +180,7 @@ class ControlsXboxNew extends UIScriptedMenu
 		m_CategoryStructure = new map<int,Widget>;
 		m_ImageMarkerStructure = new map<int,Widget>;
 		
-		layoutRoot = g_Game.GetWorkspace().CreateWidgets("gui/layouts/xbox/Controls_Screen.layout");
+		layoutRoot = GetGame().GetWorkspace().CreateWidgets("gui/layouts/xbox/Controls_Screen.layout");
 		#ifdef PLATFORM_XBOX
 			m_ControlsImage = layoutRoot.FindAnyWidget("XboxControlsImage");
 		#else
@@ -206,8 +206,8 @@ class ControlsXboxNew extends UIScriptedMenu
 		ComposeData();
 		UpdateTabContent(0);
 		
-		g_Game.GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
-		g_Game.GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
+		GetGame().GetMission().GetOnInputPresetChanged().Insert(OnInputPresetChanged);
+		GetGame().GetMission().GetOnInputDeviceChanged().Insert(OnInputDeviceChanged);
 		
 		return layoutRoot;
 	}
@@ -217,7 +217,7 @@ class ControlsXboxNew extends UIScriptedMenu
 		super.OnShow();
 		
 		SetFocus(null);
-		OnInputDeviceChanged(g_Game.GetInput().GetCurrentInputDevice());
+		OnInputDeviceChanged(GetGame().GetInput().GetCurrentInputDevice());
 	}
 	
 	override bool OnClick(Widget w, int x, int y, int button)
@@ -362,7 +362,7 @@ class ControlsXboxNew extends UIScriptedMenu
 		inputAPI.PresetSelect(index);
 		UpdateToolbarText();
 		
-		g_Game.GetMission().GetOnInputPresetChanged().Invoke();
+		GetGame().GetMission().GetOnInputPresetChanged().Invoke();
 		
 		#ifdef PLATFORM_WINDOWS
 			GetUApi().Export(); //works on emulated consoles (-xbox,-ps4)
@@ -541,7 +541,7 @@ class ControlsXboxNew extends UIScriptedMenu
 	{
 		bool toolbarShow = false;
 		#ifdef PLATFORM_CONSOLE
-		toolbarShow = !g_Game.GetInput().IsEnabledMouseAndKeyboardEvenOnServer() || g_Game.GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
+		toolbarShow = !GetGame().GetInput().IsEnabledMouseAndKeyboardEvenOnServer() || GetGame().GetInput().GetCurrentInputDevice() == EInputDeviceType.CONTROLLER;
 		#endif
 		
 		layoutRoot.FindAnyWidget("toolbar_bg").Show(toolbarShow);

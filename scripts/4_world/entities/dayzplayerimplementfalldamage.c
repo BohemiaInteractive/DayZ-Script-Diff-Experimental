@@ -131,7 +131,7 @@ class DayZPlayerImplementFallDamage
 		
 		m_FallDamageData.m_BleedingChanceLegsCoef = 0.15;
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			PlayerBase playerBase = PlayerBase.Cast(m_Player);
 			if (playerBase)
@@ -150,7 +150,7 @@ class DayZPlayerImplementFallDamage
 	
 	private float Randomize(int pType, float pValue)
 	{
-		Math.Randomize(g_Game.GetTime());
+		Math.Randomize(GetGame().GetTime());
 		
 		int randomizedSign = -1;
 		if (Math.RandomIntInclusive(1, 2) % 2 == 1)
@@ -175,7 +175,7 @@ class DayZPlayerImplementFallDamage
 	
 	private void AttachBleedingToZonesByHeight(notnull PlayerBase pPlayer)
 	{
-		Math.Randomize(g_Game.GetTime());
+		Math.Randomize(GetGame().GetTime());
 
 			int bleedingSelectionIndex;
 			BleedingSourcesManagerServer bleedingManager = pPlayer.GetBleedingManagerServer();
@@ -258,9 +258,9 @@ class DayZPlayerImplementFallDamage
 	private vector GetValuesFromAmmoType(string pAmmoType)
 	{
 		vector values = vector.Zero;
-		values[0] = g_Game.ConfigGetFloat(string.Format("CfgAmmo %1 DamageApplied Health damage", pAmmoType));
-		values[1] = g_Game.ConfigGetFloat(string.Format("CfgAmmo %1 DamageApplied Blood damage", pAmmoType));
-		values[2] = g_Game.ConfigGetFloat(string.Format("CfgAmmo %1 DamageApplied Shock damage", pAmmoType));
+		values[0] = GetGame().ConfigGetFloat(string.Format("CfgAmmo %1 DamageApplied Health damage", pAmmoType));
+		values[1] = GetGame().ConfigGetFloat(string.Format("CfgAmmo %1 DamageApplied Blood damage", pAmmoType));
+		values[2] = GetGame().ConfigGetFloat(string.Format("CfgAmmo %1 DamageApplied Shock damage", pAmmoType));
 		
 		return values;
 	}

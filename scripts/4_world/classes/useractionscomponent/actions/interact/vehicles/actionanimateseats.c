@@ -81,7 +81,7 @@ class ActionAnimateSeats: ActionAnimateCarSelection
 			il.SetVehicle(transport, action_data.m_Player, nextSeat);
 		
 			//Lock target
-			if (g_Game.AddInventoryJunctureEx(action_data.m_Player, action_data.m_Player, il, true, 10000, action_data))
+			if (GetGame().AddInventoryJunctureEx(action_data.m_Player, action_data.m_Player, il, true, 10000))
 			{
 				accepted = true;
 				action_data.m_ReservedInventoryLocations.Insert(il);

@@ -49,9 +49,7 @@ class DayZIntroSceneXbox: Managed
 		
 		if ( m_LastPlayedCharacterID > -1 )
 		{
-			string characterName = g_Game.GetPlayerGameName();
-			m_MenuData.GetCharacterName(m_LastPlayedCharacterID, characterName);
-			g_Game.SetPlayerGameName(characterName);
+			m_MenuData.GetCharacterName(m_LastPlayedCharacterID, g_Game.GetPlayerGameName());
 		}
 	
 		// Camera Setup
@@ -77,7 +75,7 @@ class DayZIntroSceneXbox: Managed
 		// Character Setup
 		vector cam_dir = m_SceneCamera.GetDirection();
 		m_CharacterPos = camera_position + ( cam_dir * character_distance );
-		m_CharacterPos[1] = g_Game.SurfaceY(m_CharacterPos[0], m_CharacterPos[2]);
+		m_CharacterPos[1] = GetGame().SurfaceY(m_CharacterPos[0], m_CharacterPos[2]);
 		m_CharacterDir = (camera_position - m_CharacterPos);
 		
 		float overcast = 0.42;
@@ -105,14 +103,14 @@ class DayZIntroSceneXbox: Managed
 		m_TimerUpdate.Run(0.5, this, "SetupCharacter", null, true);
 		
 		vector clut_pos = SnapToGround( m_CharacterPos + "-1 0 0" );
-		m_Clutter = g_Game.CreateObject( "ClutterCutter2x2", clut_pos, true );
+		m_Clutter = GetGame().CreateObject( "ClutterCutter2x2", clut_pos, true );
 		
 		// Xbox check update
 		CheckXboxClientUpdateLoopStart();
 		
 		g_Game.SetHudBrightness(g_Game.GetHUDBrightnessSetting());
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_GUI).Call(SetInitPostprocesses);
+		GetGame().GetCallQueue(CALL_CATEGORY_GUI).Call(SetInitPostprocesses);
 	}
 	
 	void ~DayZIntroSceneXbox()
@@ -141,7 +139,7 @@ class DayZIntroSceneXbox: Managed
 		
 		CheckXboxClientUpdateLoopStop();
 		
-		g_Game.ObjectDelete( m_SceneCamera );
+		GetGame().ObjectDelete( m_SceneCamera );
 		
 		if ( m_MenuData )
 		{
@@ -316,13 +314,13 @@ class DayZIntroSceneXbox: Managed
 			character_name = m_CharPersonalityMaleList.GetRandomElement();
 		}
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(UpdateCharacterPos, 250);
+		GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(UpdateCharacterPos, 250);
 	}
 	
 	void UpdateSelectedUserName()
 	{
 		string name;
-		BiosUserManager user_manager = g_Game.GetUserManager();
+		BiosUserManager user_manager = GetGame().GetUserManager();
 		if( user_manager )
 		{
 			BiosUser user = user_manager.GetSelectedUser();
@@ -354,7 +352,7 @@ class DayZIntroSceneXbox: Managed
 		//}
 		if (m_Character.IsDefaultCharacter())
 		{
-			g_Game.GetMenuDefaultCharacterData().SetCharacterName(name);
+			GetGame().GetMenuDefaultCharacterData().SetCharacterName(name);
 		}
 		m_MenuData.SaveCharactersLocal();
 	}
@@ -364,7 +362,7 @@ class DayZIntroSceneXbox: Managed
 	{
 		float pos_x = pos[0];
 		float pos_z = pos[2];
-		float pos_y = g_Game.SurfaceY(pos_x, pos_z);
+		float pos_y = GetGame().SurfaceY(pos_x, pos_z);
 		vector tmp_pos = Vector(pos_x, pos_y, pos_z);
 		tmp_pos[1] = tmp_pos[1] + pos[1];
 	

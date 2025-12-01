@@ -26,7 +26,7 @@ class Battery9V : ItemBase
 	{
 		super.OnEnergyConsumed();
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			float energyCoef = GetCompEM().GetEnergy0To1();
 			
@@ -43,7 +43,7 @@ class Battery9V : ItemBase
 	{
 		super.OnEnergyAdded();
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			float energyCoef = GetCompEM().GetEnergy0To1();
 			if (energyCoef < m_EfficiencyDecayStart && m_EfficiencyDecayStart > 0)

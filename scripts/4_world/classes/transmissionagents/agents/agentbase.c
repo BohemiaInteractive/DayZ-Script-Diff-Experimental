@@ -9,27 +9,18 @@ class AgentBase : MessageReceiverBase
 	int		m_AutoinfectCount = 1;			//! number of agents injected during the autoinfection
 	float 	m_AutoinfectProbability = CalculateAutoinfectProbability(0);	// [0..1], 0 = zero chance, 1 = 100% chance of getting this agent once per hour
 	float 	m_TransferabilityAirOut; 		//! transferibility airborne out
-	float 	m_AntibioticsResistance = 1;	//! [0..1], 0 means antibiotics have full effect, 1 means no effect - deprecated, use the m_DrugResistance map below for drug resistances
-	
-	protected ref 	map<EMedicalDrugsType, float> m_DrugResistances = new map<EMedicalDrugsType, float>();
+	float 	m_AntibioticsResistance = 1;	//! [0..1], 0 means antibiotics have full effect, 1 means no effect
 	
 	EStatLevels m_Potency = EStatLevels.MEDIUM;		//! grow when player's immune system is at this level or lower
 	float m_DieOffSpeed = 1;						//! how fast the agent dies off when not potent enough to grow(per sec)
 	
 	void AgentBase()
 	{
-		InitDefaults();
 		Init();
 	}
 	
-	protected void InitDefaults()
-	{
-		m_DrugResistances.Insert(EMedicalDrugsType.CHELATION, 1.0);
-		m_DrugResistances.Insert(EMedicalDrugsType.ANTIBIOTICS, 1.0);
-	}
-	
 	void Init();
-
+	
 	int GetAgentType()
 	{
 		return m_Type;
@@ -72,11 +63,6 @@ class AgentBase : MessageReceiverBase
 	float GetAntibioticsResistanceEx(PlayerBase player)
 	{
 		return GetAntiboticsResistance();
-	}
-	
-	float GetDrugResistance(EMedicalDrugsType drugType, PlayerBase player)
-	{
-		return m_DrugResistances.Get(drugType);
 	}
 	
 	float GetInvasibility()

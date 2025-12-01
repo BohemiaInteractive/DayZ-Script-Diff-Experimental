@@ -59,14 +59,14 @@ class TripwireTrap : TrapBase
 	
 	override void CreateTrigger()
 	{
-		m_TrapTrigger = TripWireTrigger.Cast(g_Game.CreateObjectEx("TripWireTrigger", GetPosition(), SPAWN_FLAGS));
+		m_TrapTrigger = TripWireTrigger.Cast(GetGame().CreateObjectEx("TripWireTrigger", GetPosition(), SPAWN_FLAGS));
 		vector mins = "-0.75 0.3 -0.01";
 		vector maxs = "0.75 0.32 0.01";
 		m_TrapTrigger.SetOrientation(GetOrientation());
 		m_TrapTrigger.SetExtents(mins, maxs);
 		m_TrapTrigger.SetParentObject(this);
 		
-		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeferredEnableTrigger);
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).Call(DeferredEnableTrigger);
 	}
 	
 	override void OnSteppedOn(EntityAI victim)
@@ -82,7 +82,7 @@ class TripwireTrap : TrapBase
 		}
 
 		// We must deal some damage, here 5 shock as melee damage in order to trigger hit animation
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			victim.ProcessDirectDamage(DamageType.CLOSE_COMBAT, this, "", "TripWireHit", "0 0 0", 1);
 			SetState(TRIGGERED);
@@ -137,7 +137,7 @@ class TripwireTrap : TrapBase
 	{
 		super.EEHealthLevelChanged(oldLevel, newLevel, zone);
 
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			if (newLevel == GameConstants.STATE_RUINED)
 			{
@@ -152,10 +152,9 @@ class TripwireTrap : TrapBase
 		super.SetInactive(stop_timer);
 
 		// de-attach attachments after "activating them"
-		GameInventory inventory = GetInventory();
-		for (int att = 0; att < inventory.AttachmentCount(); ++att)
+		for (int att = 0; att < GetInventory().AttachmentCount(); att++)
 		{
-			ItemBase attachment = ItemBase.Cast(inventory.GetAttachmentFromIndex(att));
+			ItemBase attachment = ItemBase.Cast(GetInventory().GetAttachmentFromIndex(att));
 			if (attachment)
 			{
 				if (attachment.IsLockedInSlot())
@@ -164,7 +163,7 @@ class TripwireTrap : TrapBase
 				}
 				
 				attachment.OnActivatedByItem(this);
-				inventory.DropEntity(InventoryMode.SERVER, this, attachment);
+				GetInventory().DropEntity(InventoryMode.SERVER, this, attachment);
 			}
 		}
 	}
@@ -338,7 +337,7 @@ class TripwireTrap : TrapBase
 	// On placement complete, set state, play sound, create trigger and synch to client
 	override void OnPlacementComplete(Man player, vector position = "0 0 0", vector orientation = "0 0 0")
 	{
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			SetState(DEPLOYED);
 			
@@ -439,7 +438,7 @@ class TripwireTrap : TrapBase
 	{
 		if (super.OnAction(action_id, player, ctx))
 			return true;
-		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
+		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
 		{
 			if (action_id == EActions.ACTIVATE_ENTITY)
 			{

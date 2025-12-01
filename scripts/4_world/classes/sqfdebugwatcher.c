@@ -53,7 +53,7 @@ class SqfDebugWatcher
 		if ( m_IsRunning && m_SqfCommand != "" )
 		{
 //			string sqf_command = "_result = " + m_SqfCommand + "; _resultStr = format ['%1', _result]; null = callFunction ['OnSqfDebugWatcherResult', " + m_Id.ToString() + ", _resultStr];";
-//			g_Game.ExecuteSQF( sqf_command );
+//			GetGame().ExecuteSQF( sqf_command );
 		}
 	}
 }

@@ -419,8 +419,6 @@ class SoundConstants
 	const int ITEM_DEPLOY = 3;
 	const int ITEM_FOLD_LOOP = 4;
 	const int ITEM_FOLD = 5;
-	const int ITEM_ATTACH = 6;
-	const int ITEM_DETACH = 7;
 	
 	const int ITEM_BARREL_OPEN = 20;
 	const int ITEM_BARREL_CLOSE = 21;
@@ -430,8 +428,7 @@ class SoundConstants
 	const int ITEM_TENT_WINDOW_CLOSE = 25;
 	const int ITEM_EXPLOSIVE_ARM = 26;
 	const int ITEM_EXPLOSIVE_DISARM = 27;
-	const int ITEM_EXPLOSIVE_DISARM_UNPAIRED = 28;
-	const int ITEM_KEY_BREAK = 29;											
+	const int ITEM_KEY_BREAK = 28;
 }
 
 /**

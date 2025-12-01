@@ -120,18 +120,15 @@ class OptionSelectorSliderSetup extends OptionSelectorBase
 	
 	void SetValue(float value, bool update = true)
 	{
-		float normalizeValue = NormalizeInput(value);
-		float step = m_Slider.GetStep();
-		
-		normalizeValue = Math.Round(normalizeValue / step) * step;
-		m_Slider.SetCurrent(normalizeValue);
+		value = Math.Round(value * 100) * 0.01;
+		m_Slider.SetCurrent(NormalizeInput(value));
 		if (update)
 			m_OptionChanged.Invoke(GetValue());
 	}
 	
 	float GetValue()
 	{
-		float current = m_Slider.GetCurrent();
+		float current = Math.Round(m_Slider.GetCurrent() * 100) * 0.01;
 		float ret = (current * (m_MaxValue - m_MinValue)) + m_MinValue;
 		return ret;
 	}

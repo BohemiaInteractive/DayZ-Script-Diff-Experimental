@@ -132,7 +132,7 @@ class ActionGetInTransport: ActionBase
 	override void OnEnd(ActionData action_data)
 	{
 		CarScript car = CarScript.Cast(action_data.m_Target.GetObject());
-		if (car && g_Game.IsServer())
+		if (car && GetGame().IsServer())
 		{
 			car.ForceUpdateLightsEnd();
 		}
@@ -150,7 +150,7 @@ class ActionGetInTransport: ActionBase
 			il.SetVehicle(transport, action_data.m_Player, nextSeat);
 		
 			//Lock target
-			if (g_Game.AddInventoryJunctureEx(action_data.m_Player, action_data.m_Player, il, true, 10000, action_data))
+			if (GetGame().AddInventoryJunctureEx(action_data.m_Player, action_data.m_Player, il, true, 10000))
 			{
 				accepted = true;
 				action_data.m_ReservedInventoryLocations.Insert(il);

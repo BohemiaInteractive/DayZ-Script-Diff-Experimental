@@ -71,7 +71,7 @@ class Effect : Managed
 	*/
 	void Effect()
 	{
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			ErrorEx("Created Effect on server.", ErrorExSeverity.WARNING);
 		}
@@ -228,9 +228,9 @@ class Effect : Managed
 		Stop();
 		
 		// Queue up the destroying, as we should not do it while we are accessing it here
-		if (g_Game)
+		if (GetGame())
 		{
-			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).Call(SEffectManager.DestroyEffect, this);
+			GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).Call(SEffectManager.DestroyEffect, this);
 		}
 	}
 	

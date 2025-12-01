@@ -57,7 +57,7 @@ class ActionTakeItemToHands: ActionInteractBase
 	
 	override void OnExecute(ActionData action_data)
 	{
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			ClearActionJuncture(action_data);
 			return;
@@ -182,7 +182,7 @@ class ActionSwapItemToHands: ActionTakeItemToHands
 		if (!m_Executable)
 			return;
 		
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			ClearActionJuncture(action_data);
 			return;
@@ -201,7 +201,7 @@ class ActionSwapItemToHands: ActionTakeItemToHands
 			return;
 		}
 		
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 		{
 			ClearActionJuncture(action_data);
 			return;
@@ -218,7 +218,7 @@ class ActionSwapItemToHands: ActionTakeItemToHands
 		if (action_data.m_Player)
 		{
 			InventoryMode invMode = InventoryMode.PREDICTIVE;
-			if (!g_Game.IsMultiplayer())
+			if (!GetGame().IsMultiplayer())
 				invMode = InventoryMode.LOCAL;
 			else if (action_data.m_Player.NeedInventoryJunctureFromServer(ntarget, ntarget.GetHierarchyParent(), action_data.m_Player))
 				invMode = InventoryMode.JUNCTURE;

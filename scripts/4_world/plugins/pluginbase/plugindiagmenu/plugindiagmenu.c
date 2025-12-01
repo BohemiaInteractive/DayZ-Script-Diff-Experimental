@@ -103,10 +103,6 @@ class PluginDiagMenu : PluginBase
 				// LEVEL 2 - Script > Inventory
 				//---------------------------------------------------------------		
 				DiagMenu.RegisterBool(DiagMenuIDs.INVENTORY_ENTITY_PLACEMENT_CALLBACK_DEBUG, "", "Placement Debug", DiagMenuIDs.INVENTORY_MENU);
-				DiagMenu.RegisterBool(DiagMenuIDs.INVENTORY_USE_ACK_MOVE_HANDS, "", "Hands use ack for move", DiagMenuIDs.INVENTORY_MENU);
-				DiagMenu.RegisterBool(DiagMenuIDs.INVENTORY_ENABLE_DESYNC_REPAIR, "", "Enable desync repair", DiagMenuIDs.INVENTORY_MENU);
-					DiagMenu.SetValue(DiagMenuIDs.INVENTORY_ENABLE_DESYNC_REPAIR, true);
-				
 			}
 
 			//---------------------------------------------------------------
@@ -152,7 +148,6 @@ class PluginDiagMenu : PluginBase
 				DiagMenu.RegisterBool(DiagMenuIDs.CHEATS_FIX_ITEMS, "", "Fix Inventory Items", DiagMenuIDs.CHEATS_MENU);
 				DiagMenu.RegisterBool(DiagMenuIDs.CHEATS_CREATE_HIT, "lalt+5", "Create Hit Heavy", DiagMenuIDs.CHEATS_MENU);
 				DiagMenu.RegisterBool(DiagMenuIDs.CHEATS_CREATE_HIT_LIGHT, "lalt+6", "Create Hit Light", DiagMenuIDs.CHEATS_MENU);
-				DiagMenu.RegisterBool(DiagMenuIDs.CHEATS_CLIENT_DESYNC_INVENTORY, "", "Client desync inventory - local move", DiagMenuIDs.CHEATS_MENU);
 			}
 			
 			//---------------------------------------------------------------
@@ -471,9 +466,6 @@ class PluginDiagMenu : PluginBase
 				//---------------------------------------------------------------
 				// LEVEL 2 - Script > Underground Areas
 				//---------------------------------------------------------------
-				#ifdef DEVELOPER
-				DiagMenu.RegisterBool(DiagMenuIDs.UNDERGROUND_DEBUG, "", "Enable debug", DiagMenuIDs.UNDERGROUND_MENU);
-				#endif
 				DiagMenu.RegisterBool(DiagMenuIDs.UNDERGROUND_SHOW_BREADCRUMB, "", "Show Breadcrumbs", DiagMenuIDs.UNDERGROUND_MENU);
 				DiagMenu.RegisterBool(DiagMenuIDs.UNDERGROUND_DISABLE_DARKENING, "lctrl+f", "Disable Darkening", DiagMenuIDs.UNDERGROUND_MENU);
 			}
@@ -569,7 +561,6 @@ class PluginDiagMenu : PluginBase
 	void OnRPC(PlayerBase player, int rpc_type, ParamsReadContext ctx)
 	{
 		EntityAI parent;
-		PluginInventoryDebug pluginInventoryDebug;
 		Class.CastTo(parent, player.GetParent());
 
 		switch (rpc_type)
@@ -584,28 +575,6 @@ class PluginDiagMenu : PluginBase
 				break;
 			}
 			
-			//---------------------------------------------------------------
-			// LEVEL 2 - Script > Inventory
-			//---------------------------------------------------------------
-			case ERPCs.DIAG_INVENTORY_ACK_HANDS:
-			{
-				if (ctx.Read(CachedObjectsParams.PARAM1_BOOL))
-				{
-					pluginInventoryDebug = PluginInventoryDebug.Cast(GetPlugin(PluginInventoryDebug));
-					pluginInventoryDebug.SetHandAckEnable(CachedObjectsParams.PARAM1_BOOL.param1);
-				}
-				break;
-			}
-			
-			case ERPCs.DIAG_INVENTORY_REPAIR_DESYNC:
-			{
-				if (ctx.Read(CachedObjectsParams.PARAM1_BOOL))
-				{
-					pluginInventoryDebug = PluginInventoryDebug.Cast(GetPlugin(PluginInventoryDebug));
-					pluginInventoryDebug.SetDesyncRepairEnable(CachedObjectsParams.PARAM1_BOOL.param1);
-				}
-				break;
-			}
 			
 			//---------------------------------------------------------------
 			// LEVEL 2 - Script > Player States
@@ -906,7 +875,7 @@ class PluginDiagMenu : PluginBase
 			//---------------------------------------------------------------
 			case ERPCs.DIAG_MISC_GO_UNCONSCIOUS_DELAYED:
 			{
-				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(GoUnconscious, 10000, false, player);
+				GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(GoUnconscious, 10000, false, player);
 				break;
 			}
 			
@@ -953,7 +922,7 @@ class PluginDiagMenu : PluginBase
 			case ERPCs.DIAG_MISC_DEBUG_MONITOR:
 			{
 				if (ctx.Read(CachedObjectsParams.PARAM1_BOOL))
-					g_Game.SetDebugMonitorEnabled(CachedObjectsParams.PARAM1_BOOL.param1);
+					GetGame().SetDebugMonitorEnabled(CachedObjectsParams.PARAM1_BOOL.param1);
 				break;
 			}
 			
@@ -1185,13 +1154,13 @@ class PluginDiagMenu : PluginBase
 					FeatureTimeAccel.m_CurrentTimeAccel = tap;
 					//Print("received from " + player);
 					array<Man> players = new array<Man>();
-					g_Game.GetPlayers(players);
+					GetGame().GetPlayers(players);
 					foreach (Man p : players)
 					{
 						if (p != player)// send to everyone except the one we receieved from
 						{
 							//Print("sending to " + p);
-							g_Game.RPCSingleParam( p, ERPCs.DIAG_TIMEACCEL_CLIENT_SYNC, tap, true, p.GetIdentity());
+							GetGame().RPCSingleParam( p, ERPCs.DIAG_TIMEACCEL_CLIENT_SYNC, tap, true, p.GetIdentity());
 						}					
 					}
 					
@@ -1264,7 +1233,7 @@ class PluginDiagMenu : PluginBase
 		
 		string value;
 		
-		if ( g_Game.CommandlineGetParam("timeAccel", value))
+		if ( GetGame().CommandlineGetParam("timeAccel", value))
 		{
 			TStringArray params = new TStringArray();
 			

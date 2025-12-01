@@ -70,7 +70,7 @@ class StaticFlagPole extends TerritoryFlag
 			SetPartFromSyncData(construtionPart); // server part of sync, client will be synced from SetPartsFromSyncData	
 			UpdateNavmesh();
 			UpdateVisuals();
-			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetActionSyncData, 100, false, this);
+			GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(ResetActionSyncData, 100, false, this);
 		}
 		
 		GetConstruction().UpdateVisuals();

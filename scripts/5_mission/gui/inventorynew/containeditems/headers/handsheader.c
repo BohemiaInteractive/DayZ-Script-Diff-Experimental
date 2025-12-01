@@ -22,11 +22,11 @@ class HandsHeader: Header
 	
 	override void UpdateInterval()
 	{
-		PlayerBase p = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase p = PlayerBase.Cast( GetGame().GetPlayer() );
 		if (!p)
 			return;
 		
-		EntityAI item = p.GetEntityInHands();
+		EntityAI item = p.GetHumanInventory().GetEntityInHands();
 		/*if ( !m_ForceHideCollapseButtons )
 		{
 			if ( item && !item.GetInventory().IsInventoryLockedForLockType( HIDE_INV_FROM_SCRIPT ) && item.HasCargo() )

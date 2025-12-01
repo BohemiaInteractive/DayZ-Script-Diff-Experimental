@@ -63,7 +63,7 @@ class ActionRepairPart: ActionDismantlePart
 	
 	override string GetText()
 	{
-		PlayerBase player = PlayerBase.Cast( g_Game.GetPlayer() );
+		PlayerBase player = PlayerBase.Cast( GetGame().GetPlayer() );
 		if ( player )
 		{
 			ConstructionActionData construction_action_data = player.GetConstructionActionData();
@@ -200,7 +200,7 @@ class ActionRepairPart: ActionDismantlePart
 					//Camera check (client-only)
 					if ( camera_check )
 					{
-						if ( g_Game && ( !g_Game.IsDedicatedServer() ) )
+						if ( GetGame() && ( !GetGame().IsDedicatedServer() ) )
 						{
 							if ( base_building.IsFacingCamera( part_name ) )
 							{

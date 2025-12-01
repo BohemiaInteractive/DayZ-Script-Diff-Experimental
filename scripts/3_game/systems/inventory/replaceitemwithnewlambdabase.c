@@ -58,7 +58,7 @@ class ReplaceItemWithNewLambdaBase
 					Math3D.MatrixIdentity4(m4);
 					m4[3] = m_NewLocation.GetPos();
 					string path = "" + CFG_VEHICLESPATH + " " + m_NewItemType + " inherit_rotation";
-					bool keep_rotation = g_Game.ConfigIsExisting(path) && g_Game.ConfigGetInt(path) > 0;
+					bool keep_rotation = GetGame().ConfigIsExisting(path) && GetGame().ConfigGetInt(path) > 0;
 					
 					if (m_OldLocation.GetType() == InventoryLocationType.GROUND && keep_rotation)
 					{
@@ -106,13 +106,13 @@ class ReplaceItemWithNewLambdaBase
 	 **/
 	protected void RemoveNetworkObjectInfo()
 	{
-		g_Game.RemoteObjectTreeDelete(m_OldItem); // C) this forces server to send DeleteObject Message to client. This is needed for preserving the appearance of network operations on client (so that DeleteObject(old) arrives before CreateVehicle(new)). @NOTE: this does not delete the object on server, only it's network representation.
+		GetGame().RemoteObjectTreeDelete(m_OldItem); // C) this forces server to send DeleteObject Message to client. This is needed for preserving the appearance of network operations on client (so that DeleteObject(old) arrives before CreateVehicle(new)). @NOTE: this does not delete the object on server, only it's network representation.
 		// @NOTE: the item is not deleted right now on server, but rather after copying the properties in Step E)
 		m_RemoveNetworkObjectInfoPassed = true;
 	}
 	protected void UndoRemoveNetworkObjectInfo()
 	{
-		g_Game.RemoteObjectTreeCreate(m_OldItem);
+		GetGame().RemoteObjectTreeCreate(m_OldItem);
 	}
 
 	/**@fn		CreateNewEntity
@@ -130,9 +130,9 @@ class ReplaceItemWithNewLambdaBase
 			switch (m_NewLocation.GetType())
 			{
 				case InventoryLocationType.GROUND:
-					new_item = EntityAI.Cast(g_Game.CreateObjectEx(m_NewItemType,m_NewLocation.GetPos(),ECE_PLACE_ON_SURFACE|ECE_LOCAL));
+					new_item = EntityAI.Cast(GetGame().CreateObjectEx(m_NewItemType,m_NewLocation.GetPos(),ECE_PLACE_ON_SURFACE|ECE_LOCAL));
 					string path = "" + CFG_VEHICLESPATH + " " + m_NewItemType + " inherit_rotation";
-					bool keep_rotation = g_Game.ConfigIsExisting(path) && g_Game.ConfigGetInt(path) > 0;
+					bool keep_rotation = GetGame().ConfigIsExisting(path) && GetGame().ConfigGetInt(path) > 0;
 					if (keep_rotation)
 					{
 						new_item.SetOrientation(m_OldItem.GetOrientation()); //this one actually works...debug InventoryLocation
@@ -205,7 +205,7 @@ class ReplaceItemWithNewLambdaBase
 	{
 		if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[inv] ReplaceItemWithNewLambdaBase Step G) CreateNetworkObjectInfo =" + new_item);
 		if (new_item)
-			g_Game.RemoteObjectTreeCreate(new_item); // G) this forces server to send CreateVehicle Message to client. This is needed for preserving the appearance of network operations on client (so that DeleteObject(old) arrives before CreateVehicle(new)). @NOTE: this does not delete the object on server, only it's network representation.
+			GetGame().RemoteObjectTreeCreate(new_item); // G) this forces server to send CreateVehicle Message to client. This is needed for preserving the appearance of network operations on client (so that DeleteObject(old) arrives before CreateVehicle(new)). @NOTE: this does not delete the object on server, only it's network representation.
 	}
 
 	/**@fn		OnSuccess
@@ -230,7 +230,7 @@ class ReplaceItemWithNewLambdaBase
 
 	void Execute(HumanInventoryWithFSM fsm_to_notify = null)
 	{
-		int t = g_Game.GetTime();
+		int t = GetGame().GetTime();
 		if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[syncinv] t=" + t + " lambda.Execute start ");
 
 		// A) init
@@ -290,7 +290,7 @@ class ReplaceItemWithNewLambdaBase
 			OnAbort();
 			return;
 		}
-		int te = g_Game.GetTime();
+		int te = GetGame().GetTime();
 		int dt = te - t;
 		if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[syncinv] te=" + te + " lambda.Execute end, exec time=" + dt);
 	}

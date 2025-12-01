@@ -44,8 +44,8 @@ class ActionBuryAshes: ActionContinuousBase
 			{
 				int liquidType;
 				string surfaceType;
-				g_Game.SurfaceUnderObject(fireplaceTarget, surfaceType, liquidType);
-				if (g_Game.IsSurfaceDigable(surfaceType))
+				GetGame().SurfaceUnderObject(fireplaceTarget, surfaceType, liquidType);
+				if (GetGame().IsSurfaceDigable(surfaceType))
 				{
 					return true;
 				}
@@ -58,7 +58,7 @@ class ActionBuryAshes: ActionContinuousBase
 	override void OnFinishProgressServer(ActionData action_data)
 	{
 		//destroy fireplace with ashes
-		g_Game.ObjectDelete(action_data.m_Target.GetObject());
+		GetGame().ObjectDelete(action_data.m_Target.GetObject());
 
 		MiscGameplayFunctions.DealAbsoluteDmg(action_data.m_MainItem, 4);
 	}

@@ -86,7 +86,7 @@ class FeatureTimeAccel
 		string output = "-timeAccel=";
 		int val = enable;
 		output += val.ToString()+","+timeAccelBig.ToString()+","+timeAccelSmall.ToString()+","+bitMask.ToString();
-		g_Game.CopyToClipboard(output);
+		GetGame().CopyToClipboard(output);
 	}
 	
 	//-------------------------------
@@ -133,7 +133,7 @@ class FeatureTimeAccel
 	
 	static void SendTimeAccel(Man player, TimeAccelParam param)
 	{
-		g_Game.RPCSingleParam(player, ERPCs.DIAG_TIMEACCEL, param, true, player.GetIdentity());
+		GetGame().RPCSingleParam(player, ERPCs.DIAG_TIMEACCEL, param, true, player.GetIdentity());
 	}
 }
 #endif

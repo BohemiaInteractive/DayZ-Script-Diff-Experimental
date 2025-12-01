@@ -52,11 +52,11 @@ class HandStateBase
 		{
 			if (e)
 			{
-				if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] { " + Object.GetDebugName(e.m_Player) + " STS = " + e.m_Player.GetSimulationTimeStamp() + " " + this.Type().ToString() + "  Has Sub-FSM! Starting submachine... OnEntry");
+				if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] { " + Object.GetDebugName(e.m_Player) + " STS = " + e.m_Player.GetSimulationTimeStamp() + " " + this.Type().ToString() + "  Has Sub-FSM! Starting submachine...");
 			}
 			else
 			{
-				if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] { " + this.Type().ToString() + "  Has Sub-FSM! Starting submachine... OnEntry");
+				if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] { " + this.Type().ToString() + "  Has Sub-FSM! Starting submachine...");
 			}
 			m_FSM.Start(e);
 		}
@@ -64,11 +64,11 @@ class HandStateBase
 		{
 			if (e)
 			{
-				if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] { " + Object.GetDebugName(e.m_Player) + " STS = " + e.m_Player.GetSimulationTimeStamp() + " " + this.Type().ToString() + " OnEntry");
+				if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] { " + Object.GetDebugName(e.m_Player) + " STS = " + e.m_Player.GetSimulationTimeStamp() + " " + this.Type().ToString());
 			}
 			else
 			{
-				if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] { " + this.Type().ToString() + " OnEntry");
+				if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] { " + this.Type().ToString());
 			}
 		}
 	}
@@ -92,11 +92,11 @@ class HandStateBase
 	{
 		if (HasFSM() && m_FSM.IsRunning())
 		{
-			if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] OnAbort " + this.Type().ToString() + "  Has Sub-FSM! Aborting submachine... OnAbort");
+			if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] OnAbort " + this.Type().ToString() + "  Has Sub-FSM! Aborting submachine...");
 			m_FSM.Abort(e);
 		}
 		//Debug.InventoryHFSMLog("ABORTED " + e.m_Player.GetSimulationTimeStamp(), ""/*typename.EnumToString(HandEventID, GetEventID()) */, "n/a", "OnAbort", m_Player.ToString() );
-		if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] } " + Object.GetDebugName(e.m_Player) + " STS = " + e.m_Player.GetSimulationTimeStamp() + " ABORTED " + this.Type().ToString() + " OnAbort");
+		if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] } " + Object.GetDebugName(e.m_Player) + " STS = " + e.m_Player.GetSimulationTimeStamp() + " ABORTED " + this.Type().ToString());
 	}
 
 	/**@fn		OnExit
@@ -105,7 +105,7 @@ class HandStateBase
 	 **/
 	void OnExit (HandEventBase e)
 	{
-		if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] } " + Object.GetDebugName(e.m_Player) + " STS = " + e.m_Player.GetSimulationTimeStamp() + " " + this.Type().ToString() + " OnExit");
+		if (LogManager.IsInventoryHFSMLogEnable()) hndDebugPrint("[hndfsm] } " + Object.GetDebugName(e.m_Player) + " STS = " + e.m_Player.GetSimulationTimeStamp() + " " + this.Type().ToString());
 	}
 
 	/**@fn			IsWaitingForActionFinish

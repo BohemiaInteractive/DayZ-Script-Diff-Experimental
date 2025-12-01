@@ -19,7 +19,7 @@ class ActionRepairBoatChassis : ActionRepairVehiclePartBase
 		if (!boat)
 			return false;
 		
-		if (g_Game.IsDedicatedServer())
+		if (GetGame().IsDedicatedServer())
 			return true;
 					
 		string damageZone = "";

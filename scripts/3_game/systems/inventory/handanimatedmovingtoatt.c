@@ -35,33 +35,24 @@ class HandAnimatedMoveToDst_W4T extends HandStartAction
 			InventoryLocation src = new InventoryLocation;
 			if (item.GetInventory().GetCurrentInventoryLocation(src))
 			{
-				if (g_Game.IsDedicatedServer())
+				if (!GetGame().IsDedicatedServer())
 				{
-					g_Game.ClearJunctureEx(m_Player, m_Dst.GetItem());
-				}
-				else
-				{
-					m_Player.GetHumanInventory().ClearInventoryReservationEx(m_Dst.GetItem(), m_Dst);
-				}
-				
-				#ifdef DIAG_DEVELOPER
-				if (g_Game.IsMultiplayer() && InventoryDebug.IsHandAckEnable())
-				{
-					if (!g_Game.IsDedicatedServer())
+					if (!GetGame().IsMultiplayer())
 					{
+						m_Player.GetHumanInventory().ClearInventoryReservationEx(m_Dst.GetItem(), m_Dst);
+						GameInventory.LocationSyncMoveEntity(src, m_Dst);
+						m_Player.OnItemInHandsChanged();
+					}
+					else
+					{
+						m_Player.GetHumanInventory().ClearInventoryReservationEx(m_Dst.GetItem(), m_Dst);
 						m_Player.GetHumanInventory().PostDeferredEventTakeToDst(InventoryMode.JUNCTURE,src, m_Dst);
 					}
 				}
 				else
 				{
-				#endif
-					if (GameInventory.LocationSyncMoveEntity(src, m_Dst))
-					{
-						m_Player.OnItemInHandsChanged();
-					}
-				#ifdef DIAG_DEVELOPER
+					GetGame().ClearJunctureEx(m_Player, m_Dst.GetItem());
 				}
-				#endif	
 			}
 			else
 				Error("[hndfsm] " + Object.GetDebugName(m_Player) + " STS = " + m_Player.GetSimulationTimeStamp() + " HandAnimatedMoveToDst_W4T - item " + item + " has no Inventory or Location, inv=" + item.GetInventory());
@@ -134,13 +125,13 @@ class HandAnimatedMovingToAtt extends HandStateBase
 
 	override void OnAbort(HandEventBase e)
 	{
-		if ( !g_Game.IsDedicatedServer())
+		if ( !GetGame().IsDedicatedServer())
 		{
 			m_Player.GetHumanInventory().ClearInventoryReservationEx(m_Entity, m_ilEntity);
 		}
 		else
 		{
-			g_Game.ClearJunctureEx(m_Player, m_Entity);
+			GetGame().ClearJunctureEx(m_Player, m_Entity);
 		}
 		
 		m_Entity = null;
@@ -151,7 +142,7 @@ class HandAnimatedMovingToAtt extends HandStateBase
 
 	override void OnExit(HandEventBase e)
 	{
-		if ( !g_Game.IsDedicatedServer())
+		if ( !GetGame().IsDedicatedServer())
 		{
 			m_Player.GetHumanInventory().ClearInventoryReservationEx(m_Entity, m_ilEntity);
 		}

@@ -188,13 +188,13 @@ class StaminaSoundHandlerClient extends StaminaSoundHandlerBase
 
 	void PostponeStamina(float time)
 	{
-		m_PostponeTime = g_Game.GetTime() + time;
+		m_PostponeTime = GetGame().GetTime() + time;
 	}
 
 	
 	override void Update()
 	{
-		if( g_Game.GetTime() < m_PostponeTime || m_Player.GetPlayerSoundEventHandler().m_CurrentState )
+		if( GetGame().GetTime() < m_PostponeTime || m_Player.GetPlayerSoundEventHandler().m_CurrentState )
 		{
 			return;
 		}

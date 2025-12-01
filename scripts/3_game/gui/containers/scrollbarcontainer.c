@@ -17,8 +17,8 @@ class ScrollBarContainer : ScriptedWidgetEventHandler
 		
 	void ~ScrollBarContainer()
 	{
-		//if(g_Game != NULL)
-		//g_Game.GetDragQueue().RemoveCalls(this);
+		//if(GetGame() != NULL)
+		//GetGame().GetDragQueue().RemoveCalls(this);
 	}
 	
 	void ScrollFixedAmount( bool down, float amount )
@@ -156,7 +156,7 @@ class ScrollBarContainer : ScriptedWidgetEventHandler
 	{
 		if (m_scrolling)
 		{
-			g_Game.GetDragQueue().RemoveCalls(this);
+			GetGame().GetDragQueue().RemoveCalls(this);
 			m_scrolling = false;
 		}
 	}
@@ -202,7 +202,7 @@ class ScrollBarContainer : ScriptedWidgetEventHandler
 			m_scrolling_start_pos = m_position;
 			int mouse_x;
 			GetMousePos(mouse_x, m_scrolling_mouse_pos);
-			g_Game.GetDragQueue().Call(this, "UpdateScroll");
+			GetGame().GetDragQueue().Call(this, "UpdateScroll");
 			return true;
 		}
 	

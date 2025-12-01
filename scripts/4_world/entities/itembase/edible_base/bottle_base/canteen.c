@@ -65,7 +65,7 @@ class Canteen extends Bottle_Base
 	{
 		super.EEOnCECreate();
 
-		WorldData data = g_Game.GetMission().GetWorldData();
+		WorldData data = GetGame().GetMission().GetWorldData();
 		if (data)
 		{
 			float chance = data.GetAgentSpawnChance(eAgents.CHOLERA);

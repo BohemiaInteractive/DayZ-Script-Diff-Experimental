@@ -22,7 +22,7 @@ class CASingleUseQuantityEdible : CASingleUseQuantity
 				consumeData.m_Agents = action_data.m_Player.GetBloodyHandsPenaltyAgents();
 		}
 		
-		if (g_Game.IsServer())
+		if (GetGame().IsServer())
 		{
 			PlayerBase ntarget = PlayerBase.Cast(action_data.m_Target.GetObject());
 			if (ntarget)
