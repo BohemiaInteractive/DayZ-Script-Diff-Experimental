@@ -549,10 +549,14 @@ class NewsCarousel extends ScriptedWidgetEventHandler
 		#endif
 		
 		#ifdef PLATFORM_CONSOLE
+		#ifdef PLATFORM_MSSTORE
+		shopLabel = "#dlc_open_store_Xbox";
+		#else
 		#ifdef PLATFORM_XBOX
 		shopLabel = "#dlc_open_store_Xbox";
 		#else
 		shopLabel = "#dlc_open_store_PS";
+		#endif
 		#endif
 		#endif
 		

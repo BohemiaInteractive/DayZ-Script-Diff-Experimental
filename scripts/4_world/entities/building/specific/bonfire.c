@@ -53,7 +53,7 @@ class Bonfire extends BuildingSuper
 		}
 		#endif
 		
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_UpdateInterval		= TIMER_HEATING_UPDATE_INTERVAL;
@@ -100,7 +100,7 @@ class Bonfire extends BuildingSuper
 		}
 		#endif
 		
-		if (GetGame().IsServer() || !GetGame().IsMultiplayer())
+		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
 			m_UTSource.SetActive(false);
 		}
