@@ -5,6 +5,7 @@ class Bonfire extends BuildingSuper
 	const float PARAM_FULL_HEAT_RADIUS				= 5;
 	const float	PARAM_MAX_TRANSFERED_TEMPERATURE	= 25;		//! maximum value for temperature that will be transfered to player (environment)
 	const float CONST_FIRE_TEMP						= 1000;
+	const float PARAM_DRY_MODIFIER					= 8.0;
 
 	protected BonfireLight		m_Light;
 	protected Particle 			m_ParticleFire;
@@ -62,6 +63,7 @@ class Bonfire extends BuildingSuper
 			m_UTSSettings.m_TemperatureCap		= PARAM_MAX_TRANSFERED_TEMPERATURE;
 			m_UTSSettings.m_RangeFull			= PARAM_FULL_HEAT_RADIUS;
 			m_UTSSettings.m_RangeMax			= PARAM_HEAT_RADIUS;
+			m_UTSSettings.m_ItemDryModifier		= PARAM_DRY_MODIFIER;
 			
 			m_UTSLBonfire 						= new UniversalTemperatureSourceLambdaConstant();
 			m_UTSource 							= new UniversalTemperatureSource(this, m_UTSSettings, m_UTSLBonfire);

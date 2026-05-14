@@ -55,6 +55,7 @@ class FireplaceBase : ItemBase
 	const float PARAM_FULL_HEAT_RADIUS 				= 2.0;		//! radius in which objects are fully heated by fire
 	const float PARAM_HEAT_RADIUS 					= 4.0;		//! radius in which objects are heated by fire
 	const float PARAM_MAX_TRANSFERED_TEMPERATURE	= 20;		//! maximum value for temperature that will be transfered to player (environment)
+	const float PARAM_DRY_MODIFIER					= 1.3;
 	
 	//staging constants
 	const int 	MIN_STONES_TO_BUILD_CIRCLE			= 8;		//! minimum amount of stones for circle
@@ -84,7 +85,7 @@ class FireplaceBase : ItemBase
 	const float IGNITE_WIND_THRESHOLD				= 0.8; 		//fireplace can not be ignited above this multiple of max wind
 	
 	protected const float RAIN_EFFECT_LIMIT 		= 0.4;		//! rain level that triggers fireplace to start soaking
-	protected const float SNOWFALL_EFFECT_LIMIT 	= 1.3;		//! snowfall level that triggers fireplace to start soaking
+	protected const float SNOWFALL_EFFECT_LIMIT 	= 1.5;		//! snowfall level that triggers fireplace to start soaking
 	protected const float RAIN_WETNESS_INCREASE 	= 0.02;		//! value for calculating of  wetness that fireplace gain when raining
 	protected const float SNOWFALL_WETNESS_INCREASE	= 0.01;		//! value for calculating of  wetness that fireplace gain when raining
 
@@ -281,6 +282,7 @@ class FireplaceBase : ItemBase
 		m_UTSSettings.m_TemperatureCap		= PARAM_MAX_TRANSFERED_TEMPERATURE;
 		m_UTSSettings.m_RangeFull			= PARAM_FULL_HEAT_RADIUS;
 		m_UTSSettings.m_RangeMax			= PARAM_HEAT_RADIUS;
+		m_UTSSettings.m_ItemDryModifier			= PARAM_DRY_MODIFIER;
 		
 		m_UTSSettings.m_EnableOnTemperatureControl		= true;
 		m_UTSSettings.m_ActiveTemperatureThreshold 		= 250.0;

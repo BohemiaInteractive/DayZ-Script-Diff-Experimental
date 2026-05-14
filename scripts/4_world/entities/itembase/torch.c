@@ -1,5 +1,11 @@
 class FlammableBase : ItemBase
 {
+	const float PARAM_FULL_HEAT_RADIUS 				= 0.5;
+	const float PARAM_HEAT_RADIUS 					= 1.0;
+	const int 	TIMER_HEATING_UPDATE_INTERVAL 		= 1;		//! update interval duration of heating process (seconds)
+	const float PARAM_MAX_TRANSFERED_TEMPERATURE	= 5;		//! maximum value for temperature that will be transfered to player (environment)
+	const float PARAM_DRY_MODIFIER					= 1.125;
+	
 	void FlammableBase()
 	{
 		Init();
@@ -60,11 +66,12 @@ class FlammableBase : ItemBase
 		{
  			m_UTSSettings 						= new UniversalTemperatureSourceSettings();
 			m_UTSSettings.m_Updateable			= true;
-			m_UTSSettings.m_UpdateInterval		= 1;
+			m_UTSSettings.m_UpdateInterval		= TIMER_HEATING_UPDATE_INTERVAL;
 			m_UTSSettings.m_TemperatureItemCap 	= GameConstants.ITEM_TEMPERATURE_NEUTRAL_ZONE_MIDDLE;
-			m_UTSSettings.m_TemperatureCap		= 5;
-			m_UTSSettings.m_RangeFull			= 0.5;
-			m_UTSSettings.m_RangeMax			= 1;
+			m_UTSSettings.m_TemperatureCap		= PARAM_MAX_TRANSFERED_TEMPERATURE;
+			m_UTSSettings.m_RangeFull			= PARAM_FULL_HEAT_RADIUS;
+			m_UTSSettings.m_RangeMax			= PARAM_HEAT_RADIUS;
+			m_UTSSettings.m_ItemDryModifier		= PARAM_DRY_MODIFIER;
 			
 			m_UTSLConstant					= new UniversalTemperatureSourceLambdaConstant();
 			m_UTSource						= new UniversalTemperatureSource(this, m_UTSSettings, m_UTSLConstant);

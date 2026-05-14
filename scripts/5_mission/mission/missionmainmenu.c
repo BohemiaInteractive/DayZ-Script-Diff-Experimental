@@ -37,7 +37,10 @@ class MissionMainMenu extends MissionBase
 			delete m_IntroScenePC;
 		#endif
 		
-		CreateIntroScene();
+		if (!m_NoCutscene)
+		{
+			CreateIntroScene();
+		}
 	}
 	
 	DayZIntroScenePC GetIntroScenePC()

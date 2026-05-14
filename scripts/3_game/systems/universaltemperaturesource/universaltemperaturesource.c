@@ -6,6 +6,7 @@ class UniversalTemperatureSourceSettings
 	float m_TemperatureCap		= float.MAX;	//! temperature cap that will limit the return value from GetTemperature method
 	float m_RangeFull			= 1;			//! range where the full temperature is given to receiver
 	float m_RangeMax			= 2;			//! maximum range where the receiver can get some temperature
+	float m_ItemDryModifier		= 1.5;
 	
 	bool m_EnableOnTemperatureControl		= false;	//! enable or disable activation/deactivation on set temperature
 	float m_ActiveTemperatureThreshold 		= 0.0; 	 	//! UTS will be active on temperature >= to this value
