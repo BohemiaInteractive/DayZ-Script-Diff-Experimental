@@ -1045,9 +1045,9 @@ class Environment
 				heatComfortSum += stomachContentTemperature * GameConstants.ENVIRO_STOMACH_WEIGHT;
 			}
 		}
-
-		float targetHeatComfort = (heatComfortSum + heatItems + (GetPlayerHeat() / 100)) + EnvTempToCoef(m_EnvironmentTemperature);
 		
+		float targetHeatComfort = (heatComfortSum + heatItems + (GetPlayerHeat() / 100)) + EnvTempToCoef(m_EnvironmentTemperature);
+				
 		//! uses the raw targetHeatComfort data
 		m_EnvironmentSnapshot.m_ClothingHeatComfort = hcBodyPartTotal;
 		m_EnvironmentSnapshot.m_TargetHeatComfort 	= targetHeatComfort;
@@ -1501,8 +1501,9 @@ class Environment
 			}
 		}
 
-		if (m_Player.GetItemInHands() && m_Player.GetItemInHands().IsUniversalTemperatureSource())
-			m_UTemperatureSources.Insert(m_Player.GetItemInHands().GetUniversalTemperatureSource());
+		ItemBase inHandsItem = m_Player.GetItemInHands();
+		if (inHandsItem && inHandsItem.IsUniversalTemperatureSource())
+			m_UTemperatureSources.Insert(inHandsItem.GetUniversalTemperatureSource());
 	}
 	
 	/**
@@ -1522,7 +1523,7 @@ class Environment
 			return;
 		}
 
-		array<float> utsTemperatures = new array<float>();
+		TFloatArray utsTemperatures = new TFloatArray();
 		
 		// get temperature from the source (based on distance), save it for min/max filtering
 		float itemCoefAverage = 0.0;
