@@ -94,11 +94,6 @@ class CableReel extends ItemBase
 			playerPB.GetHologramLocal().SetSelectionToRefresh(selections);
 	}
 	
-	override string GetDeploySoundset()
-	{
-		return "placeCableReel_SoundSet";
-	}
-	
 	override void SetActions()
 	{
 		super.SetActions();

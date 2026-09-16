@@ -12,7 +12,7 @@ class ClaymoreMine : ExplosivesBase
 		m_RAIB = new RemotelyActivatedItemBehaviour(this);
 		
 		SetAmmoTypes({"ClaymoreMine_Ammo","ClaymoreMine_Secondary_Ammo"});
-		SetParticleExplosion(ParticleList.CLAYMORE_EXPLOSION);
+		//SetParticleExplosion(ParticleList.CLAYMORE_EXPLOSION);
 		SetParticleOrientation("90 0 0");
 
 		RegisterNetSyncVariableInt("m_RAIB.m_PairDeviceNetIdLow");

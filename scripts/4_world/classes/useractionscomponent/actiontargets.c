@@ -35,11 +35,16 @@ class VicinityObjects
 	{
 		foreach (Object obj : objects)
 		{
-			if (obj && obj.GetType() != "" && obj.CanBeActionTarget())
+			if (IsValidVicinityObject(obj))
 			{
 				StoreVicinityObject(obj);
 			}
 		}
+	}
+	
+	protected bool IsValidVicinityObject(notnull Object obj)
+	{
+		return obj.CanBeActionTarget();
 	}
 	
 	void ClearVicinityObjects()
@@ -48,9 +53,9 @@ class VicinityObjects
 	}
 
 	//! return simple array of Objects in Vicinity
-	array< Object > GetVicinityObjects()
+	array<Object> GetVicinityObjects()
 	{
-		ref array<Object> vicinityObjects = new array<Object>;
+		array<Object> vicinityObjects = new array<Object>();
 		for (int i = 0; i < m_VicinityObjects.Count(); i++)
 		{
 			//! filters out non-takeable items (won't be shown in vicinity)
@@ -65,9 +70,9 @@ class VicinityObjects
 	}
 	
 	//! return simple array of Objects in Vicinity
-	array< Object > GetRawVicinityObjects()
+	array<Object> GetRawVicinityObjects()
 	{
-		ref array<Object> vicinityObjects = new array<Object>;
+		array<Object> vicinityObjects = new array<Object>();
 		for (int i = 0; i < m_VicinityObjects.Count(); i++)
 		{
 			vicinityObjects.Insert(GetObject(i));
@@ -109,20 +114,40 @@ class VicinityObjects
 
 class ActionTarget
 {
-	void ActionTarget(Object object, Object parent, int componentIndex, vector cursorHitPos, float utility)
+	private Object m_Object;		// object itself
+	private Object m_Parent;		// null or parent of m_Object
+	private int m_ComponentIndex;		// p3d Component ID or -1
+	private vector m_CursorHitPos;
+	private float m_Utility;
+	private string m_SurfaceName;
+	private int m_SurfaceLiquidType = LIQUID_NONE;
+	
+	void ActionTarget(Object object, Object parent, int componentIndex, vector cursorHitPos, float utility, string surfaceName = "")
 	{
 		m_Object = object;
 		m_Parent = parent;
 		m_ComponentIndex = componentIndex;
 		m_CursorHitPos = cursorHitPos;
 		m_Utility = utility;
-	} 
+				
+		m_SurfaceName = surfaceName;
+		if (m_SurfaceName != "")
+		{
+			SurfaceInfo surfaceInfo = SurfaceInfo.GetByFile(surfaceName);
+			if (surfaceInfo && surfaceInfo.GetLiquidType() != LIQUID_NONE)
+				m_SurfaceLiquidType = surfaceInfo.GetLiquidType();
+		}
+	}
 
 	Object GetObject()
-		{ return m_Object; }
+	{
+		return m_Object;
+	}
 
 	Object GetParent()
-		{ return m_Parent; }
+	{ 
+		return m_Parent; 
+	}
 
 	bool IsProxy()
 	{
@@ -132,17 +157,33 @@ class ActionTarget
 	}
 	
 	int GetComponentIndex()	
-		{ return m_ComponentIndex; }
+	{ 
+		return m_ComponentIndex;
+	}
 	
 	float GetUtility()
-		{ return m_Utility; }
+	{
+		 return m_Utility;
+	}
 	
 	vector GetCursorHitPos()
-		{ return m_CursorHitPos; }
+	{
+		 return m_CursorHitPos; 
+	}
 	
 	void SetCursorHitPos(vector cursor_position)
 	{
 		m_CursorHitPos = cursor_position;
+	}
+	
+	string GetSurfaceName()
+	{
+		return m_SurfaceName;
+	}
+		
+	int GetSurfaceLiquidType()
+	{
+		return m_SurfaceLiquidType;
 	}
 	
 	void DbgPrintTargetDump()
@@ -161,12 +202,6 @@ class ActionTarget
 		res = res + "}";
 		return res;
 	}
-	
-	private Object m_Object;		// object itself
-	private Object m_Parent;		// null or parent of m_Object
-	private int m_ComponentIndex;	// p3d Component ID or -1
-	private vector m_CursorHitPos;
-	private float m_Utility;
 };
 
 class ActionTargets
@@ -236,7 +271,7 @@ class ActionTargets
 						if (res.hierLevel > 0)
 						{
 							//! ignores attachments on player and objects with invalid IDs
-							if (res.parent.IsMan() || res.obj.GetID() < 1)
+							if (res.parent.IsMan() || (res.obj.GetID() < 1 && !IsRaycastResultException(res)))
 								continue;
 						}
 						
@@ -248,6 +283,30 @@ class ActionTargets
 						if (m_HitPos == vector.Zero)
 							m_HitPos = res.pos;
 						
+						if (res.surface && res.surface.GetSurfaceType() != "")
+						{
+							m_SurfaceInfo = res.surface;
+						}
+						else
+						{
+							//! Need to do this surface detection here as the current RaycastRVResult might not contain the correct surface info
+							SurfaceDetectionParameters surfaceParams = new SurfaceDetectionParameters();
+							surfaceParams.type = SurfaceDetectionType.Roadway;
+							surfaceParams.position = m_HitPos;
+							surfaceParams.includeWater = true;
+							surfaceParams.syncMode = UseObjectsMode.NoWait;
+							surfaceParams.rsd = RoadSurfaceDetection.ABOVE;
+							
+							//! Check current surface player is looking at
+							SurfaceDetectionResult surfaceResult = new SurfaceDetectionResult();
+							if (g_Game.GetSurface(surfaceParams, surfaceResult))
+							{
+								if (surfaceResult && surfaceResult.surface)
+								{
+									m_SurfaceInfo = surfaceResult.surface;
+								}
+							}
+						}
 						break;
 					}
 				}
@@ -257,6 +316,7 @@ class ActionTargets
 		{
 			firstValidRaycastedObject = null;
 			m_HitPos = vector.Zero;
+			m_SurfaceInfo = null;
 		}
 		
 		//! spacial search
@@ -301,7 +361,11 @@ class ActionTargets
 			float utility = ComputeUtility(object, m_RayStart, m_RayEnd, firstValidRaycastedObject, hitpos);
 			if (utility > 0)
 			{
-				ActionTarget at = new ActionTarget(object, parent, targetComponent, m_HitPos, utility);
+				string surfaceName;
+				if (m_SurfaceInfo && m_SurfaceInfo.GetEntryName() != "")
+					surfaceName = m_SurfaceInfo.GetEntryName();
+
+				ActionTarget at = new ActionTarget(object, parent, targetComponent, m_HitPos, utility, surfaceName);
 				StoreTarget(at);
 			}
 		}
@@ -341,6 +405,15 @@ class ActionTargets
 			DrawSelectionPos(false);
 		}
 #endif
+	}
+	
+	//! Initial raycast filtering exceptions (can't ask the entity type, sadly)
+	protected bool IsRaycastResultException(RaycastRVResult res)
+	{
+		if (TentBase.Cast(res.parent))
+			return true;
+		
+		return false;
 	}
 	
 	//distance sorting, returns sorted unique distance tiers as ints (float*1000)
@@ -422,39 +495,43 @@ class ActionTargets
 
 		if (pTarget)
 		{
-			if ( pTarget == cursorTarget )
+			if (pTarget == cursorTarget)
 			{
 				//! ground and static objects
-				if ( pTarget.GetType() == string.Empty )
+				if (pTarget.GetType() == string.Empty)
 					return 0.01;
 
-				if ( pTarget.IsBuilding() )
+				if (pTarget.IsBuilding())
 					return 0.25;
 
-				if ( pTarget.IsTransport() )
+				if (pTarget.IsTransport())
 					return 0.25;
 				
 				//!basebuilding objects
 				if (pTarget.CanUseConstruction())
 					return 0.85;
 
-				if ( pTarget.IsWell() )
+				if (pTarget.IsWell())
 					return 0.9;
-
+				
 				vector playerPosXZ = m_Player.GetPosition();
 				vector hitPosXZ = hitPos;
 				playerPosXZ[1] = 0;
 				hitPosXZ[1] = 0;
-				if ( vector.DistanceSq(playerPosXZ, hitPosXZ) <= c_MaxTargetDistance * c_MaxTargetDistance )
+				if (vector.DistanceSq(playerPosXZ, hitPosXZ) <= c_MaxTargetDistance * c_MaxTargetDistance)
 					return c_UtilityMaxValue;
 			}
-
+			
 			if ( PlayerBase.Cast(pTarget) && PlayerBase.Cast(pTarget).IsInVehicle() ) // utility in vehicle should be below base vehicle val
 				return 0.20;
 			
 			float distSqr = DistSqrPoint2Line(pTarget.GetPosition(), pRayStart, pRayEnd);
-			return (c_UtilityMaxDistFromRaySqr - distSqr) / c_UtilityMaxDistFromRaySqr;
+			return ((c_UtilityMaxDistFromRaySqr - distSqr) / c_UtilityMaxDistFromRaySqr) * c_UtilityValueCoef;
 		}
+		
+		//! surfaces with liquid source
+		if (m_SurfaceInfo && m_SurfaceInfo.GetLiquidType() != LIQUID_NONE)
+			return 0.01;
 
 		return -1;
 	}
@@ -754,6 +831,8 @@ class ActionTargets
 	private vector m_RayEnd;
 	private vector m_HitPos; //!first valid hitpos! Used only as rough reference value for conecasted results.
 	
+	private SurfaceInfo m_SurfaceInfo;
+	
 	//--------------------------------------------------------
 	// Constants
 	//--------------------------------------------------------
@@ -768,7 +847,8 @@ class ActionTargets
 	
 	//! utility constants
 	private const float c_UtilityMaxValue = 10000;
-	private const float c_UtilityMaxDistFromRaySqr = 0.8 * 0.8;
+	private const float c_UtilityMaxDistFromRaySqr = 0.65 * 0.65;
+	private const float c_UtilityValueCoef = 0.35;
 
 	//! p3d 
 	private const string CE_CENTER 					= "ce_center";

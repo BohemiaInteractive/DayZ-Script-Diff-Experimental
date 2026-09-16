@@ -108,7 +108,7 @@ class BearTrap extends TrapBase
 				OnServerSteppedOn(victim, "zone_leg_random");
 			}
 		}
-		else if (!g_Game.IsDedicatedServer()) //! this is also called on client (OnRPC->SnapOn->OnSteppedOn chain)
+		else if (!g_Game.IsHeadlessOrDedicatedServer()) //! this is also called on client (OnRPC->SnapOn->OnSteppedOn chain)
 		{
 			if (victim)
 			{
@@ -210,14 +210,18 @@ class BearTrap extends TrapBase
 	override void OnActivate()
 	{
 		#ifndef SERVER
+		#ifndef NO_GUI
 		PlaySoundOpen();
+		#endif
 		#endif
 	}
 	
 	override void OnDisarm()
 	{
 		#ifndef SERVER
+		#ifndef NO_GUI
 		PlaySoundBiteEmpty();
+		#endif
 		#endif
 	}
 	

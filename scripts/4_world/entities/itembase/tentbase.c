@@ -182,6 +182,12 @@ class TentBase extends ItemBase
 		}
 	}
 	
+	override protected void EOnContact(IEntity other, Contact extra)
+	{
+		if ((g_Game.IsServer() || !g_Game.IsMultiplayer()) && m_State == PITCHED)
+			Pack(false);
+	}
+	
 	override void OnVariablesSynchronized()
 	{
 		super.OnVariablesSynchronized();

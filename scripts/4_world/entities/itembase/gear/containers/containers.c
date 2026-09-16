@@ -80,3 +80,13 @@ class SmallProtectorCase : Container_Base
 }
 
 class TrashCan : WorldContainer_Base {};
+class NBCPack_ColorBase : Container_Base 
+{
+	override bool CanDisplayAttachmentCargo(EntityAI attachment)
+	{
+		return false;
+	}
+};
+class NBCPack_Grey : NBCPack_ColorBase {};
+class NBCPack_White : NBCPack_ColorBase {};
+class NBCPack_Yellow : NBCPack_ColorBase {};
