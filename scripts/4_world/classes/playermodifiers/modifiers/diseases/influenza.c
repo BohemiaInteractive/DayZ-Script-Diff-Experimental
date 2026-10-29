@@ -41,7 +41,6 @@ class InfluenzaMdfr : ModifierBase
 
 	override protected void OnDeactivate(PlayerBase player)
 	{
-		player.DecreaseDiseaseCount();
 		DoOnce.Clear(ClassName());
 
 		player.SetTemporaryResistanceToAgent(eAgents.INFLUENZA, TEMPORARY_RESISTANCE_TIME);

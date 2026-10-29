@@ -312,6 +312,12 @@ class LandMineTrap extends TrapBase
 		AddAction(ActionDeployObject);
 	}
 	
+	override void OnTriggeredByFall(Contact extra)
+	{
+		// Explode() already handles the server check and cleans itself up via DeleteThis()
+		Explode(DamageType.EXPLOSION);
+	}
+	
 #ifdef DEVELOPER	
 	//================================================================
 	// DEBUG

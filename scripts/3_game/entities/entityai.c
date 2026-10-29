@@ -660,15 +660,34 @@ class EntityAI extends Entity
 		return false;
 	}
 
-	//! is this container empty or not, checks only cargo
+	//! Is this container empty or not, checks only cargo
+	//! @note: Does NOT include count of items in cargo of items that are themselves in cargo
 	bool HasAnyCargo()
 	{
+		//! Does the item has any cargo?
 		CargoBase cargo = GetInventory().GetCargo();
-		
-		if(!cargo) return false;//this is not a cargo container
+		if (!cargo)
+			return false;
 		
 		return cargo.GetItemCount() > 0;
-		}
+	}
+	
+	//! Is there any attachments on the object or not, checks only attachments
+	//! @note: Does NOT include count of items of attachments of items that are themselves in cargo or attached
+	bool HasAnyAttachments()
+	{
+		return GetInventory().AttachmentCount() > 0;
+	}
+	
+	//! Is there any attachments or cargo items in the object
+	//! @note: Does NOT include count of items in cargo or attachments of items that are themselves in cargo or attached
+	bool HasAnyAttachmentsOrCargo()
+	{
+		if (!HasAnyCargo() && !HasAnyAttachments())
+			return false;
+		
+		return true;
+	}
 	
 	array<EntityAI> GetAttachmentsWithCargo()
 	{
@@ -1695,6 +1714,10 @@ class EntityAI extends Entity
 	//! useful for construction and inventory related systems
 	bool IsFacingPlayerEx(DayZPlayer player, string selection)
 	{
+		ConstructionBasic constructionComponent = GetConstructionBasic();
+		if (constructionComponent)
+			return constructionComponent.IsPartFacingPlayer(player, selection);
+		
 		return true;
 	}
 	
@@ -4786,17 +4809,25 @@ class EntityAI extends Entity
 
 	void NotifyPlayerLoadChanged(EntityAI owner);
 
-
 	//! Override on children to create the desired data class subtype
-	protected void InitializeInstanceAttachmentGroupsData()
-	{
-	}
+	protected void InitializeInstanceAttachmentGroupsData();
 
 	protected InstancedAttachmentGroupDataBase GetInstancedAttGroupData()
 	{
 		return null;
 	}
 
+	//! Override on children to handle destruction of construction parts of falling rebuilding and base building objects
+	bool DestroyOnFall()
+	{
+		return false;
+	}
+	
+	//! @Note for modders: This method and its overrides are subjects to change!
+	//! Override on children to handle desired events when item is falling from rebuilding and base building construction parts
+	//! Method is called from the ConstructionBase::ItemFall method
+	void OnItemFallRebuilding();
+	
 	//OBSOLETE
 	/**
 	\brief Put item into into cargo

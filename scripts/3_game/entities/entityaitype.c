@@ -69,7 +69,7 @@ class EntityAIType : EntityType
 		if (g_Game.ConfigIsExisting(path))
 		{
 			m_TypedConstructionDataHolder = ConstructionDataTypeHolderBasic.Cast("ConstructionDataTypeHolder".ToType().Spawn());
-			m_TypedConstructionDataHolder.InitPartsTypeDataHolder(ownerTypeName, path);
+			m_TypedConstructionDataHolder.InitPartsTypeDataHolder(this, path);
 		}
 	}
 	

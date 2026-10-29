@@ -172,6 +172,11 @@ class ActionDismantlePart: ActionContinuousBase
 				
 				if (constructionPart)
 				{
+					#ifdef DIAG_DEVELOPER
+					if (!g_Game.IsDedicatedServer())
+						construction.UpdateItemFallDebugVisuals(constructionPart.GetPartName());
+					#endif					
+					
 					//invalid on gate if the gate is opened
 					if (baseBuilding && constructionPart.IsGate() && baseBuilding.IsOpened())
 						return false;

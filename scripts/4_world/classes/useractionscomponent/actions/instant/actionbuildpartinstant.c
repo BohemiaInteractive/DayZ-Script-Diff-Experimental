@@ -189,6 +189,7 @@ class ActionBuildPartInstantDebug : ActionInstantBase
 	protected bool PositioningCheck(PlayerBase player, ActionTarget target)
 	{
 		EntityAI ent = EntityAI.Cast(target.GetObject());
+		BaseBuildingBase bbb = BaseBuildingBase.Cast(ent);
 		ConstructionActionData cad = player.GetConstructionActionData();
 		ConstructionPart part = GetTargetPart(cad);
 		
@@ -196,7 +197,12 @@ class ActionBuildPartInstantDebug : ActionInstantBase
 		{
 			ConstructionBase construction = ConstructionBase.Cast(ent.GetConstructionBasic());
 			if (!ent.IsPlayerInsideEx(player, part.GetPartName()))
-				return false;
+			{
+				if (bbb && !bbb.MustBeBuiltFromOutside())
+					return false;
+				else if (!bbb)
+					return false;
+			}
 			if (!construction.ConstructionDirectionCheck(player, part, EConstructionDirCheckType.INDOORS))
 				return false;
 			if (!construction.ConstructionInsiderBoxCheck(player, part))

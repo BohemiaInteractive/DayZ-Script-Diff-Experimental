@@ -349,6 +349,21 @@ class CfgGameplayHandler
 		return m_Data.BaseBuildingData.ConstructionData.disableDistanceCheck;
 	}
 	//----------------------------------------------------------------------------------
+	static bool GetDisableItemFalling()
+	{
+		return m_Data.BaseBuildingData.ConstructionData.disableItemFalling;
+	}
+	//----------------------------------------------------------------------------------
+	static bool GetDisableDropAttachmentsOnFall()
+	{
+		return m_Data.BaseBuildingData.ConstructionData.disableDropAttachmentsOnFall;
+	}
+	//----------------------------------------------------------------------------------
+	static bool GetDisableRefundMaterialsOnFall()
+	{
+		return m_Data.BaseBuildingData.ConstructionData.disableRefundMaterialsOnFall;
+	}
+	//----------------------------------------------------------------------------------
 	static bool GetDisableColdAreaPlacementCheck()
 	{
 		return m_Data.BaseBuildingData.HologramData.disableColdAreaPlacementCheck;

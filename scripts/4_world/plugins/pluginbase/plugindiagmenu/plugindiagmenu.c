@@ -518,6 +518,7 @@ class PluginDiagMenu : PluginBase
 				DiagMenu.RegisterItem(DiagMenuIDs.BASEBUILDING_FASTBUILD, "lalt+b", "Fast&Free building", DiagMenuIDs.BASEBUILDING_MENU, "Disabled,Fast,Instant");
 					DiagMenu.SetValue(DiagMenuIDs.BASEBUILDING_FASTBUILD, EConstructionDebugModes.DISABLED);
 				DiagMenu.RegisterBool(DiagMenuIDs.BASEBUILDING_COLLISIONDEBUG, "", "Collision debug", DiagMenuIDs.BASEBUILDING_MENU);
+				DiagMenu.RegisterBool(DiagMenuIDs.BASEBUILDING_ITEMFALLDEBUG, "", "Item falling debug", DiagMenuIDs.BASEBUILDING_MENU);
 				DiagMenu.RegisterBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG, "lalt+h", "Full debug", DiagMenuIDs.BASEBUILDING_MENU);
 			}
 			

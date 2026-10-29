@@ -260,6 +260,10 @@ class ITEM_ConstructionData : ITEM_DataBase
 	
 	override void InitServer()
 	{
+	#ifdef SERVER_FOR_CONSOLE
+		disableDropAttachmentsOnFall = true;
+		disableRefundMaterialsOnFall = true;
+	#endif
 	}
 	
 	override bool ValidateServer()
@@ -272,6 +276,9 @@ class ITEM_ConstructionData : ITEM_DataBase
 	bool disablePerformRoofCheck;
 	bool disableIsCollidingCheck;
 	bool disableDistanceCheck;
+	bool disableItemFalling;
+	bool disableDropAttachmentsOnFall;
+	bool disableRefundMaterialsOnFall;
 };
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------

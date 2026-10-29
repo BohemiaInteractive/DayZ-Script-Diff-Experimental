@@ -9,7 +9,7 @@ class ConstructionMaterialData
 	string m_MaterialType;
 	string m_MaterialSlotName;
 	
-	
+
 	void ConstructionMaterialData(string cfgPath)
 	{
 		Init(cfgPath);
@@ -23,12 +23,12 @@ class ConstructionMaterialData
 		m_MaterialType = "";
 		m_MaterialSlotName = "";
 		
-		GetGame().ConfigGetText(cfgPath + " type", m_MaterialType);
-		GetGame().ConfigGetText(cfgPath + " slot_name", m_MaterialSlotName);
+		g_Game.ConfigGetText(cfgPath + " type", m_MaterialType);
+		g_Game.ConfigGetText(cfgPath + " slot_name", m_MaterialSlotName);
 		m_MaterialSlotID = InventorySlots.GetSlotIdFromString(m_MaterialSlotName);
-		m_MaterialQuantity = GetGame().ConfigGetFloat(cfgPath + " quantity");
-		m_MaterialLockable = GetGame().ConfigGetInt(cfgPath + " lockable");
-		m_SkipOnRepair = GetGame().ConfigGetInt(cfgPath + " skipOnRepair");
-		m_SkipOnDismantle = GetGame().ConfigGetInt(cfgPath + " skipOnDismantle");
+		m_MaterialQuantity = g_Game.ConfigGetFloat(cfgPath + " quantity");
+		m_MaterialLockable = g_Game.ConfigGetInt(cfgPath + " lockable");
+		m_SkipOnRepair = g_Game.ConfigGetInt(cfgPath + " skipOnRepair");
+		m_SkipOnDismantle = g_Game.ConfigGetInt(cfgPath + " skipOnDismantle");
 	}
 }

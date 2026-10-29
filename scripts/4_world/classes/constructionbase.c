@@ -29,6 +29,8 @@ enum EConstructionDebugModes
 
 class ConstructionBase : ConstructionBasic
 {
+	protected static const int MAX_MATERIAL_PILES = 64; //safety cap for material pile spawning
+	
 	static const float REPAIR_MATERIAL_PERCENTAGE = 0.15;
 	static const float DECONSTURCT_MATERIAL_LOSS = 0.2;
 	static const float DEFAULT_DECAY_RATE = -1.0; //! HP/s change
@@ -36,17 +38,52 @@ class ConstructionBase : ConstructionBasic
 	static const float DEFAULT_DECAY_RATE_COEF = 1.0; //! Default decay speed coef
 	static const float SANDSTORM_DECAY_RATE_COEF = 1.5; //! Sandstorm decay speed coef
 	
+	static const float ITEM_FALL_MARGIN_TOP_DEFAULT = 0.5; //! top (+Y) margin for unmatched parts, covers collision boxes undershooting the part's support surface
+	static const float ITEM_FALL_MARGIN_TOP_ROOF = 0.5; //! top margin for roof/ceiling parts, tune per category as needed
+	static const float ITEM_FALL_MARGIN_TOP_WALL = 0.5;
+	static const float ITEM_FALL_MARGIN_TOP_WINDOW = 0.5;
+	static const float ITEM_FALL_MARGIN_TOP_DOOR = 0.5;
+	static const float ITEM_FALL_HEIGHT_DIFF_TOLERANCE = 0.3;
+	
+	protected ConstructionDataTypeHolder m_TypeLevelHolder;
 	protected ref map<string, ref ConstructionPart> m_ConstructionParts //! INSTANCED construction part data;
 	protected ref array<ConstructionPart> m_ConstructionPartArray; //ordered array for easier access
 	protected ref array<ConstructionPart> m_BuiltConstructionPartArray; //built parts array
 	protected EntityAI 	m_EntityParent;
 	protected bool m_AnyPartBuildableByHands;
+	protected bool m_UpdateUtilityParts;
 	
 	#ifdef DIAG_DEVELOPER
+	static const int MAX_ITEM_FALL_DEBUG_WAVES = 8; //! safety cap for cascade waves in the item falling debug
+	static const int ITEM_FALL_DEBUG_QUERY_INTERVAL = 3; //! requery the item fall cascade every N frames, cached shapes are re-aimed in between
+	static const int ITEM_FALL_DEBUG_STALE_FRAMES = 3; //! frames without a targeting refresh before the debug shapes of a construction are cleaned up
+	static const float ITEM_FALL_DEBUG_FRECAM_RAY_DIST = 100.0; //! raycast distance for the free camera item fall debug part lookup
 	//Debug
 	protected Shape m_CollisionBox;
 	protected Shape m_PlayerInsideTestCylinder;
 	protected ref array<Shape> m_InsideTestBoxes;
+	//Item falling debug, reusable state (allocated on first use)
+	protected ref array<Shape> m_ItemFallDebugBoxes;
+	protected ref array<Shape> m_ItemFallAffectedDebugBoxes;
+	//cascade query scratch
+	protected ref array<ConstructionBase> m_ItemFallDebugQueueConstructions;
+	protected ref array<string> m_ItemFallDebugQueueParts;
+	protected ref map<int, int> m_ItemFallDebugProcessed;
+	protected ref array<string> m_ItemFallDebugLines;
+	protected ref array<string> m_ItemFallDebugWaveLines;
+	protected ref array<Object> m_ItemFallDebugAffected;
+	protected ref array<Object> m_ItemFallDebugResults;
+	//cached cascade data, refreshed on query and consumed every frame for shape drawing
+	protected string m_ItemFallDebugPartName;
+	protected bool m_ItemFallDebugHasData;
+	protected int m_ItemFallDebugFrameCounter;
+	protected ref array<ConstructionBase> m_ItemFallDebugBoxConstructions;
+	protected ref array<string> m_ItemFallDebugBoxParts;
+	protected ref array<int> m_ItemFallDebugBoxWaves;
+	protected ref array<Object> m_ItemFallDebugAffectedCache;
+	protected ref array<int> m_ItemFallDebugAffectedWaves;
+	//frame lease, refreshed while the part is targeted, expired by the ConstructionDebug sweep
+	protected int m_ItemFallDebugLastTick;
 	#endif
 	
 	//============================================
@@ -65,6 +102,11 @@ class ConstructionBase : ConstructionBasic
 		
 		//set parent object
 		SetParent(parent);
+		EntityAIType entityType;
+		if (!Class.CastTo(entityType, m_EntityParent.GetEntityType()) || !Class.CastTo(m_TypeLevelHolder, entityType.GetConstructionDataHolderBasic()))
+		{
+			ErrorEx("invalid EntityType or ConstructionDataTypeHolder for entity instance: " + parent);
+		}
 	}
 	
 	void ~ConstructionBase()
@@ -104,12 +146,10 @@ class ConstructionBase : ConstructionBasic
 		m_BuiltConstructionPartArray = null;
 		
 		#ifdef DIAG_DEVELOPER
+		ResetItemFallDebugVisuals();
 		m_InsideTestBoxes = null;
 		#endif
 	}
-	
-	protected void InitAttachmentGUIPartStructure();
-	protected void InitAttachmentGUIPartLinks(ConstructionPart part);
 	
 	protected void SetParent(EntityAI parent)
 	{
@@ -139,7 +179,7 @@ class ConstructionBase : ConstructionBasic
 		{
 			if (LogManager.IsBaseBuildingLogEnable()) bsbDebugPrint("[bsb] Construction " + Object.GetDebugName(m_EntityParent) + " AddToConstructedParts part=" + part.GetPartName());
 			part.SetBuiltState(true);
-			part.TryHandleUtilityParts(m_EntityParent);
+			part.TryQueueUtilityPartsUpdate(this);
 			if (m_BuiltConstructionPartArray.Find(part) == -1)
 				m_BuiltConstructionPartArray.Insert(part);
 			
@@ -157,7 +197,7 @@ class ConstructionBase : ConstructionBasic
 		{
 			if (LogManager.IsBaseBuildingLogEnable()) bsbDebugPrint("[bsb] Construction " + Object.GetDebugName(m_EntityParent) + " RemoveFromConstructedParts part=" + part.GetPartName());
 			part.SetBuiltState(false);
-			part.TryHandleUtilityParts(m_EntityParent);
+			part.TryQueueUtilityPartsUpdate(this);
 			m_BuiltConstructionPartArray.RemoveItem(part);
 			
 			#ifndef SERVER
@@ -196,7 +236,8 @@ class ConstructionBase : ConstructionBasic
 		DropNonUsableMaterialsServer(player, part_name);
 		DropEssentialAttachments(player, part_name);
 		
-		HandleEntityFalling(part_name);
+		if (!CfgGameplayHandler.GetDisableItemFalling())
+			HandleEntityFalling(part_name);
 	}
 	
 	//! destroy part method
@@ -210,7 +251,8 @@ class ConstructionBase : ConstructionBasic
 		DropNonUsableMaterialsServer(player, part_name);
 		DropEssentialAttachments(player, part_name);
 		
-		HandleEntityFalling(part_name);
+		if (!CfgGameplayHandler.GetDisableItemFalling())
+			HandleEntityFalling(part_name);
 	}
 	
 	void DestroyConnectedParts(string part_name)
@@ -230,53 +272,91 @@ class ConstructionBase : ConstructionBasic
 		}
 	}
 	
-	//! when supporting part is removed, entities on top of it should transform to surface Y height
-	protected void HandleEntityFalling(string partName)
+	//! when supporting part is removed, entities resting on or against it should be made to fall
+	void HandleEntityFalling(string partName)
 	{
 		ConstructionPart part = GetConstructionPart(partName);
-		if (part.CanSimulateItemFalling())
+		vector minMax[2];
+		if (part && GetItemFallDetectionBoxData(partName, minMax))
 		{
-			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(ItemFall, partName); //deferred call to allow for material spawning/part's phx adjustment
+			if (!part.TriggersItemFall())
+			{
+				//part opted out of item falling via config 'item_fall_trigger = 0' (e.g. rubble, doors, windows)
+				return;
+			}
+			
+			if (PartSupportsOtherParts(partName))
+			{
+				//part supports built part/s above it (e.g. a wall under a roof/ceiling, or a part other built
+				//parts explicitly require), entities in its box are handled by the dependents when they are destroyed
+				return;
+			}
+			
+			vector min = minMax[0];
+			vector max = minMax[1];
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(ItemFall, partName, min, max); //deferred call to allow for material spawning/part's phx adjustment
 		}
 	}
 	
-	protected void ItemFall(string partName)
+	protected void ItemFall(string partName, vector min, vector max)
 	{
 		vector minMax[2];
-		GetItemFallDetectionBoxData(partName, minMax);
+		minMax[0] = min;
+		minMax[1] = max;
 		vector center = GetBoxCenter(minMax);
 		center = m_EntityParent.ModelToWorld(center);		//convert to world coordinates
 		vector edgeLength = GetCollisionBoxSize(minMax);
 		vector orientation = m_EntityParent.GetOrientation();
-		BoxCollidingParams params = new BoxCollidingParams();
-		params.SetParams(center, orientation, edgeLength, ObjIntersect.View, ObjIntersect.Geom, false);
+		float parentHeight = m_EntityParent.GetPosition()[1];
 		
-		array<Object> excludes; //null by default
-		array<ref BoxCollidingResult> results = new array<ref BoxCollidingResult>();
+		//non proxy box query, same candidates as the proxy variant but plain object handles instead of
+		//per hit BoxCollidingResult/ComponentInfo script objects
+		//CollisionFlags.ONLYDYNAMIC skips static scenery/houses, only entities/items/vehicles can be made to fall
+		array<Object> excludes = new array<Object>();
+		array<Object> results = new array<Object>();
+		excludes.Insert(m_EntityParent);
 		
-		if (g_Game.IsBoxCollidingGeometryProxy(params, excludes, results))
+		if (g_Game.IsBoxCollidingGeometry(center, orientation, edgeLength, ObjIntersect.Geom, ObjIntersect.Fire, excludes, results, CollisionFlags.ONLYDYNAMIC))
 		{
-			foreach (BoxCollidingResult res : results)
+			foreach (Object res : results)
 			{
-				Transport vehicle;
-				if (Class.CastTo(vehicle, res.obj)) //special treatment for transports
+				//height filter, objects on the same surface are not made to fall
+				float resHeight = res.GetPosition()[1];
+				if (parentHeight + ITEM_FALL_HEIGHT_DIFF_TOLERANCE > resHeight)
+					continue;
+				
+				Transport vehicle = Transport.Cast(res);
+				Physics objPhysics = res.GetPhysics();
+				if (!objPhysics) //objects without a physics component (e.g. proxies) cannot be made to fall
+					continue;
+				
+				SimulationState simState = objPhysics.GetSimulationState();
+				if (!vehicle && simState != SimulationState.NONE && simState != SimulationState.COLLISION) //! Temp fix for DZ-32838
+					continue;
+				
+				if (vehicle && simState != SimulationState.SIMULATION && !dBodyIsActive(vehicle))
+					continue;
+				
+				if (vehicle) //special treatment for transports
 				{
 					dBodyActive(vehicle, ActiveState.ACTIVE);
 					continue;
 				}
 				
 				PlayerBase player;
-				if (Class.CastTo(player, res.obj)) //special treatment for characters
+				if (Class.CastTo(player, res)) //special treatment for characters
 				{
-					player.GetPhysics().ApplyImpulse(-vector.Up);
+					objPhysics.ApplyImpulse(-vector.Up * 0.01);
 					continue;
 				}
 				
 				InventoryItem item;
-				if (!Class.CastTo(item, res.obj))
-					continue;
-				
-				item.ThrowPhysically(null, vector.Zero);
+				if (Class.CastTo(item, res))
+				{
+					item.OnItemFallRebuilding();
+					if (item) //! We checking if the item instance still exists as it could have been deleted with the OnItemFallRebuilding call
+						item.ThrowPhysically(null, vector.Zero);
+				}
 			}
 		}
 	}
@@ -502,28 +582,21 @@ class ConstructionBase : ConstructionBasic
 		ConstructionDataTypeHolder holder;
 		if (Class.CastTo(entityType, m_EntityParent.GetEntityType()) && Class.CastTo(holder, entityType.GetConstructionDataHolderBasic()))
 		{
-			InitAttachmentGUIPartStructure(); //TODO: move GUI stuff to type level maybe?
-			
 			array<ConstructionPartTypeData> partTypesArray = holder.GetConstructionPartTypeDataArray();
 			foreach (ConstructionPartTypeData typeData : partTypesArray)
 			{
-				string partPath = typeData.GetPartPath();
-				string spawnTypeStr;
 				ConstructionPart part;
-				//if no special treatment defined..
-				if (!g_Game.ConfigGetText(partPath + " custom_part_type", spawnTypeStr) || !Class.CastTo(part, CreatePartInstanceObject(spawnTypeStr)))
+				typename customInstanceTypename = typeData.GetCustomInstanceType();
+				if (!customInstanceTypename || !Class.CastTo(part, CreatePartInstanceObject(customInstanceTypename)))
 				{
 					//parameters are purely optional at this point, all config data is cached on entity type level
-					part = CreatePartInstanceObject(GetDefaultPartInstanceType());
+					part = CreatePartInstanceObject(GetDefaultPartInstanceTypename());
 				}
 				
 				part.SetPartTypeData(typeData);
 				PartInstanceInitData initData = new PartInstanceInitData();
-				initData.m_PartPath = partPath;
 				initData.m_ParentEnt = m_EntityParent;
 				part.InitAdditionalPartInstanceInfo(initData);
-				
-				InitAttachmentGUIPartLinks(part);
 				
 				m_ConstructionParts.Insert(typeData.GetPartName(), part);
 				m_ConstructionPartArray.Insert(part);
@@ -532,16 +605,16 @@ class ConstructionBase : ConstructionBasic
 		}
 	}
 	
-	protected ConstructionPart CreatePartInstanceObject(string partType)
+	protected ConstructionPart CreatePartInstanceObject(typename partTypename)
 	{
-		return ConstructionPart.Cast(partType.ToType().Spawn());
+		return ConstructionPart.Cast(partTypename.Spawn());
 	}
 	
 	//! Override on lower implements to create desired part types
-	protected string GetDefaultPartInstanceType()
+	protected typename GetDefaultPartInstanceTypename()
 	{
 		ErrorEx("missing valid override!");
-		return "";
+		return typename;
 	}
 	
 	protected void QueueFullUpdateParts(array<ConstructionPart> changedParts)
@@ -597,8 +670,6 @@ class ConstructionBase : ConstructionBasic
 	//! Simplified condition for utility (non-)parts
 	bool CanBuildUtilityPart(string partName)
 	{
-		if (IsPartConstructed(partName))
-			return false;
 		if (!HasRequiredPart(partName))
 			return false;
 		if (!PartHasAnySupportFulfilled(partName))
@@ -607,6 +678,48 @@ class ConstructionBase : ConstructionBasic
 			return false;
 		
 		return true;
+	}
+	
+	void QueueUpdateUtilityParts()
+	{
+		if (!m_UpdateUtilityParts)
+		{
+			m_UpdateUtilityParts = true;
+			g_Game.GetPostUpdateQueue(CALL_CATEGORY_SYSTEM).Insert(this.UpdateUtilityParts);
+		}
+	}
+	
+	//! returns 'true' if changed
+	bool UpdateUtilityParts()
+	{
+		m_UpdateUtilityParts = false;
+		bool changed = false;
+		
+		foreach (ConstructionPart part : m_ConstructionPartArray)
+		{
+			if (part.IsUtilityPart())
+			{
+				bool built = part.IsBuilt();
+				string partName = part.GetPartName();
+				if (CanBuildUtilityPart(partName))
+				{
+					if (!built)
+					{
+						AddToConstructedParts(partName);
+						ConstructionManagerStatic.AddPartToProcess(this, part);
+					}
+				}
+				else if (built)
+				{
+					RemoveFromConstructedParts(partName);
+					ConstructionManagerStatic.AddPartToProcess(this, part);
+				}
+			}
+		}
+		
+		g_Game.GetPostUpdateQueue(CALL_CATEGORY_SYSTEM).Remove(this.UpdateUtilityParts);
+		
+		return changed;
 	}
 	
 	bool MaterialIsRuined(string part_name)
@@ -637,7 +750,6 @@ class ConstructionBase : ConstructionBasic
 		}
 	}
 	
-	//TODO: double parsing every update due to info actions. Cache results once every update only?
 	//Get all construction parts from the targeted actionComponentName, that currently CANNOT be built
 	void GetConstructionPartsUnableToBuild(string actionComponentName, out array<ConstructionPart> constructionParts, ItemBase tool, out string realConstructionTarget, bool useTool)
 	{
@@ -774,6 +886,13 @@ class ConstructionBase : ConstructionBasic
 		return true;
 	}
 	
+	//! Returns 'true' if the part is load-bearing for other built parts (explicit requirement dependencies;
+	//! Rebuilding adds the support system and requirement variants), such parts skip their own item falling
+	bool PartSupportsOtherParts(string part_name)
+	{
+		return HasDependentPart(part_name);
+	}
+	
 	bool CanRepairPart(string partName, ItemBase tool = null, PlayerBase player = null, bool facingCheck = false)
 	{
 		ConstructionPart constructionPart = GetConstructionPart(partName);
@@ -784,16 +903,20 @@ class ConstructionBase : ConstructionBasic
 			if (!DamageSystem.GetDamageZoneFromComponentName(m_EntityParent, partName, zoneName)) //no zone, no repair
 				return false;
 			
-			float zoneHealth = m_EntityParent.GetHealthLevel(zoneName);
-			if (zoneHealth == GameConstants.STATE_PRISTINE || zoneHealth == GameConstants.STATE_RUINED)
+			float currentZoneHealthLevel = m_EntityParent.GetHealthLevel(zoneName);
+			if (currentZoneHealthLevel == GameConstants.STATE_PRISTINE || currentZoneHealthLevel == GameConstants.STATE_RUINED)
 				return false;
 			
-			//materials check
-			if (!HasMaterials(partName,true))
+			ConstructionPart part = GetConstructionPart(partName);
+			if (!part.CanBeRepaired(currentZoneHealthLevel, tool, player))
 				return false;
 			
 			if (!player) //for debug purposes, I guess?
 				return true;
+			
+			//materials check
+			if (!HasMaterials(partName,true))
+				return false;
 			
 			//facing and position checks
 			if (!ConstructionDirectionCheck(player, constructionPart, EConstructionDirCheckType.INDOORS) || !ConstructionDirectionCheck(player, constructionPart, EConstructionDirCheckType.REFERENCE_DIRECTION))
@@ -903,7 +1026,6 @@ class ConstructionBase : ConstructionBasic
 		return success;
 	}
 	
-	//TODO: make this reliant on configuration, don't inherently check the points!
 	bool ConstructionDirectionCheck(PlayerBase player, ConstructionPart part, EConstructionDirCheckType type)
 	{
 		string name = part.GetPartName();
@@ -1161,7 +1283,8 @@ class ConstructionBase : ConstructionBasic
 		}
 	}
 	
-	//receive materials when dismantling
+	// Receive materials when dismantling
+	// ToDo: Use cached materials data from part
 	protected void ReceiveMaterialsServer(notnull Man player, string part_name, string damagezone_name)
 	{
 		ConstructionPart part = GetConstructionPart(part_name);
@@ -1171,7 +1294,7 @@ class ConstructionBase : ConstructionBasic
 		
 		if (g_Game.ConfigIsExisting(cfgPath))
 		{
-			StaticConstructionMethods.SpawnConstructionMaterialPiles(m_EntityParent,player,cfgPath,part_name,damagezone_name,isBase);
+			StaticConstructionMethods.SpawnConstructionMaterialPilesEx(m_EntityParent,player,cfgPath,part_name,damagezone_name,isBase);
 		}
 	}
 	
@@ -1200,126 +1323,117 @@ class ConstructionBase : ConstructionBasic
 		}
 	}
 	
-	//TODO: remove config parsing and read from cached data
 	void DropNonUsableMaterialsServer(Man player, string part_name)
 	{
 		ConstructionPart part = GetConstructionPart(part_name);
 		
-		string cfgPath = "cfgVehicles" + " " + m_EntityParent.GetType() + " " + "Construction" + " " + part.GetMainPartName() + " " + part.GetPartName() + " " + "platform_support";
-		string platformSupport = "";
+		//! We only care about base parts with locked materials/attachments here.
+		//! Refund of materials that where used to construct the part are refunded by the ReceiveMaterialsServer method
+		if (!part.IsBase())
+			return;
 		
-		if (g_Game.ConfigIsExisting(cfgPath))
-		{		
-			g_Game.ConfigGetText(cfgPath, platformSupport);
-		}
+		array<ref ConstructionMaterialData> materials = part.GetMaterialsData();
+		if (!materials)
+			return;
 		
-		if (platformSupport != "" || part.IsBase())
+		GameInventory parentInv = m_EntityParent.GetInventory();
+		foreach (ConstructionMaterialData dta : materials)
 		{
-			string atCfgPath = "cfgVehicles" + " " + m_EntityParent.GetType() + " "+ "GUIInventoryAttachmentsProps";
-			
-			if (g_Game.ConfigIsExisting(atCfgPath))
+			if (dta.m_SkipOnDismantle)
+				continue;
+	
+			int slotId = dta.m_MaterialSlotID;
+			if (slotId == InventorySlots.INVALID)
 			{
-				int	count = g_Game.ConfigGetChildrenCount(atCfgPath);
-				for (int i = 0; i < count; ++i)
-				{
-					string childName;
-					g_Game.ConfigGetChildName(atCfgPath, i, childName);
-					childName.ToLower();
-					
-					//TODO: rip and tear
-					if (childName.Contains(platformSupport)) //necessary; 'Level_3' will also drop stuff from 'Level_3_Wall_1', 'Level_3_Wall_2' and so on. FML
-					{
-						array<string> attachment_slots = new array<string>();
-						g_Game.ConfigGetTextArray(atCfgPath + " " + childName + " " + "attachmentSlots", attachment_slots);
-						
-						for (int j = 0; j < attachment_slots.Count(); ++j)
-						{
-							//get material
-							ItemBase attachment = ItemBase.Cast(m_EntityParent.FindAttachmentBySlotName(attachment_slots[j]));
-							
-							//material still attached
-							if (attachment)
-							{
-								InventoryLocation invloc = new InventoryLocation();
-								attachment.GetInventory().GetCurrentInventoryLocation(invloc);
-								if (LogManager.IsBaseBuildingLogEnable()) bsbDebugPrint("[bsb] " + Object.GetDebugName(m_EntityParent) + " DropNonUsableMaterials UNlocking slot=" + invloc.GetSlot());
-								
-								//unlock slot
-								m_EntityParent.GetInventory().SetSlotLock(invloc.GetSlot() , false);
-								
-								EntityAI parent = m_EntityParent;
-								if (!parent)
-									parent = player;
-								
-								int quantityMax = attachment.GetTargetQuantityMax(-1);
-								InventoryLocation dst = new InventoryLocation();
-								vector mat[4];
-								attachment.GetTransform(mat);
-								//TODO: why are we spawning and deleting here, instead of moving to location??
-								if (parent.MemoryPointExists("" + part_name + "_materials"))
-								{
-									vector destination = parent.GetMemoryPointPos("" + part_name + "_materials");
-									destination = g_Game.ObjectModelToWorld(parent,destination);
-									float health = attachment.GetHealth("","Health");
-									float quantity = attachment.GetQuantity() - 1;
-									if (quantity < 1.0)
-										quantity = 1.0;
-									float dir[4];
-									invloc.GetDir(dir);
-									dst.SetGroundEx(attachment,destination,dir);
-									
-									if (player)
-									{
-										vector posHead = MiscGameplayFunctions.GetPlayerHeadPosition(PlayerBase.Cast(player));
-										MiscGameplayFunctions.CreateItemBasePilesDispersed(attachment.GetType(),posHead,destination,UAItemsSpreadRadius.NARROW,quantity,health,player);
-									}
-									else
-									{
-										MiscGameplayFunctions.CreateItemBasePiles(attachment.GetType(),destination,quantity,health,true);
-									}
-									attachment.AddQuantity(-quantity);
-								}
-								else
-								{
-									dst.SetGround(attachment,mat);
-									
-									for (int k = attachment.GetQuantity(); k > quantityMax; )
-									{
-										Object o = parent.GetInventory().LocationCreateEntity(dst, attachment.GetType(), ECE_PLACE_ON_SURFACE, RF_DEFAULT);
-										ItemBase new_item = ItemBase.Cast(o);
-										
-										if (new_item)
-										{
-											MiscGameplayFunctions.TransferItemProperties(attachment, new_item);
-											attachment.AddQuantity(-quantityMax);
-											new_item.SetQuantity(quantityMax);
-										}
-										k -= quantityMax;
-									}
-								}
-								
-								//drop
-								if (attachment.GetQuantity() > 0)
-								{
-									if (g_Game.IsMultiplayer())
-									{
-										parent.ServerTakeToDst(invloc, dst);
-									}
-									else
-									{
-										parent.LocalTakeToDst(invloc, dst);
-									}
-								}
-								else
-								{
-									attachment.Delete();
-								}
-							}
-						}
-					}
-				}
+				ErrorEx(string.Format("DropNonUsableMaterialsServer: invalid cached slot id for '%1' on part %2", dta.m_MaterialSlotName, part_name));
+				continue;
 			}
+			
+			ItemBase attachment = ItemBase.Cast(parentInv.FindAttachment(slotId));
+			if (!attachment)
+				continue;
+	
+			if (LogManager.IsBaseBuildingLogEnable())
+				bsbDebugPrint("[bsb] " + Object.GetDebugName(m_EntityParent) + " DropNonUsableMaterials UNlocking slot=" + slotId + " (" + dta.m_MaterialSlotName + ")");
+	
+			parentInv.SetSlotLock(slotId, false);
+	
+			//-1 => consumed by construction. Lockable materials are NEVER consumed
+			//(TakeMaterialsServer locks them instead) so they must be returned.
+			//Example: Fence wall_gate: MetalWire quantity=-1 lockable=1
+			if (dta.m_MaterialQuantity == -1.0 && !dta.m_MaterialLockable)
+			{
+				if (LogManager.IsBaseBuildingLogEnable())
+					bsbDebugPrint("[bsb] " + Object.GetDebugName(m_EntityParent) + " DropNonUsableMaterials DELETING (qty==-1, non-lockable) slot=" + slotId);
+				
+				g_Game.ObjectDelete(attachment);
+				continue;
+			}
+	
+			InventoryLocation invloc = new InventoryLocation();
+			attachment.GetInventory().GetCurrentInventoryLocation(invloc);
+			
+			MoveMaterialAttachmentToGround(m_EntityParent, player, attachment, invloc, part_name);
 		}
+	}
+	
+	//! The method does not care about the amount of materials that should be returned based on the cached quantity in the ConstructionMaterialData struct.
+	//! If we start using this method for e.g. drop of materials that are not attached and locked to the construction parent then we need to change the method to handle the quantity accordingly
+	protected void MoveMaterialAttachmentToGround(notnull EntityAI parent, Man player, notnull ItemBase attachment, notnull InventoryLocation invloc, string partName)
+	{
+		// 1) base drop position
+		vector basePos;
+		bool hasMemPoint = parent.MemoryPointExists(partName + "_materials");
+		if (hasMemPoint)
+			basePos = g_Game.ObjectModelToWorld(parent, parent.GetMemoryPointPos(partName + "_materials"));
+		else if (player)
+			basePos = player.GetPosition();
+		else
+			basePos = attachment.GetPosition();
+		
+		// 2) capture everything we need BEFORE touching the entity
+		string itemType = attachment.GetType();
+		float health = attachment.GetHealth("", "Health");
+		int total = attachment.GetQuantity();
+		int stackMax = attachment.GetTargetQuantityMax(-1);
+		if (stackMax <= 0)
+			stackMax = 1;
+	
+		// number of fresh entities needed to carry total at stackMax each
+		int pileCount = Math.Ceil((float)total / stackMax);
+		if (pileCount > MAX_MATERIAL_PILES)
+		{
+			ErrorEx(string.Format("MoveMaterialAttachmentToGround: pile count %1 exceeds cap %2 for %3 on part %4, truncating!", pileCount, MAX_MATERIAL_PILES, itemType, partName), ErrorExSeverity.INFO);
+			pileCount = MAX_MATERIAL_PILES;
+		}
+		
+		// 3) spawn ALL units as fresh, cleanly-networked ground entities
+		int remaining = total;
+		for (int i = 0; i < pileCount; ++i)
+		{
+			int thisQty = stackMax;
+			if (remaining < stackMax)
+				thisQty = remaining;
+	
+			float ang = i * 90 * Math.DEG2RAD;
+			vector dropPos = basePos + Vector(Math.Cos(ang) * 0.45, 0, Math.Sin(ang) * 0.45);
+	
+			ItemBase newItem = ItemBase.Cast(g_Game.CreateObjectEx(itemType, dropPos, ECE_PLACE_ON_SURFACE));
+			if (!newItem)
+			{
+				ErrorEx("MoveMaterialAttachmentToGround: failed to create '" + itemType + "' on part " + partName + ", aborting drop!");
+				return; //bail BEFORE deleting the original, so materials aren't lost
+			}
+	
+			newItem.SetQuantity(thisQty);
+			newItem.SetHealth("", "Health", health);
+			newItem.PlaceOnSurface();
+	
+			remaining -= thisQty;
+		}
+		
+		// 4) remove the original - it never becomes a ground item, so it can never be a stale one
+		attachment.Delete();
 	}
 	
 	//! Drop other, non-material attachments tied to the construction part
@@ -1409,7 +1523,6 @@ class ConstructionBase : ConstructionBasic
 		{
 			if (tool)
 			{
-				//TODO: store on ItemBaseType someplace?
 				string toolCfgPath = "cfgVehicles" + " " + tool.GetType() + " " + "build_action_type";
 				if (g_Game.ConfigIsExisting(toolCfgPath))
 				{
@@ -1437,7 +1550,6 @@ class ConstructionBase : ConstructionBasic
 		{
 			if (tool)
 			{
-				//TODO: store on ItemBaseType someplace?
 				string toolCfgPath = "cfgVehicles" + " " + tool.GetType() + " " + "dismantle_action_type";
 				
 				if (g_Game.ConfigIsExisting(toolCfgPath))
@@ -1467,6 +1579,14 @@ class ConstructionBase : ConstructionBasic
 	//============================================
 	// Collision check
 	//============================================
+	//! Whether House entities are skipped in the part collision check.
+	//! Rebuildable buildings are static, so a part may legitimately overlap
+	//! a House placed touching the rebuilt one (map authoring decision).
+	bool IgnoreHouseCollisions()
+	{
+		return false;
+	}
+	
 	//! Collision check for building part
 	bool IsCollidingEx(CollisionCheckData check_data)
 	{
@@ -1509,6 +1629,9 @@ class ConstructionBase : ConstructionBasic
 					EntityAI entity = EntityAI.Cast(collidedObjects.Get(i));
 					if (entity && !entity.IsIgnoredByConstruction())
 					{
+						if (House.Cast(entity) && IgnoreHouseCollisions())
+							continue;
+						
 						validCollision = true;
 						#ifdef DIAG_DEVELOPER 
 						if (collisionDebugEnabled)
@@ -1572,7 +1695,7 @@ class ConstructionBase : ConstructionBasic
 		return boxSize;
 	}
 	
-	//outputs collision box minMax from construction config and model p3d, in MODELSPACE coordinates
+	// Outputs collision box minMax from construction config and model p3d, in MODELSPACE coordinates
 	protected void GetCollisionBoxData(string part_name, out vector min_max[2])
 	{
 		ConstructionPart path = GetConstructionPart(part_name);
@@ -1590,30 +1713,53 @@ class ConstructionBase : ConstructionBasic
 		}
 		else if (dta.Count() > 0)
 		{
-			ErrorEx("Wrong collision_data configuration of " + part_name + "; valid collision_data must contain exactly 2 strings (min/max)!",ErrorExSeverity.INFO);
+			ErrorEx(string.Format("Wrong collision_data configuration of %1 for object %2; valid collision_data must contain exactly 2 strings (min/max)!", part_name, m_EntityParent), ErrorExSeverity.INFO);
 		}
 	}
 	
-	//outputs item fall detection box minMax from construction config and model p3d, in MODELSPACE coordinates
-	protected void GetItemFallDetectionBoxData(string partName, out vector minMax[2])
+	//! Outputs item fall detection box minMax from the part's collision box, in MODELSPACE coordinates,
+	//! inflated by the part category margins so entities resting on or leaning against the part are covered
+	protected bool GetItemFallDetectionBoxData(string partName, out vector minMax[2])
 	{
-		ConstructionPart path = GetConstructionPart(partName);
-		array<string> dta = path.GetItemFallingData();
-		if (dta.Count() == 2)
+		ConstructionPart part = GetConstructionPart(partName);
+		if (!part)
+			return false;
+		
+		array<string> dta = part.GetCollisionData();
+		if (dta.Count() == 2 && m_EntityParent.MemoryPointExists(dta[0]) && m_EntityParent.MemoryPointExists(dta[1]))
 		{
-			if (m_EntityParent.MemoryPointExists(dta[0]))
-			{
-				minMax[0] = m_EntityParent.GetMemoryPointPos(dta[0]);
-			}
-			if (m_EntityParent.MemoryPointExists(dta[1]))
-			{
-				minMax[1] = m_EntityParent.GetMemoryPointPos(dta[1]);
-			}
+			minMax[0] = m_EntityParent.GetMemoryPointPos(dta[0]);
+			minMax[1] = m_EntityParent.GetMemoryPointPos(dta[1]);
+			
+			vector margins = GetItemFallBoxMargins(partName);
+			minMax[0] = minMax[0] - Vector(margins[0], margins[1], margins[0]);
+			minMax[1] = minMax[1] + Vector(margins[0], margins[2], margins[0]);
+			
+			return true;
 		}
-		else if (dta.Count() > 0)
-		{
-			ErrorEx("Wrong collision_data configuration of " + partName + "; valid item_falling_data must contain exactly 2 strings (min/max)!",ErrorExSeverity.INFO);
-		}
+		
+		return false;
+	}
+	
+	//! XZ/bottom/top margins of the item fall detection box, matched by part name category (case-insensitive substring)
+	vector GetItemFallBoxMargins(string partName)
+	{
+		float top = ITEM_FALL_MARGIN_TOP_DEFAULT;
+		string name = partName;
+		name.ToLower();
+		
+		if (name.Contains("roof") || name.Contains("ceiling"))
+			top = ITEM_FALL_MARGIN_TOP_ROOF;
+		else if (name.Contains("wall"))
+			top = ITEM_FALL_MARGIN_TOP_WALL;
+		else if (name.Contains("window"))
+			top = ITEM_FALL_MARGIN_TOP_WINDOW;
+		else if (name.Contains("door"))
+			top = ITEM_FALL_MARGIN_TOP_DOOR;
+		else if (name.Contains("window"))
+			top = ITEM_FALL_MARGIN_TOP_DOOR;
+		
+		return Vector(0, 0, top);
 	}
 	
 	//returns center point of box defined by min/max values
@@ -1640,7 +1786,7 @@ class ConstructionBase : ConstructionBasic
 		extents[1][2] = egdeLength[2] / 2;
 	}
 	
-	#ifdef DIAG_DEVELOPER 
+#ifdef DIAG_DEVELOPER 
 	//Debug
 	protected void DrawDebugCollisionBox(vector min_max[2], int color)
 	{
@@ -1681,7 +1827,519 @@ class ConstructionBase : ConstructionBasic
 		}
 		m_InsideTestBoxes.Clear();
 	}
-	#endif
+	
+	//! allocates the reusable item falling debug state, only when the debug is actually used
+	void InitItemFallDebugState()
+	{
+		if (m_ItemFallDebugQueueConstructions)
+			return;
+		
+		m_ItemFallDebugBoxes = new array<Shape>();
+		m_ItemFallAffectedDebugBoxes = new array<Shape>();
+		m_ItemFallDebugQueueConstructions = new array<ConstructionBase>();
+		m_ItemFallDebugQueueParts = new array<string>();
+		m_ItemFallDebugProcessed = new map<int, int>();
+		m_ItemFallDebugLines = new array<string>();
+		m_ItemFallDebugWaveLines = new array<string>();
+		m_ItemFallDebugAffected = new array<Object>();
+		m_ItemFallDebugResults = new array<Object>();
+		m_ItemFallDebugBoxConstructions = new array<ConstructionBase>();
+		m_ItemFallDebugBoxParts = new array<string>();
+		m_ItemFallDebugBoxWaves = new array<int>();
+		m_ItemFallDebugAffectedCache = new array<Object>();
+		m_ItemFallDebugAffectedWaves = new array<int>();
+	}
+	
+	//! draws the item fall detection boxes of the cascade triggered by a part and highlights the entities that would be made to fall
+	void UpdateItemFallDebugVisuals(string partName)
+	{
+		if (!DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_ITEMFALLDEBUG))
+		{
+			ResetItemFallDebugVisuals();
+			return;
+		}
+		
+		//while the part is targeted this refreshes the frame lease, the ConstructionDebug sweep cleans up once it expires
+		m_ItemFallDebugLastTick = ConstructionDebug.GetItemFallDebugTick();
+		ConstructionDebug.RegisterItemFallDebug(this);
+		
+		InitItemFallDebugState();
+		
+		vector minMax[2];
+		if (!GetItemFallDetectionBoxData(partName, minMax))
+		{
+			ClearItemFallDebugShapes();
+			ConstructionDebug.ResetItemFallDebugData();
+			m_ItemFallDebugHasData = false;
+			return;
+		}
+		
+		//mirror the server side gate: a part supporting other built parts (e.g. a wall under a roof/ceiling) skips item falling
+		if (PartSupportsOtherParts(partName))
+		{
+			ClearItemFallDebugShapes();
+			m_ItemFallDebugLines.Clear();
+			m_ItemFallDebugLines.Insert("item falling suppressed: part supports other part/s");
+			ConstructionDebug.SetItemFallDebugData(partName, 0, 0, m_ItemFallDebugLines);
+			return;
+		}
+		
+		//mirror the server side gate: a part opted out of item falling via config
+		ConstructionPart debugPart = GetConstructionPart(partName);
+		if (debugPart && !debugPart.TriggersItemFall())
+		{
+			ClearItemFallDebugShapes();
+			m_ItemFallDebugLines.Clear();
+			m_ItemFallDebugLines.Insert("item falling disabled for part (item_fall_trigger = 0)");
+			ConstructionDebug.SetItemFallDebugData(partName, 0, 0, m_ItemFallDebugLines);
+			return;
+		}
+		
+		//the cascade query is throttled and reconciles the shapes, in between the cached shapes are only re-aimed at the
+		//current transforms, never destroyed and recreated (that flickers)
+		m_ItemFallDebugFrameCounter++;
+		if (!m_ItemFallDebugHasData || m_ItemFallDebugPartName != partName || m_ItemFallDebugFrameCounter >= ITEM_FALL_DEBUG_QUERY_INTERVAL)
+		{
+			m_ItemFallDebugFrameCounter = 0;
+			UpdateItemFallDebugCascade(partName);
+		}
+		
+		//re-aim part boxes at the current parent transforms, parents like base buildings can move
+		for (int i = m_ItemFallDebugBoxConstructions.Count() - 1; i >= 0; i--)
+		{
+			ConstructionBase construction = m_ItemFallDebugBoxConstructions[i];
+			if (!construction)
+			{
+				m_ItemFallDebugBoxes[i].Destroy();
+				m_ItemFallDebugBoxes.Remove(i);
+				m_ItemFallDebugBoxConstructions.Remove(i);
+				m_ItemFallDebugBoxParts.Remove(i);
+				m_ItemFallDebugBoxWaves.Remove(i);
+				continue;
+			}
+			
+			construction.UpdateItemFallDebugPartBoxMatrix(m_ItemFallDebugBoxes[i]);
+		}
+		
+		//re-aim entity highlights at the current entity transforms, entities like cars and players move
+		for (int j = m_ItemFallDebugAffectedCache.Count() - 1; j >= 0; j--)
+		{
+			Object obj = m_ItemFallDebugAffectedCache[j];
+			if (!obj)
+			{
+				m_ItemFallAffectedDebugBoxes[j].Destroy();
+				m_ItemFallAffectedDebugBoxes.Remove(j);
+				m_ItemFallDebugAffectedCache.Remove(j);
+				m_ItemFallDebugAffectedWaves.Remove(j);
+				continue;
+			}
+			
+			vector mat[4];
+			obj.GetTransform(mat);
+			m_ItemFallAffectedDebugBoxes[j].SetMatrix(mat);
+		}
+	}
+	
+	//! debug helper: requeries the full item fall cascade of a part and reconciles the cached shapes and panel data,
+	//! existing shapes are kept and re-aimed so they do not flicker, new ones are created and stale ones dropped
+	void UpdateItemFallDebugCascade(string partName)
+	{
+		//shapes of a different debugged part are stale, start fresh
+		if (m_ItemFallDebugPartName != partName)
+			ClearItemFallDebugShapes();
+		
+		m_ItemFallDebugPartName = partName;
+		m_ItemFallDebugHasData = true;
+		
+		//BFS over the fall boxes to visualize the full cascade (domino effect) of falling entities
+		m_ItemFallDebugQueueConstructions.Clear();
+		m_ItemFallDebugQueueParts.Clear();
+		m_ItemFallDebugProcessed.Clear();
+		m_ItemFallDebugLines.Clear();
+		m_ItemFallDebugQueueConstructions.Insert(this);
+		m_ItemFallDebugQueueParts.Insert(partName);
+		
+		//new cascade results, the cached shapes are reconciled against them once the BFS is done
+		array<ConstructionBase> newBoxConstructions = new array<ConstructionBase>();
+		array<string> newBoxParts = new array<string>();
+		array<int> newBoxWaves = new array<int>();
+		array<Object> newAffected = new array<Object>();
+		array<int> newAffectedWaves = new array<int>();
+		
+		int totalAffected = 0;
+		int wave = 0;
+		int i, j;
+		
+		while (m_ItemFallDebugQueueConstructions.Count() > 0 && wave < MAX_ITEM_FALL_DEBUG_WAVES)
+		{
+			int queueSize = m_ItemFallDebugQueueConstructions.Count();
+			m_ItemFallDebugWaveLines.Clear();
+			int waveAffected = 0;
+			
+			for (i = 0; i < queueSize; i++)
+			{
+				ConstructionBase construction = m_ItemFallDebugQueueConstructions[i];
+				string queuePartName = m_ItemFallDebugQueueParts[i];
+				
+				newBoxConstructions.Insert(construction);
+				newBoxParts.Insert(queuePartName);
+				newBoxWaves.Insert(wave);
+				
+				construction.QueryItemFallDebugPart(queuePartName, m_ItemFallDebugResults, m_ItemFallDebugAffected);
+				
+				foreach (Object obj : m_ItemFallDebugAffected)
+				{
+					if (m_ItemFallDebugProcessed.Contains(obj.GetID()))
+						continue;
+					
+					m_ItemFallDebugProcessed.Insert(obj.GetID(), wave);
+					newAffected.Insert(obj);
+					newAffectedWaves.Insert(wave);
+					waveAffected++;
+					totalAffected++;
+					
+					string line = "   " + obj.GetType();
+					BaseBuildingBase bbb = BaseBuildingBase.Cast(obj);
+					if (bbb && bbb.DestroyOnFall())
+					{
+						int drops = GetItemFallDebugDroppedCount(bbb);
+						if (bbb.CanFoldBaseBuildingObject())
+						{
+							line = string.Format("   %1  [folded into kit, drops %2]", obj.GetType(), drops);
+						}
+						else
+						{
+							line = string.Format("   %1  [deconstructs, drops %2]", obj.GetType(), drops);
+							ItemFallDebugEnqueueBbbParts(bbb, m_ItemFallDebugQueueConstructions, m_ItemFallDebugQueueParts);
+						}
+					}
+					
+					m_ItemFallDebugWaveLines.Insert(line);
+				}
+			}
+			
+			m_ItemFallDebugLines.Insert(string.Format("wave %1 (%2):", wave, waveAffected));
+			foreach (string waveLine : m_ItemFallDebugWaveLines)
+			{
+				m_ItemFallDebugLines.Insert(waveLine);
+			}
+			
+			wave++;
+		}
+		
+		//keep cached part boxes that are still part of the cascade, drop the rest
+		array<bool> boxKept = new array<bool>();
+		for (i = 0; i < newBoxParts.Count(); i++)
+			boxKept.Insert(false);
+		
+		for (i = m_ItemFallDebugBoxConstructions.Count() - 1; i >= 0; i--)
+		{
+			bool keep = false;
+			for (j = 0; j < newBoxParts.Count(); j++)
+			{
+				if (boxKept[j])
+					continue;
+				
+				if (newBoxConstructions[j] == m_ItemFallDebugBoxConstructions[i] && newBoxParts[j] == m_ItemFallDebugBoxParts[i] && newBoxWaves[j] == m_ItemFallDebugBoxWaves[i])
+				{
+					keep = true;
+					boxKept[j] = true;
+					break;
+				}
+			}
+			
+			if (!keep)
+			{
+				m_ItemFallDebugBoxes[i].Destroy();
+				m_ItemFallDebugBoxes.Remove(i);
+				m_ItemFallDebugBoxConstructions.Remove(i);
+				m_ItemFallDebugBoxParts.Remove(i);
+				m_ItemFallDebugBoxWaves.Remove(i);
+			}
+		}
+		
+		//create part boxes for parts that are new in the cascade
+		for (i = 0; i < newBoxParts.Count(); i++)
+		{
+			ConstructionBase constructionB = newBoxConstructions[i];
+			if (boxKept[i] || !constructionB || !constructionB.DrawItemFallDebugPartBox(newBoxParts[i], newBoxWaves[i], m_ItemFallDebugBoxes))
+				continue;
+			
+			m_ItemFallDebugBoxConstructions.Insert(constructionB);
+			m_ItemFallDebugBoxParts.Insert(newBoxParts[i]);
+			m_ItemFallDebugBoxWaves.Insert(newBoxWaves[i]);
+		}
+		
+		//keep cached entity highlights that are still affected, drop the rest
+		array<bool> affectedKept = new array<bool>();
+		for (i = 0; i < newAffected.Count(); i++)
+			affectedKept.Insert(false);
+		
+		for (i = m_ItemFallDebugAffectedCache.Count() - 1; i >= 0; i--)
+		{
+			Object objA = m_ItemFallDebugAffectedCache[i];
+			bool keepA = false;
+			if (objA)
+			{
+				for (j = 0; j < newAffected.Count(); j++)
+				{
+					if (affectedKept[j])
+						continue;
+					
+					if (newAffected[j] == objA && newAffectedWaves[j] == m_ItemFallDebugAffectedWaves[i])
+					{
+						keepA = true;
+						affectedKept[j] = true;
+						break;
+					}
+				}
+			}
+			
+			if (!keepA)
+			{
+				m_ItemFallAffectedDebugBoxes[i].Destroy();
+				m_ItemFallAffectedDebugBoxes.Remove(i);
+				m_ItemFallDebugAffectedCache.Remove(i);
+				m_ItemFallDebugAffectedWaves.Remove(i);
+			}
+		}
+		
+		//create highlights for entities that are new in the cascade
+		for (i = 0; i < newAffected.Count(); i++)
+		{
+			Object objB = newAffected[i];
+			if (affectedKept[i] || !objB)
+				continue;
+			
+			m_ItemFallDebugAffectedCache.Insert(objB);
+			m_ItemFallDebugAffectedWaves.Insert(newAffectedWaves[i]);
+			DrawDebugAffectedEntity(objB, newAffectedWaves[i]);
+		}
+		
+		if (m_ItemFallDebugQueueConstructions.Count() > 0)
+			m_ItemFallDebugLines.Insert("cascade truncated at max wave depth");
+		
+		ConstructionDebug.SetItemFallDebugData(partName, totalAffected, wave, m_ItemFallDebugLines);
+	}
+	
+	//! debug helper: creates this part's fall box (wave colored) into the given shape list, returns 'true' when a box was created
+	bool DrawItemFallDebugPartBox(string partName, int wave, array<Shape> debugBoxes)
+	{
+		vector minMax[2];
+		if (!GetItemFallDetectionBoxData(partName, minMax))
+			return false;
+		
+		vector mat[4];
+		m_EntityParent.GetTransform(mat);
+		Shape box = Debug.DrawBox(minMax[0], minMax[1], GetItemFallDebugWaveColor(wave));
+		box.SetMatrix(mat);
+		debugBoxes.Insert(box);
+		return true;
+	}
+	
+	//! debug helper: re-aims a cached part box at the current parent transform
+	void UpdateItemFallDebugPartBoxMatrix(Shape box)
+	{
+		vector mat[4];
+		m_EntityParent.GetTransform(mat);
+		box.SetMatrix(mat);
+	}
+	
+	//! debug helper: same non proxy box query and filters the server side ItemFall method uses, fills the given affected list
+	void QueryItemFallDebugPart(string partName, array<Object> results, array<Object> affected)
+	{
+		affected.Clear();
+		results.Clear();
+		
+		vector minMax[2];
+		if (!GetItemFallDetectionBoxData(partName, minMax))
+			return;
+		
+		//same query the server side ItemFall method uses, so the highlight matches the real behavior
+		vector center = GetBoxCenter(minMax);
+		center = m_EntityParent.ModelToWorld(center);		//convert to world coordinates
+		vector edgeLength = GetCollisionBoxSize(minMax);
+		vector orientation = m_EntityParent.GetOrientation();
+		float parentHeight = m_EntityParent.GetPosition()[1];
+		array<Object> excludes; //null by default
+		
+		if (!g_Game.IsBoxCollidingGeometry(center, orientation, edgeLength, ObjIntersect.Geom, ObjIntersect.Geom, excludes, results, CollisionFlags.ONLYDYNAMIC))
+			return;
+		
+		foreach (Object res : results)
+		{
+			if (res == m_EntityParent)	//skip parent
+				continue;
+			
+			//same height filter, objects on the same surface are not made to fall
+			float resHeight = res.GetPosition()[1];
+			if (parentHeight + ITEM_FALL_HEIGHT_DIFF_TOLERANCE > resHeight)
+				continue;
+			
+			Transport vehicle = Transport.Cast(res);
+			Physics objPhysics = res.GetPhysics();
+			if (!objPhysics) //placement proxy/holograms have no physics component, skip them
+				continue;
+			
+			SimulationState simState = objPhysics.GetSimulationState();
+			if (!vehicle && simState != SimulationState.NONE && simState != SimulationState.COLLISION) //! Temp fix for DZ-32838
+				continue;
+			
+			if (vehicle && simState != SimulationState.SIMULATION && !dBodyIsActive(vehicle))
+				continue;
+			
+			PlayerBase player;
+			InventoryItem item;
+			if (Class.CastTo(vehicle, res) || Class.CastTo(player, res) || Class.CastTo(item, res))
+				affected.Insert(res);
+		}
+	}
+	
+	//! color of the fall box and affected entity highlight for a cascade wave
+	int GetItemFallDebugWaveColor(int wave)
+	{
+		switch (wave)
+		{
+			case 0:
+				return COLOR_YELLOW_A;
+			case 1:
+				return COLOR_GREEN_A;
+			case 2:
+				return COLOR_BLUE_A;
+			default:
+				return 0x1fFFFFFF;
+		}
+		
+		return COLOR_MAGENTA;
+	}
+	
+	//! debug helper: how many items are dropped when a falling base building deconstructs (attachments + cargo, plus the construction kit if foldable)
+	int GetItemFallDebugDroppedCount(BaseBuildingBase bbb)
+	{
+		GameInventory inventory = bbb.GetInventory();
+		int drops = inventory.AttachmentCount();
+		
+		CargoBase cargo = inventory.GetCargo();
+		if (cargo)
+			drops += cargo.GetItemCount();
+		
+		if (bbb.CanFoldBaseBuildingObject())
+			drops++; //! construction kit
+		
+		return drops;
+	}
+	
+	//! debug helper: queues the built parts of a deconstructing base building for the next cascade wave
+	void ItemFallDebugEnqueueBbbParts(BaseBuildingBase bbb, array<ConstructionBase> queueConstructions, array<string> queueParts)
+	{
+		ConstructionBase construction = bbb.GetConstruction();
+		if (!construction)
+			return;
+		
+		map<string, ref ConstructionPart> parts = construction.GetConstructionParts();
+		for (int i = 0; i < parts.Count(); i++)
+		{
+			ConstructionPart part = parts.GetElement(i);
+			if (part && part.IsBuilt() && !part.IsUtilityPart())
+			{
+				queueConstructions.Insert(construction);
+				queueParts.Insert(part.GetPartName());
+			}
+		}
+	}
+	
+	//! highlights an entity that would be affected by the item falling cascade, wave colored
+	protected void DrawDebugAffectedEntity(Object obj, int wave)
+	{
+		vector mat[4];
+		obj.GetTransform(mat);
+		
+		vector objBox[2];
+		Shape shape;
+		int color = GetItemFallDebugWaveColor(wave);
+		if (obj.GetCollisionBox(objBox))
+		{
+			shape = Debug.DrawBox(objBox[0], objBox[1], color);
+			shape.SetMatrix(mat);
+		}
+		else
+		{
+			shape = Debug.DrawSphere(obj.GetPosition(), 0.5, color);
+		}
+		
+		m_ItemFallAffectedDebugBoxes.Insert(shape);
+	}
+	
+	//! last diag tick in which the debugged part was still targeted, used by the ConstructionDebug sweep
+	int GetItemFallDebugLastTick()
+	{
+		return m_ItemFallDebugLastTick;
+	}
+	
+	//! debug helper: destroys all cached debug shapes and clears the parallel shape data lists
+	void ClearItemFallDebugShapes()
+	{
+		DestroyDebugItemFallBox();
+		
+		m_ItemFallDebugBoxConstructions.Clear();
+		m_ItemFallDebugBoxParts.Clear();
+		m_ItemFallDebugBoxWaves.Clear();
+		m_ItemFallDebugAffectedCache.Clear();
+		m_ItemFallDebugAffectedWaves.Clear();
+	}
+	
+	//! destroys the item fall debug shapes and clears all cached debug state, called when the debugged part is no longer targeted
+	void ResetItemFallDebugVisuals()
+	{
+		DestroyDebugItemFallBox();
+		
+		m_ItemFallDebugBoxes = null;
+		m_ItemFallAffectedDebugBoxes = null;
+		m_ItemFallDebugQueueConstructions = null;
+		m_ItemFallDebugQueueParts = null;
+		m_ItemFallDebugProcessed = null;
+		m_ItemFallDebugLines = null;
+		m_ItemFallDebugWaveLines = null;
+		m_ItemFallDebugAffected = null;
+		m_ItemFallDebugResults = null;
+		m_ItemFallDebugBoxConstructions = null;
+		m_ItemFallDebugBoxParts = null;
+		m_ItemFallDebugBoxWaves = null;
+		m_ItemFallDebugAffectedCache = null;
+		m_ItemFallDebugAffectedWaves = null;
+		m_ItemFallDebugPartName = "";
+		m_ItemFallDebugHasData = false;
+		m_ItemFallDebugFrameCounter = 0;
+		m_ItemFallDebugLastTick = 0;
+		
+		ConstructionDebug.ResetItemFallDebugData();
+		ConstructionDebug.UnregisterItemFallDebug(this);
+	}
+	
+	protected void DestroyDebugItemFallBox()
+	{
+		if (m_ItemFallDebugBoxes)
+		{
+			foreach (Shape box : m_ItemFallDebugBoxes)
+			{
+				box.Destroy();
+				box = NULL;
+			}
+			m_ItemFallDebugBoxes.Clear();
+		}
+		
+		if (m_ItemFallAffectedDebugBoxes)
+		{
+			foreach (Shape debugBox : m_ItemFallAffectedDebugBoxes)
+			{
+				debugBox.Destroy();
+				debugBox = NULL;
+			}
+			m_ItemFallAffectedDebugBoxes.Clear();
+		}
+	}
+#endif
+
 	//////////////////
 	//Deprecated Code
 	//////////////////
@@ -1792,30 +2450,30 @@ class ConstructionBase : ConstructionBasic
 class StaticConstructionMethods
 {
 	//! spawns material from any construction; 'player' parameter optional; 'main_part_name' is actually a PART_NAME!
-	static void SpawnConstructionMaterialPiles(notnull EntityAI entity, Man player, string cfg_path, string main_part_name, string damagezone_name = "", bool is_base = false)
+	static void SpawnConstructionMaterialPilesEx(notnull EntityAI entity, Man player, string cfgPath, string mainPartName, string damagezoneName = "", bool isBase = false, bool throwPiles = false)
 	{
-		string partName = main_part_name; //'main_part_name' is actually a PART_NAME, using this to avoid further confustion
-		int	child_count = g_Game.ConfigGetChildrenCount(cfg_path);
+		string partName = mainPartName; //'mainPartName' is actually a PART_NAME, using this to avoid further confustion
+		int	childCount = g_Game.ConfigGetChildrenCount(cfgPath);
 		
-		for (int i = 0; i < child_count; ++i)
+		for (int i = 0; i < childCount; ++i)
 		{
 			string child_name;
-			g_Game.ConfigGetChildName(cfg_path, i, child_name);
+			g_Game.ConfigGetChildName(cfgPath, i, child_name);
 			
 			//get type, quantity from material
-			string config_path;
+			string configPath;
 			string type;
 			string slot_name;
-			config_path = cfg_path + " " + child_name + " " + "type";
-			g_Game.ConfigGetText(config_path, type);
-			config_path = cfg_path + " " + child_name + " " + "slot_name";
-			g_Game.ConfigGetText(config_path, slot_name);
-			config_path = cfg_path + " " + child_name + " " + "quantity";
-			float quantity = g_Game.ConfigGetFloat(config_path);
-			config_path = cfg_path + " " + child_name + " " + "lockable";
-			bool lockable = g_Game.ConfigGetInt(config_path);
-			config_path = cfg_path + " " + child_name + " " + "skipOnDismantle";
-			bool skipOnDismantle = g_Game.ConfigGetInt(config_path);
+			configPath = cfgPath + " " + child_name + " " + "type";
+			g_Game.ConfigGetText(configPath, type);
+			configPath = cfgPath + " " + child_name + " " + "slot_name";
+			g_Game.ConfigGetText(configPath, slot_name);
+			configPath = cfgPath + " " + child_name + " " + "quantity";
+			float quantity = g_Game.ConfigGetFloat(configPath);
+			configPath = cfgPath + " " + child_name + " " + "lockable";
+			bool lockable = g_Game.ConfigGetInt(configPath);
+			configPath = cfgPath + " " + child_name + " " + "skipOnDismantle";
+			bool skipOnDismantle = g_Game.ConfigGetInt(configPath);
 			
 			if (skipOnDismantle)
 				continue;
@@ -1835,7 +2493,7 @@ class StaticConstructionMethods
 					entity.GetInventory().SetSlotLock(src.GetSlot() , false);
 					
 					//detach if base
-					if (is_base)
+					if (isBase)
 					{
 						if (g_Game.IsMultiplayer() && player)
 						{
@@ -1852,8 +2510,8 @@ class StaticConstructionMethods
 			}
 			else
 			{
-				float pile_health;
-				float qty_coef;
+				float pileHealth;
+				float qtyCoef;
 				vector destination = entity.GetPosition();
 				vector playerPosition;
 				//placed on helper memory point, if available, or on player pos, if available, or on entity pos otherwise
@@ -1866,29 +2524,35 @@ class StaticConstructionMethods
 				if (entity.MemoryPointExists("" + partName + "_materials"))
 				{
 					destination = entity.GetMemoryPointPos("" + partName + "_materials");
-					destination = g_Game.ObjectModelToWorld(entity,destination);
+					destination = g_Game.ObjectModelToWorld(entity, destination);
 				}
 				else if (entity.MemoryPointExists(partName))
 				{
 					destination = entity.GetMemoryPointPos(partName);
-					destination = g_Game.ObjectModelToWorld(entity,destination);
+					destination = g_Game.ObjectModelToWorld(entity, destination);
 				}
-				pile_health = entity.GetHealth01(damagezone_name,"Health") * MiscGameplayFunctions.GetTypeMaxGlobalHealth(type);
-				qty_coef =  1 - (entity.GetHealthLevel(damagezone_name) * Construction.DECONSTURCT_MATERIAL_LOSS) - Construction.DECONSTURCT_MATERIAL_LOSS;
-				quantity *= qty_coef;
+				pileHealth = entity.GetHealth01(damagezoneName, "Health") * MiscGameplayFunctions.GetTypeMaxGlobalHealth(type);
+				qtyCoef =  1 - (entity.GetHealthLevel(damagezoneName) * Construction.DECONSTURCT_MATERIAL_LOSS) - Construction.DECONSTURCT_MATERIAL_LOSS;
+				quantity *= qtyCoef;
 				quantity = Math.Max(Math.Floor(quantity),1);
 				
 				if (player)
 				{
 					vector posHead = MiscGameplayFunctions.GetPlayerHeadPosition(PlayerBase.Cast(player));
-					MiscGameplayFunctions.CreateItemBasePilesDispersed(type,posHead,destination,UAItemsSpreadRadius.NARROW,quantity,pile_health,player);
+					MiscGameplayFunctions.CreateItemBasePilesDispersed(type, posHead, destination, UAItemsSpreadRadius.NARROW, quantity, pileHealth, player);
 				}
 				else
 				{
-					MiscGameplayFunctions.CreateItemBasePiles(type,destination,quantity,pile_health,true);
+					MiscGameplayFunctions.CreateItemBasePilesEx(type, destination, quantity, pileHealth, true, throwPiles);
 				}
 			}
 		}
+	}
+	
+	[Obsolete("1.30: Use SpawnConstructionMaterialPilesEx instead")]
+	static void SpawnConstructionMaterialPiles(notnull EntityAI entity, Man player, string cfg_path, string main_part_name, string damagezone_name = "", bool is_base = false)
+	{
+		SpawnConstructionMaterialPilesEx(entity, player, cfg_path, main_part_name, damagezone_name, is_base);
 	}
 }
 

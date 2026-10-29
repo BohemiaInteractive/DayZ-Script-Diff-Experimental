@@ -18,6 +18,30 @@ class BuildingBase : Building
 	void BuildingBase()
 	{
 		m_ActionsInitialize = false;
+		
+		//only rebuilding objects with construction parts are covered by the base damage flag
+		if (HasRebuildingConstructionParts())
+		{
+			ProcessInvulnerabilityCheck(GetInvulnerabilityTypeString());
+		}
+	}
+	
+	override string GetInvulnerabilityTypeString()
+	{
+		if (HasRebuildingConstructionParts())
+			return "disableBaseDamage";
+		
+		return "";
+	}
+	
+	//! true when this building has a rebuilding construction component with at least one construction part
+	bool HasRebuildingConstructionParts()
+	{
+		Rebuilding rebuilding;
+		if (Class.CastTo(rebuilding, GetConstructionBasic()) && rebuilding.GetConstructionPartArray().Count() > 0)
+			return true;
+		
+		return false;
 	}
 	
 	override protected ConstructionBasic CreateConstructionComponent()
@@ -49,7 +73,88 @@ class BuildingBase : Building
 	{
 		return m_Construction;
 	}
+
+	override void AfterStoreLoad()
+	{
+		super.AfterStoreLoad();
+
+		UnlockEmptyDoorLockSlots();
+
+		if (!HasRebuildingConstructionParts())
+			return;
+
+		// Locks may attach before the construction data is loaded and miss the door orientation
+		int count = GetInventory().AttachmentCount();
+		for (int i = 0; i < count; ++i)
+		{
+			DigitalCodeLock codeLock = DigitalCodeLock.Cast(GetInventory().GetAttachmentFromIndex(i));
+			if (codeLock)
+				codeLock.RefreshDoorInfoServer();
+		}
+	}
 	
+	override void EEItemDetached(EntityAI item, string slot_name)
+	{
+		super.EEItemDetached(item, slot_name);
+
+		// The lock may leave without the Detach action so its slot lock must be released here
+		if (g_Game.IsServer() && CombinationLock.Cast(item))
+			GetInventory().SetSlotLock(InventorySlots.GetSlotIdFromString(slot_name), false);
+
+		// A code lock locks the door itself and nothing else may lock it while the lock is attached
+		if (g_Game.IsServer() && DigitalCodeLock.Cast(item))
+		{
+			int doorIndex = GetDoorIndexByLockSlot(slot_name);
+			if (doorIndex > -1 && IsDoorLocked(doorIndex))
+				UnlockDoor(doorIndex);
+		}
+	}
+
+	protected int GetDoorIndexByLockSlot(string slotName)
+	{
+		AdditionalDoorInfosHolder doorInfoHolder = m_AdditionalDoorInfosMap.Get(GetType());
+		if (!doorInfoHolder)
+			return -1;
+
+		map<int, ref AdditionalDoorInfo> doorsInfoMap = doorInfoHolder.GetDoorInfoMap();
+		if (!doorsInfoMap)
+			return -1;
+
+		foreach (int doorInfoIndex, AdditionalDoorInfo doorInfo : doorsInfoMap)
+		{
+			if (doorInfo.m_RelatedInventorySlotNames && doorInfo.m_RelatedInventorySlotNames.Find(slotName) > -1)
+				return doorInfoIndex;
+		}
+
+		return -1;
+	}
+
+	// Repairs door lock slots left locked with no lock in them
+	protected void UnlockEmptyDoorLockSlots()
+	{
+		AdditionalDoorInfosHolder doorInfoHolder = m_AdditionalDoorInfosMap.Get(GetType());
+		if (!doorInfoHolder)
+			return;
+
+		map<int, ref AdditionalDoorInfo> doorsInfoMap = doorInfoHolder.GetDoorInfoMap();
+		if (!doorsInfoMap)
+			return;
+
+		GameInventory inventory = GetInventory();
+		foreach (int doorInfoIndex, AdditionalDoorInfo doorInfo : doorsInfoMap)
+		{
+			if (!doorInfo.m_RelatedInventorySlotNames)
+				continue;
+
+			foreach (string slotName : doorInfo.m_RelatedInventorySlotNames)
+			{
+				int slotId = InventorySlots.GetSlotIdFromString(slotName);
+				if (inventory.GetSlotLock(slotId) && !inventory.FindAttachment(slotId))
+					inventory.SetSlotLock(slotId, false);
+			}
+		}
+	}
+
 	override bool CanDisplayAttachmentCategory( string category_name )
 	{
 		if (!super.CanDisplayAttachmentCategory(category_name))

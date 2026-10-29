@@ -243,6 +243,15 @@ class Fence extends BaseBuildingBase
 	// ---
 	
 	// --- EVENTS
+	override void EEItemDetached(EntityAI item, string slot_name)
+	{
+		super.EEItemDetached(item, slot_name);
+
+		// The lock may leave without the Detach action so its slot lock must be released here
+		if (g_Game.IsServer() && slot_name == ATTACHMENT_SLOT_COMBINATION_LOCK)
+			GetInventory().SetSlotLock(InventorySlots.GetSlotIdFromString(slot_name), false);
+	}
+
 	override void OnStoreSave( ParamsWriteContext ctx )
 	{   
 		super.OnStoreSave( ctx );
@@ -291,7 +300,12 @@ class Fence extends BaseBuildingBase
 	override void AfterStoreLoad()
 	{	
 		super.AfterStoreLoad();
-		
+
+		// Repair a lock slot left locked with no lock in it
+		int lockSlotId = InventorySlots.GetSlotIdFromString(ATTACHMENT_SLOT_COMBINATION_LOCK);
+		if (GetInventory().GetSlotLock(lockSlotId) && !GetCombinationLock())
+			GetInventory().SetSlotLock(lockSlotId, false);
+
 		//set gate state
 		ConstructionPart gate_part = GetConstruction().GetGateConstructionPart();
 		SetGateState( CheckGateState() );
@@ -882,6 +896,11 @@ class Fence extends BaseBuildingBase
 		AddAction(ActionFoldBaseBuildingObject);
 		AddAction(ActionOpenFence);
 		AddAction(ActionCloseFence);
+	}
+	
+	override bool DestroyOnFall()
+	{
+		return true;
 	}
 	
 	//================================================================

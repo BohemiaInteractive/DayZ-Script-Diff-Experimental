@@ -266,6 +266,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 		DiagMenu.BindCallback(DiagMenuIDs.BASEBUILDING_FASTBUILD, CBBaseBuildingFast);
 		DiagMenu.BindCallback(DiagMenuIDs.BASEBUILDING_FULLDEBUG, CBBaseBuildingDebug);
 		DiagMenu.BindCallback(DiagMenuIDs.BASEBUILDING_COLLISIONDEBUG, CBBaseBuildingCollisionDebug);
+		DiagMenu.BindCallback(DiagMenuIDs.BASEBUILDING_ITEMFALLDEBUG, CBBaseBuildingItemFallDebug);
 			
 		//---------------------------------------------------------------
 		// LEVEL 2 - Script > Finishers
@@ -662,8 +663,8 @@ class PluginDiagMenuClient : PluginDiagMenu
 	void UpdateBaseBuildingFullDebug()
 	{
 		#ifdef DIAG_DEVELOPER
-		if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG))
-			ConstructionDebug.Update();
+		//runs every frame so the item fall debug sweep cleans up shapes of parts that are no longer targeted, panels stay gated inside
+		ConstructionDebug.Update();
 		#endif
 	}
 	
@@ -1479,6 +1480,7 @@ class PluginDiagMenuClient : PluginDiagMenu
 	static void CBBaseBuildingDebug(bool enabled)
 	{
 		DiagMenu.SetValue(DiagMenuIDs.BASEBUILDING_COLLISIONDEBUG, enabled);
+		DiagMenu.SetValue(DiagMenuIDs.BASEBUILDING_ITEMFALLDEBUG, enabled);
 		ConstructionDebug.ResetValues();
 	}
 
@@ -1487,6 +1489,13 @@ class PluginDiagMenuClient : PluginDiagMenu
 	{
 		if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG) && !enabled) //can't disable if main one is enabled
 			DiagMenu.SetValue(DiagMenuIDs.BASEBUILDING_COLLISIONDEBUG, true);
+	}
+	
+	//---------------------------------------------
+	static void CBBaseBuildingItemFallDebug(bool enabled)
+	{
+		if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG) && !enabled) //can't disable if main one is enabled
+			DiagMenu.SetValue(DiagMenuIDs.BASEBUILDING_ITEMFALLDEBUG, true);
 	}
 	
 	//---------------------------------------------

@@ -139,6 +139,7 @@ enum ShapeFlags
 
 enum CollisionFlags
 {
+	NONE = 0,		//All colliding objects
 	FIRSTCONTACT,	//<In many cases only collided=true/false is enough
 	NEARESTCONTACT,	//<We want only one, the nearest contact
 	ONLYSTATIC,		//<Only static objects

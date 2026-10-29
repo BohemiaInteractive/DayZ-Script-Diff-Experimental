@@ -578,6 +578,11 @@ class TerritoryFlag extends BaseBuildingBase
 		}
 	}
 	
+	override bool DestroyOnFall()
+	{
+		return true;
+	}
+	
 	//================================================================
 	// DEBUG
 	//================================================================	

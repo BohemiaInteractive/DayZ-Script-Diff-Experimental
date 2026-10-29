@@ -719,11 +719,13 @@ class DustEffectManager
 	//! Returns effect type paired to the particleID
 	static string GetCeilingEffectType(int particleID)
 	{
-		string ret = m_ParticleIDEffectPairing.Get(particleID);
+		string ret;
+		if (m_ParticleIDEffectPairing)
+			ret = m_ParticleIDEffectPairing.Get(particleID);
 		if (ret == string.Empty)
 		{
 			ErrorEx("No 'CeilingDustEffectBase'-type paired to particle ID " + particleID + ", using default value. Please add registration into the 'InitCeilingEffect' method.");
-			ret = "CeilingDustEffecter";
+			ret = "CeilingDustEffectWood";
 		}
 		return ret;
 	}

@@ -212,6 +212,27 @@ class DigitalCodeLock : ItemBase
 		}	
 	}
 	
+	// Reversed state comes from the door part so it must be read again once the parent has loaded its construction data
+	void RefreshDoorInfoServer()
+	{
+		InventoryLocation il = new InventoryLocation();
+		if (!GetInventory().GetCurrentInventoryLocation(il) || il.GetType() != InventoryLocationType.ATTACHMENT)
+			return;
+
+		string slotName = InventorySlots.GetSlotName(il.GetSlot());
+		BuildingBase buildingBase = BuildingBase.Cast(il.GetParent());
+		if (!buildingBase || slotName.IndexOf("Att_CodeLock") == -1)
+			return;
+
+		bool wasReversed = m_Reversed;
+		SetDoorInfoFromSlot(buildingBase, slotName);
+		if (m_Reversed == wasReversed)
+			return;
+
+		SetSynchDirty();
+		ForceFullVisualsUpdate();
+	}
+
 	//! Condition check called from ActionTakeItem and ActionTakeItemToHands
 	bool CanDetachCodeLock(notnull PlayerBase player, int componentIndex)
 	{
@@ -403,6 +424,21 @@ class DigitalCodeLock : ItemBase
 	bool GetReversedState()
 	{
 		return m_Reversed;
+	}
+	
+	//! Checks whether the given player is standing on the physical (non-keypad) side of the lock
+	//! Fails closed when the required memory points are not available
+	bool IsPlayerOnBackside(PlayerBase player)
+	{
+		if (!player)
+			return false;
+		
+		if (!MemoryPointExists(MEMPOINT_CENTER) || !MemoryPointExists(MEMPOINT_INSIDE))
+			return false;
+		
+		bool playerOnInsideSide = MiscGameplayFunctions.MemPointDirectionalCheck(player, this, MEMPOINT_CENTER, MEMPOINT_INSIDE);
+		
+		return playerOnInsideSide != GetReversedState();
 	}
 	
 	bool HasValidParent()

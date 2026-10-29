@@ -349,12 +349,12 @@ class Land_WarheadStorage_Main : House
 		return -1;
 	}
 
-	override bool CanDoorBeOpened(int doorIndex, bool checkIfLocked = false)
+	override bool CanDoorBeOpened(notnull DoorManipulationParams params)
 	{
-		if (!super.CanDoorBeOpened(doorIndex, checkIfLocked))
+		if (!super.CanDoorBeOpened(params))
 			return false;
 		
-		switch (doorIndex)
+		switch (params.m_DoorIndex)
 		{
 			case 4:
 				return IsDoorClosed(4) && IsDoorClosed(5);

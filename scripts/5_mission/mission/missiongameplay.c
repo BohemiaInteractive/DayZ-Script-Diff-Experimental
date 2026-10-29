@@ -1394,8 +1394,31 @@ class MissionGameplay extends MissionBase
 		}		
 	}
 	
+	//! Hands a logout that is already running over to whoever is taking it on. m_Logout outlives
+	//! its dialog, so a countdown armed before can still reach Exit() and abort the mission, and
+	//! its destructor still owes a LogoutRequestCancel that would otherwise land after the new
+	//! owner has asked for a logout of its own. Cancel() settles both, and it must be called
+	//! while the new owner is already the current menu so that its Continue() is a no-op.
+	void TakeOverLogoutMenu()
+	{
+		if (!m_Logout)
+			return;
+
+		m_Logout.Cancel();
+		m_Logout = null;
+	}
+
 	override void StartLogoutMenu(int time)
 	{
+		// the invite dialog waits for the very same logout, it just joins the target server
+		// instead of returning to the main menu once it is over
+		InviteMenu invite = InviteMenu.Cast(GetUIManager().FindMenu(MENU_INVITE_TIMER));
+		if (invite)
+		{
+			invite.StartCountdown(time);
+			return;
+		}
+
 		if (m_Logout)
 		{
 			if (time > 0)

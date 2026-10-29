@@ -21,9 +21,7 @@ class ActionResetCodeOnCodeLock : ActionInteractBase
 		if ((!codeLock || (codeLock && !codeLock.GetCompEM().IsWorking())))
 			return false;
 				
-		bool isFacingBackside;
-		if (MiscGameplayFunctions.MemPointDirectionalCheck(player, codeLock, DigitalCodeLock.MEMPOINT_CENTER, DigitalCodeLock.MEMPOINT_INSIDE))
-			isFacingBackside = true;
+		bool isFacingBackside = codeLock.IsPlayerOnBackside(player);
 		
 		if (!codeLock.HasPIN() || codeLock.IsLocked() || isFacingBackside)
 			return false;

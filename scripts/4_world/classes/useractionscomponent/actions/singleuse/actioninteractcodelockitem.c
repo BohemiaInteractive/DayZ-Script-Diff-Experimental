@@ -42,9 +42,7 @@ class ActionInteractCodeLockItem : ActionInteractCodeLockBase
 
 				InteractCodeLockActionData interactActionData = InteractCodeLockActionData.Cast(action_data);
 				interactActionData.m_CodeLockPosition = codeLock.GetWorldPosition();
-
-				if (MiscGameplayFunctions.MemPointDirectionalCheck(player, codeLock, DigitalCodeLock.MEMPOINT_CENTER, DigitalCodeLock.MEMPOINT_INSIDE))
-					interactActionData.m_IsFacingBackside = true;
+				interactActionData.m_IsFacingBackside = codeLock.IsPlayerOnBackside(player);
 			}
 		}
 
@@ -110,9 +108,8 @@ class ActionInteractCodeLockItem : ActionInteractCodeLockBase
 		{
 			if (!codeLock.GetHierarchyRoot())
 				return false;
-		
-			if (MiscGameplayFunctions.MemPointDirectionalCheck(player, codeLock, DigitalCodeLock.MEMPOINT_CENTER, DigitalCodeLock.MEMPOINT_INSIDE))
-				isFacingBackside = true;
+			
+			isFacingBackside = codeLock.IsPlayerOnBackside(player);
 			
 			if (codeLock.HasPIN())
 			{
@@ -162,8 +159,15 @@ class ActionInteractCodeLockItem : ActionInteractCodeLockBase
 		InteractCodeLockActionData interactActionData = InteractCodeLockActionData.Cast(action_data);
 		if (!interactActionData || interactActionData.m_CodeLockPosition == vector.Zero)
 			return;
-
-		bool isFacingBackside = interactActionData.m_IsFacingBackside;
+		
+		//! Re-validate the lock side on the server, the client-provided value is not trusted
+		bool isFacingBackside = codeLock.IsPlayerOnBackside(action_data.m_Player);
+		
+		if (interactActionData.m_IsFacingBackside && !isFacingBackside)
+		{
+			ErrorEx(string.Format("[ActionInteractCodeLockItem] Client claimed backside but server disagrees, physical release rejected! Player=%1 | Lock=%2", action_data.m_Player, codeLock), ErrorExSeverity.INFO);
+			return;
+		}
 		
 		if ((!codeLock.HasPIN() || codeLock.HasPIN() && codeLock.IsLocked()) && !isFacingBackside)
 		{

@@ -259,6 +259,16 @@ class BearTrap extends TrapBase
 		AddAction(ActionDeployObject);
 	}
 
+	override void OnTriggeredByFall(Contact extra)
+	{
+		SetInactive(false); // springs the trap, RefreshState() handles the jaw animation
+	}
+	
+	override void OnTriggeredByFallEffectsClient()
+	{
+		PlaySoundBiteEmpty();
+	}
+	
 #ifdef DEVELOPER	
 	//================================================================
 	// DEBUG

@@ -2,7 +2,8 @@ class HeatStrokeMdfr : ModifierBase
 {
 	const int NUMBER_OF_STAGES = 4;
 	const float STAGE_THRESHOLDS[NUMBER_OF_STAGES] = {0.0, 0.4, 0.6, 0.85};
-	
+	const float STAGE_DEACTIVATION_BUFFER = 0.02;
+
 	//! Fever setup
 	protected static const int WATER_DRAIN_FROM_FEVER_ST1 	= 0.35; //! per tick
 	protected static const int WATER_DRAIN_FROM_FEVER_ST2 	= 0.5; //! per tick
@@ -25,7 +26,7 @@ class HeatStrokeMdfr : ModifierBase
 	
 	//! Health damage
 	protected static const float HEALTH_DAMAGE_MIN = 0.01;
-	protected static const float HEALTH_DAMAGE_MAX = 0.35;
+	protected static const float HEALTH_DAMAGE_MAX = 0.15;
 
 	override void Init()
 	{
@@ -42,7 +43,7 @@ class HeatStrokeMdfr : ModifierBase
 class HeatStrokePhase1Mdfr : HeatStrokeMdfr
 {
 	private static const float THRESHOLD_ACTIVATE = HeatStrokeMdfr.STAGE_THRESHOLDS[0];
-	
+
 	override void Init()
 	{
 		super.Init();
@@ -71,9 +72,8 @@ class HeatStrokePhase1Mdfr : HeatStrokeMdfr
 	
 	override protected void OnDeactivate(PlayerBase player)
 	{
-		player.DecreaseDiseaseCount();
 	}
-	
+
 	override protected void OnTick(PlayerBase player, float deltaT)
 	{
 		PlayerStat<float> waterStat 	= player.GetStatWater();
@@ -84,7 +84,8 @@ class HeatStrokePhase1Mdfr : HeatStrokeMdfr
 class HeatStrokePhase2Mdfr : HeatStrokeMdfr
 {
 	private static const float THRESHOLD_ACTIVATE = HeatStrokeMdfr.STAGE_THRESHOLDS[1];
-	
+	private static const float THRESHOLD_DEACTIVATE = HeatStrokeMdfr.STAGE_THRESHOLDS[1] - HeatStrokeMdfr.STAGE_DEACTIVATION_BUFFER;
+
 	override void Init()
 	{
 		super.Init();
@@ -94,9 +95,9 @@ class HeatStrokePhase2Mdfr : HeatStrokeMdfr
 
 	override string GetDebugText()
 	{
-		return ("Activate threshold >: "+ THRESHOLD_ACTIVATE + "| Deativate threshold: ==" + THRESHOLD_ACTIVATE);
+		return ("Activate threshold >: "+ THRESHOLD_ACTIVATE + "| Deativate threshold: <" + THRESHOLD_DEACTIVATE);
 	}
-	
+
 	override protected bool ActivateCondition(PlayerBase player)
 	{
 		return player.GetThermalBiasHandler().Get() > THRESHOLD_ACTIVATE;
@@ -104,9 +105,9 @@ class HeatStrokePhase2Mdfr : HeatStrokeMdfr
 
 	override protected bool DeactivateCondition(PlayerBase player)
 	{
-		return player.GetThermalBiasHandler().Get() <= THRESHOLD_ACTIVATE;
+		return player.GetThermalBiasHandler().Get() < THRESHOLD_DEACTIVATE;
 	}
-	
+
 	override protected void OnActivate(PlayerBase player)
 	{
 		player.GetSymptomManager().QueueUpSecondarySymptom(SymptomIDs.SYMPTOM_FEVERBLUR);
@@ -114,7 +115,12 @@ class HeatStrokePhase2Mdfr : HeatStrokeMdfr
 		player.GetStaminaHandler().ActivateDepletionModifier(EStaminaMultiplierTypes.DISEASE_PNEUMONIA);
 		player.IncreaseDiseaseCount();
 	}
-	
+
+	override void OnReconnect(PlayerBase player)
+	{
+		this.OnActivate(player);
+	}
+
 	override protected void OnDeactivate(PlayerBase player)
 	{
 		player.GetSymptomManager().RemoveSecondarySymptom(SymptomIDs.SYMPTOM_FEVERBLUR);

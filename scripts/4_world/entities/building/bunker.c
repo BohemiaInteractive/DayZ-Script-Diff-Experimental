@@ -234,11 +234,8 @@ class BroadcastedBunker : Bunker
 
 		super.OnBunkerActivated(loadedAsActive, codeLockCode);
 
-		if (loadedAsActive)
-			return;
-
 		if (!m_StorageBox)
-			m_StorageBox = SpawnStorageBox();
+			m_StorageBox = FindOrSpawnStorageBox(loadedAsActive);
 	}
 
 	// --------------------------------------------------------------------------------
@@ -259,18 +256,63 @@ class BroadcastedBunker : Bunker
 
 	// --------------------------------------------------------------------------------
 
+	private EntityAI FindOrSpawnStorageBox(bool preferExisting)
+	{
+		if (preferExisting)
+		{
+			EntityAI existing = FindExistingStorageBox();
+			if (existing)
+				return existing;
+		}
+
+		return SpawnStorageBox();
+	}
+
+	// --------------------------------------------------------------------------------
+
+	private EntityAI FindExistingStorageBox()
+	{
+		if (!MemoryPointExists(CRATE_SPAWN_POSITION_MEM_NAME))
+			return null;
+
+		vector spawnPosWorld = ModelToWorld(GetMemoryPointPos(CRATE_SPAWN_POSITION_MEM_NAME));
+
+		array<Object> objects = new array<Object>();
+		array<CargoBase> proxyCargos = new array<CargoBase>();
+		g_Game.GetObjectsAtPosition3D(spawnPosWorld, 1.5, objects, proxyCargos);
+
+		float bestDist 	= 999999;
+		EntityAI bestBox = null;
+
+		foreach (Object obj : objects)
+		{
+			if (StorageBox_Colorbase.Cast(obj))
+			{
+				float dist = vector.Distance(spawnPosWorld, obj.GetWorldPosition());
+				if (dist < bestDist)
+				{
+					bestDist = dist;
+					bestBox 	= EntityAI.Cast(obj);
+				}
+			}
+		}
+
+		return bestBox;
+	}
+
+	// --------------------------------------------------------------------------------
+
 	private EntityAI SpawnStorageBox()
 	{
 		if (!MemoryPointExists(CRATE_SPAWN_POSITION_MEM_NAME))
 			return null;
-		
+
 		vector positionModel = GetMemoryPointPos(CRATE_SPAWN_POSITION_MEM_NAME);
 		vector positionWorld = ModelToWorld(positionModel);
 
-		
 		EntityAI storageBox = EntityAI.Cast(g_Game.CreateObjectEx(STORAGE_BOX_CLASSNAME, positionWorld, ECE_CREATEPHYSICS|ECE_UPDATEPATHGRAPH|ECE_KEEPHEIGHT|ECE_EQUIP_CARGO));
 		if (storageBox)
-		{		
+		{
 		    vector directionModel	= GetMemoryPointPos("storagecratedir");
 		    vector directionWorld	= ModelToWorld(directionModel);
 		

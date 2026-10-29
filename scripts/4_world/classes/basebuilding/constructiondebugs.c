@@ -20,6 +20,16 @@ class ConstructionDebug
 	protected static string m_CollidingPartName;
 	protected static ref array<string> m_ValidCollisions = new array<string>();
 	
+	//Context: Item falling printout data
+	protected static string m_ItemFallPartName;
+	protected static int m_ItemFallTotalCount;
+	protected static int m_ItemFallWaveCount;
+	protected static ref array<string> m_ItemFallLines = new array<string>();
+	
+	//Context: Item falling debug frame lease; constructions stop refreshing the tick once their part is no longer targeted
+	protected static int m_ItemFallDebugTick;
+	protected static ref array<ConstructionBase> m_ItemFallDebugActive = new array<ConstructionBase>();
+	
 	//Context: Insidebox printout data
 	protected static string m_InsideboxPartName;
 	
@@ -38,6 +48,11 @@ class ConstructionDebug
 		
 		m_CollidingPartName = "";
 		m_ValidCollisions.Clear();
+		
+		m_ItemFallPartName = "";
+		m_ItemFallTotalCount = 0;
+		m_ItemFallWaveCount = 0;
+		m_ItemFallLines.Clear();
 		
 		m_InsideboxPartName = "";
 	}
@@ -99,6 +114,22 @@ class ConstructionDebug
 		m_ValidCollisions.Clear();
 	}
 	
+	static void SetItemFallDebugData(string partName, int totalAffected, int waveCount, notnull array<string> lines)
+	{
+		m_ItemFallPartName = partName;
+		m_ItemFallTotalCount = totalAffected;
+		m_ItemFallWaveCount = waveCount;
+		m_ItemFallLines.Copy(lines);
+	}
+	
+	static void ResetItemFallDebugData()
+	{
+		m_ItemFallPartName = "";
+		m_ItemFallTotalCount = 0;
+		m_ItemFallWaveCount = 0;
+		m_ItemFallLines.Clear();
+	}
+	
 	static void SetInsideboxCheckDebugData(string partName)
 	{
 		m_InsideboxPartName = partName;
@@ -106,11 +137,127 @@ class ConstructionDebug
 	
 	static void Update()
 	{
-		DrawCanDismantlePart();
-		DrawActionDismantle();
-		DrawBuildPartInfo();
-		DrawCollisionPrintouts();
-		DrawInsideboxPrintouts();
+		m_ItemFallDebugTick++;
+		SweepItemFallDebugStale();
+		
+		UpdateFreeCameraItemFallDebug();
+		
+		//full debug panels only under the full debug flag, item falling panel under its own flag
+		if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG))
+		{
+			DrawCanDismantlePart();
+			DrawActionDismantle();
+			DrawBuildPartInfo();
+			DrawCollisionPrintouts();
+			DrawInsideboxPrintouts();
+		}
+		
+		DrawItemFallPrintouts();
+	}
+	
+	//! constructions whose debugged part is no longer targeted stop refreshing the tick, clean them up so their shapes do not linger
+	static void SweepItemFallDebugStale()
+	{
+		for (int i = m_ItemFallDebugActive.Count() - 1; i >= 0; i--)
+		{
+			ConstructionBase construction = m_ItemFallDebugActive[i];
+			if (!construction || m_ItemFallDebugTick - construction.GetItemFallDebugLastTick() > ConstructionBase.ITEM_FALL_DEBUG_STALE_FRAMES)
+			{
+				m_ItemFallDebugActive.Remove(i);
+				if (construction)
+					construction.ResetItemFallDebugVisuals();
+			}
+		}
+	}
+	
+	static int GetItemFallDebugTick()
+	{
+		return m_ItemFallDebugTick;
+	}
+	
+	static void RegisterItemFallDebug(ConstructionBase construction)
+	{
+		if (construction && m_ItemFallDebugActive.Find(construction) < 0)
+			m_ItemFallDebugActive.Insert(construction);
+	}
+	
+	static void UnregisterItemFallDebug(ConstructionBase construction)
+	{
+		int idx = m_ItemFallDebugActive.Find(construction);
+		if (idx >= 0)
+			m_ItemFallDebugActive.Remove(idx);
+	}
+	
+	//! while the player flies the free camera the user actions are disabled and the action based drivers never run,
+	//! so raycast from the free camera and drive the item fall debug for the part under the crosshair instead
+	static void UpdateFreeCameraItemFallDebug()
+	{
+		if (g_Game.IsDedicatedServer())
+			return;
+		
+		if (!DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_ITEMFALLDEBUG))
+			return;
+		
+		if (!DeveloperFreeCamera.IsFreeCameraEnabledNoPlayerMovement())
+			return;
+		
+		FreeDebugCamera camera = FreeDebugCamera.GetInstance();
+		if (!camera)
+			return;
+		
+		vector rayStart = camera.GetPosition();
+		vector rayEnd = rayStart + camera.GetDirection() * ConstructionBase.ITEM_FALL_DEBUG_FRECAM_RAY_DIST;
+		
+		RaycastRVParams rayInput = new RaycastRVParams(rayStart, rayEnd, camera);
+		rayInput.flags = CollisionFlags.ALLOBJECTS;
+		array<ref RaycastRVResult> results = new array<ref RaycastRVResult>();
+		if (!DayZPhysics.RaycastRVProxy(rayInput, results))
+			return;
+		
+		//nearest construction capable hit wins
+		RaycastRVResult nearestRes = null;
+		float nearestDist = 0.0;
+		int i;
+		int resCount = results.Count();
+		for (i = 0; i < resCount; i++)
+		{
+			RaycastRVResult res = results.Get(i);
+			EntityAI ent;
+			if (!res || !res.obj || !Class.CastTo(ent, res.obj) || !ent.CanUseConstruction())
+				continue;
+			
+			float dist = vector.DistanceSq(res.pos, rayStart);
+			if (!nearestRes || dist < nearestDist)
+			{
+				nearestRes = res;
+				nearestDist = dist;
+			}
+		}
+		
+		if (!nearestRes)
+			return;
+		
+		EntityAI targetEntity;
+		if (!Class.CastTo(targetEntity, nearestRes.obj))
+			return;
+		
+		ConstructionBase construction = ConstructionBase.Cast(targetEntity.GetConstructionBasic());
+		if (!construction)
+			return;
+		
+		//first component name mapping to a constructed part, tool and dismantle checks do not apply for the preview,
+		//UpdateItemFallDebugVisuals mirrors the server gates and prints the suppression reasons
+		array<string> compNames = new array<string>();
+		targetEntity.GetActionComponentNameList(nearestRes.component, compNames);
+		int compCount = compNames.Count();
+		for (i = 0; i < compCount; i++)
+		{
+			if (construction.GetConstructionPart(compNames[i]))
+			{
+				construction.UpdateItemFallDebugVisuals(compNames[i]);
+				return;
+			}
+		}
 	}
 
 	protected static void DrawCanDismantlePart()
@@ -146,6 +293,9 @@ class ConstructionDebug
 
 	protected static void DrawBuildPartInfo()
 	{
+		if (m_TargetComponentIdx == -1 && m_ActionInfoDebug.Count() == 0)
+			return;
+		
 		DbgUI.Begin("ActionPartInfo Debug", 400, 0);
 		{
 			DbgUI.Text("target component idx: " + m_TargetComponentIdx);
@@ -181,6 +331,23 @@ class ConstructionDebug
 				foreach (string name : m_ValidCollisions)
 				{
 					DbgUI.Text("    " + name);
+				}
+			}
+			DbgUI.End();
+		}
+	}
+	
+	protected static void DrawItemFallPrintouts()
+	{
+		if (m_ItemFallPartName != "")
+		{
+			DbgUI.Begin("ItemFall Debug", 0, 450);
+			{
+				DbgUI.Text(string.Format("part %1 removed: %2 affected over %3 wave(s):", m_ItemFallPartName, m_ItemFallTotalCount, m_ItemFallWaveCount));
+				DbgUI.Text("colors: wave 0=yellow, wave 1=green, wave 2=blue, wave 3+=white");
+				foreach (string line : m_ItemFallLines)
+				{
+					DbgUI.Text(line);
 				}
 			}
 			DbgUI.End();

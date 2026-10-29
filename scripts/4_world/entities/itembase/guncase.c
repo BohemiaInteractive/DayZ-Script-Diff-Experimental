@@ -34,6 +34,17 @@ class GunCase_ColorBase : Container_Base
 		return true;
 	}
 	
+	override bool CanPutInCargo(EntityAI parent)
+	{
+		if (!super.CanPutInCargo(parent))
+			return false;
+
+		if (parent && parent.IsKindOf("GunCase_ColorBase"))
+			return false;
+
+		return true;
+	}
+
 	override bool CanReceiveItemIntoCargo(EntityAI item)
 	{
 		if (GetHealthLevel() == GameConstants.STATE_RUINED)

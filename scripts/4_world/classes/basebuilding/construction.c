@@ -31,9 +31,9 @@ class Construction : ConstructionBase
 		UpdatePhysics();
 	}
 	
-	override protected string GetDefaultPartInstanceType()
+	override protected typename GetDefaultPartInstanceTypename()
 	{
-		return "ConstructionPart";
+		return ConstructionPart;
 	}
 	
 	//BB parent

@@ -17,12 +17,12 @@ class Land_WarheadStorage_Bunker_Facility : House
 		}
 	}
 
-	override bool CanDoorBeOpened(int doorIndex, bool checkIfLocked = false)
+	override bool CanDoorBeOpened(notnull DoorManipulationParams params)
 	{
-		if (!super.CanDoorBeOpened(doorIndex, checkIfLocked))
+		if (!super.CanDoorBeOpened(params))
 			return false;
 		
-		switch (doorIndex)
+		switch (params.m_DoorIndex)
 		{
 			case 7:
 				return IsDoorClosed(8);

@@ -165,6 +165,10 @@ class ActionConstructionPartInfoContinuous: ActionBuildPart
 		}
 		else
 		{
+			#ifdef DIAG_DEVELOPER
+			construction.UpdateItemFallDebugVisuals(part.GetPartName());
+			#endif
+			
 			BaseBuildingBase baseBuilding = BaseBuildingBase.Cast(ent);
 			if (baseBuilding && baseBuilding.MustBeBuiltFromOutside() && baseBuilding.IsPlayerInsideEx(player, part.GetMainPartName()))
 				return false;

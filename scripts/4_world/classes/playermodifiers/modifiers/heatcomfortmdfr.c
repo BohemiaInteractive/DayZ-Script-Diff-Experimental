@@ -94,20 +94,28 @@ class HeatComfortMdfr : ModifierBase
 			}
 			else if (waterValue < PlayerConstants.SL_WATER_HIGH && !player.IsUnconscious())
 			{
-				if (thermalBiasValue < HeatStrokeMdfr.STAGE_THRESHOLDS[1])
+				if (thermalBiasValue < HeatStrokeMdfr.STAGE_THRESHOLDS[1] - HeatStrokeMdfr.STAGE_DEACTIVATION_BUFFER)
 				{
 					thermalBiasHandler.Add(PlayerConstants.THERMAL_BIAS_POSITIVE_HC_LOW_INCREMENT * deltaT);
 				}
 				else
 					thermalBiasHandler.Add(-PlayerConstants.THERMAL_BIAS_POSITIVE_HC_DECREMENT * deltaT);
 			}
+			else if (waterValue >= PlayerConstants.SL_WATER_HIGH && heatComfortValue <= PlayerConstants.THRESHOLD_HEAT_COMFORT_PLUS_CRITICAL)
+			{
+				RecoverThermalBias(thermalBiasHandler, thermalBiasValue, deltaT);
+			}
 		}
 		else
 		{
-			//! keep the value at 0.0 if we are bellow the positive yellow HC
-			thermalBiasHandler.Add(-PlayerConstants.THERMAL_BIAS_POSITIVE_HC_DECREMENT * deltaT);
-			if (thermalBiasValue <= 0.0)
-				thermalBiasHandler.Set(0.0);
+			RecoverThermalBias(thermalBiasHandler, thermalBiasValue, deltaT);
 		}
+	}
+
+	protected void RecoverThermalBias(ThermalBiasHandler thermalBiasHandler, float thermalBiasValue, float deltaT)
+	{
+		thermalBiasHandler.Add(-PlayerConstants.THERMAL_BIAS_POSITIVE_HC_DECREMENT * deltaT);
+		if (thermalBiasValue <= 0.0)
+			thermalBiasHandler.Set(0.0);
 	}
 }

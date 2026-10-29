@@ -3,16 +3,17 @@ class ConstructionDataTypeHolder : ConstructionDataTypeHolderBasic
 {
 	protected ref map<string, ref ConstructionPartTypeData> m_ConstructionPartTypeMap;
 	protected ref array<ConstructionPartTypeData> m_ConstructionPartTypes;
-	protected string m_EntityTypeName;
+	protected ref map<string, ref array<ConstructionPartTypeData>> m_GuiRequiredPartTypesMap; //<GuiCategyoryName, <related part types>>
+	
 	
 	//! Called manually after spawning from typename
-	override void InitPartsTypeDataHolder(string name, string cfgPath)
+	override void InitPartsTypeDataHolder(EntityAIType eType, string cfgPath)
 	{
-		super.InitPartsTypeDataHolder(name, cfgPath);
+		super.InitPartsTypeDataHolder(eType, cfgPath);
 		
-		m_EntityTypeName = name;
 		m_ConstructionPartTypeMap = new map<string, ref ConstructionPartTypeData>();
 		m_ConstructionPartTypes = new array<ConstructionPartTypeData>();
+		InitAttachmentGUIPartStructure(eType);
 		
 		//main parts
 		for (int i = 0; i < g_Game.ConfigGetChildrenCount(cfgPath); ++i)
@@ -34,13 +35,14 @@ class ConstructionDataTypeHolder : ConstructionDataTypeHolderBasic
 				string customPartPath = partPath + " custom_part_type";
 				if (g_Game.ConfigIsExisting(customPartPath) && g_Game.ConfigGetText(customPartPath, customTypeStr))
 				{
-					customTypeStr = customTypeStr + "TypeData";
-					Class.CastTo(typeDataObject, customTypeStr.ToType().Spawn());
+					Class.CastTo(typeDataObject, (customTypeStr + "TypeData").ToType().Spawn());
 				}
 				
 				//default typeDataObject creation
 				if (!typeDataObject)
 					typeDataObject = new ConstructionPartTypeData();
+				else
+					typeDataObject.SetCustomInstanceType(customTypeStr);
 				
 				PartTypeInitData initData = new PartTypeInitData();
 				initData.m_PartPath = partPath;
@@ -54,7 +56,54 @@ class ConstructionDataTypeHolder : ConstructionDataTypeHolderBasic
 				
 				m_ConstructionPartTypeMap.Insert(partName, typeDataObject);
 				m_ConstructionPartTypes.Insert(typeDataObject);
+				
+				InitAttachmentGUIPartLinks(eType, typeDataObject);
 			}
+		}
+	}
+	
+	void InitAttachmentGUIPartStructure(EntityAIType eType)
+	{
+		if (m_GuiRequiredPartTypesMap) //prevents double inits
+			return;
+		
+		TypeAttachmentGroupsDataHolder holder = eType.GetTypeAttachmentGroupsDataHolder();
+		if (!holder.IsValid())
+			return;
+		
+		m_GuiRequiredPartTypesMap = new map<string, ref array<ConstructionPartTypeData>>();
+		TAttachmentGroupMap groupMap = holder.GetAttachmentGroupMap();
+		foreach (string name, ref TypeAttachmentGroupData data : groupMap)
+		{
+			m_GuiRequiredPartTypesMap.Set(name, new array<ConstructionPartTypeData>());
+		}
+	}
+	
+	protected void InitAttachmentGUIPartLinks(EntityAIType eType, ConstructionPartTypeData typeDataObject)
+	{
+		if (!typeDataObject.HasRelatedGUICategories()) //nothing defined, skipping
+			return;
+		
+		if (!m_GuiRequiredPartTypesMap) //SOMETHING defined, but no valid GUIInventoryAttachmentsProps subclass of that name
+		{
+			ErrorEx("'related_GUI_categories' defined on part " + typeDataObject.GetPartName() + ", but no valid 'GUIInventoryAttachmentsProps' group defined on the entity!");
+			return;
+		}
+		TypeAttachmentGroupsDataHolder holder = eType.GetTypeAttachmentGroupsDataHolder();
+		array<string> namesArr = typeDataObject.GetRelatedGUICategoryNames();
+		foreach (string name : namesArr)
+		{
+			array<ConstructionPartTypeData> tmp = m_GuiRequiredPartTypesMap.Get(name);
+			if (!tmp)
+			{
+				string validCategories = "";
+				TAttachmentGroupMap groupMap = holder.GetAttachmentGroupMap();
+				foreach (string validName, ref TypeAttachmentGroupData groupData : groupMap)
+					validCategories += "'" + validName + "' ";
+				ErrorEx("Part '" + typeDataObject.GetPartName() + "' on type '" + eType.GetName() + "' declares related_GUI_category '" + name + "', but it does not match any GUIInventoryAttachmentsProps entry! Valid categories: [" + validCategories + "]");
+				continue;
+			}
+			tmp.Insert(typeDataObject);
 		}
 	}
 	
@@ -68,8 +117,8 @@ class ConstructionDataTypeHolder : ConstructionDataTypeHolderBasic
 		return m_ConstructionPartTypes;
 	}
 	
-	string GetOwnerEntityTypeName()
+	map<string, ref array<ConstructionPartTypeData>> GetGuiRequiredPartTypesMap()
 	{
-		return m_EntityTypeName;
+		return m_GuiRequiredPartTypesMap;
 	}
 }

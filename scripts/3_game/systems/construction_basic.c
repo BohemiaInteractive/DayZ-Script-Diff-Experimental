@@ -13,6 +13,12 @@ class ConstructionBasic
 		return true;
 	}
 	
+	//! Default return value is set so actions from the "inside" are always possible
+	bool IsPartFacingPlayer(DayZPlayer player, string partName)
+	{
+		return false;
+	}
+	
 	//! true if any part is buildable by hands
 	bool CanUseHandConstruction()
 	{

@@ -174,6 +174,18 @@ class ConstructionPart
 		return m_InsiderBoxData;
 	}
 	
+	bool CanBeRepaired(int zoneHealthLevel, ItemBase tool = null, PlayerBase player = null)
+	{
+		//default health level check
+		return zoneHealthLevel > GetMaxRepairLevel(tool, player);
+	}
+	
+	//! health state from 'GetHealthLevel', not the actual health float value!
+	protected int GetMaxRepairLevel(ItemBase tool = null, PlayerBase player = null)
+	{
+		return GameConstants.STATE_WORN;
+	}
+	
 	//////////////////
 	//Getters - type//
 	//////////////////
@@ -223,6 +235,11 @@ class ConstructionPart
 		return m_PartTypeData.IsUtilityPart();
 	}
 	
+	bool TriggersItemFall()
+	{
+		return m_PartTypeData.TriggersItemFall();
+	}
+	
 	bool CanPartDecay()
 	{
 		return m_PartTypeData.CanPartDecayConfig();
@@ -241,11 +258,6 @@ class ConstructionPart
 	int GetHandBuildFBAnimOverride()
 	{
 		return m_PartTypeData.GetHandBuildFBAnimOverride();
-	}
-	
-	bool CanSimulateItemFalling()
-	{
-		return m_PartTypeData.CanSimulateItemFalling();
 	}
 	
 	bool HasEssentialAttachmentSlots()
@@ -282,12 +294,6 @@ class ConstructionPart
 	array<string> GetCollisionData()
 	{
 		return m_PartTypeData.GetCollisionData();
-	}
-	
-	//! strings of min/max selections (should be single points in memory LOD)
-	array<string> GetItemFallingData()
-	{
-		return m_PartTypeData.GetItemFallingData();
 	}
 	
 	array<string> GetEssentialAttachmentSlots()
@@ -356,19 +362,25 @@ class ConstructionPart
 		return m_PartTypeData.GetPartTypeStaticsSupportData();
 	}
 	
-	int GetSupportProvided(int category)
+	bool GetSupportProvided(int category, out int providedStrength)
 	{
-		return m_PartTypeData.GetPartTypeSupportProvided(category);
+		return m_PartTypeData.GetPartTypeSupportProvided(category, providedStrength);
 	}
 	
-	int GetSupportRequirement(int category)
+	bool GetSupportRequirement(int category, out int requiredStrength)
 	{
-		return m_PartTypeData.GetPartTypeSupportRequirement(category);
+		return m_PartTypeData.GetPartTypeSupportRequirement(category, requiredStrength);
 	}
 	
 	set<int> GetConfiguredSupportCategories()
 	{
 		return m_PartTypeData.GetPartTypeConfiguredSupportCategories();
+	}
+	
+	//! Inverts reaction to support fullfilment
+	bool InvertSupportBehavior()
+	{
+		return false;
 	}
 	
 	///////////
@@ -470,7 +482,7 @@ class ConstructionPart
 		parent.SetAnimationPhase(animSourceName, 1);
 	}
 	
-	void TryHandleUtilityParts(EntityAI parent);
+	void TryQueueUtilityPartsUpdate(ConstructionBase con);
 	
 	/////////////
 	//obsoletes//
@@ -582,16 +594,17 @@ class ConstructionPartRebuild : ConstructionPart
 				physName = phxGeomNames[i];
 				if (!phxGeomBehaviorInvets[i])
 				{
-					TryShowAnim(physName, parent);
-					AddPartGeom(parent, physName); //and flags the geoms of the same name
+					ProcessPhysicsAdd(physName, parent);
 				}
 				else
 				{
-					TryHideAnim(physName, parent);
-					RemovePartGeom(parent, physName); //and flags the geoms of the same name
+					ProcessPhysicsRemove(physName, parent);
 				}
 			}
 		}
+		
+		//! added here since it's essentially a supplementary physics operation
+		HandleAddProxyRoadway(parent);
 	}
 	
 	override void HandleRemovePhysics(EntityAI parent)
@@ -607,16 +620,83 @@ class ConstructionPartRebuild : ConstructionPart
 				physName = phxGeomNames[i];
 				if (phxGeomBehaviorInvets[i])
 				{
-					TryShowAnim(physName, parent);
-					AddPartGeom(parent, physName); //and flags the geoms of the same name
+					ProcessPhysicsAdd(physName, parent);
 				}
 				else
 				{
-					TryHideAnim(physName, parent);
-					RemovePartGeom(parent, physName); //and flags the geoms of the same name
+					ProcessPhysicsRemove(physName, parent);
 				}
 			}
 		}
+		
+		//! added here since it's essentially a supplementary physics operation
+		HandleRemoveProxyRoadway(parent);
+	}
+	
+	protected void HandleAddProxyRoadway(EntityAI parent)
+	{
+		array<string> proxyRoadwayNames = m_PartTypeData.GetPartTypeProxyRoadwayNames();
+		array<int> proxyRoadwayBehaviorInvets = m_PartTypeData.GetPartTypeProxyRoadwayBehaviorInverts();
+		int count = proxyRoadwayNames.Count();
+		if (count > 0)
+		{
+			string proxyRoadwayName;
+			for (int i = 0; i < count; ++i)
+			{
+				proxyRoadwayName = proxyRoadwayNames[i];
+				if (!proxyRoadwayBehaviorInvets[i])
+				{
+					parent.AddProxyPhysics(proxyRoadwayName);
+				}
+				else
+				{
+					parent.RemoveProxyPhysics(proxyRoadwayName);
+				}
+			}
+		}
+	}
+	
+	protected void HandleRemoveProxyRoadway(EntityAI parent)
+	{
+		array<string> proxyRoadwayNames = m_PartTypeData.GetPartTypeProxyRoadwayNames();
+		array<int> proxyRoadwayBehaviorInvets = m_PartTypeData.GetPartTypeProxyRoadwayBehaviorInverts();
+		int count = proxyRoadwayNames.Count();
+		if (count > 0)
+		{
+			string proxyRoadwayName;
+			for (int i = 0; i < count; ++i)
+			{
+				proxyRoadwayName = proxyRoadwayNames[i];
+				if (proxyRoadwayBehaviorInvets[i])
+				{
+					parent.AddProxyPhysics(proxyRoadwayName);
+				}
+				else
+				{
+					parent.RemoveProxyPhysics(proxyRoadwayName);
+				}
+			}
+		}
+	}
+	
+	/**
+	\brief Groups all actions needed to 'add physics'
+	\note: 'name' is either animSource name, or boneName, depening on proxy physics usage. Match them when in doubt.
+	*/
+	protected void ProcessPhysicsAdd(string name, notnull EntityAI parent)
+	{
+		TryShowAnim(name, parent);
+		AddPartGeom(parent, name); //and flags the geoms of the same name
+	}
+	
+	/**
+	\brief Groups all actions needed to 'remove physics'
+	\note: 'name' is either animSource name, or boneName, depening on proxy physics usage. Match them when in doubt.
+	*/
+	protected void ProcessPhysicsRemove(string name, notnull EntityAI parent)
+	{
+		TryHideAnim(name, parent);
+		RemovePartGeom(parent, name); //and flags the geoms of the same name
 	}
 	
 	//! Non-proxy physics handling, ADDING
@@ -795,27 +875,13 @@ class ConstructionPartRebuild : ConstructionPart
 	/////////
 	//utils//
 	/////////
-	//! Currently only local part state + animations, not a proper synced build!
-	override void TryHandleUtilityParts(EntityAI parent)
+	//! Queues utility part update, if needed
+	override void TryQueueUtilityPartsUpdate(ConstructionBase con)
 	{
-		super.TryHandleUtilityParts(parent);
+		super.TryQueueUtilityPartsUpdate(con);
 		
-		ConstructionBase con = ConstructionBase.Cast(parent.GetConstructionBasic());
-		array<string> list = m_PartTypeData.GetPartTypeUtilityAutobuildPartsList();
-		foreach (string partName : list)
-		{
-			ConstructionPart part = con.GetConstructionPart(partName);
-			if (con.CanBuildUtilityPart(partName))
-			{
-				con.AddToConstructedParts(partName);
-				ConstructionManagerStatic.AddPartToProcess(con, part);
-			}
-			else if (part.IsBuilt())
-			{
-				con.RemoveFromConstructedParts(partName);
-				ConstructionManagerStatic.AddPartToProcess(con, part);
-			}
-		}
+		if (m_PartTypeData.TriggersUtilityPartsUpdate())
+			con.QueueUpdateUtilityParts();
 	}
 }
 

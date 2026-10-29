@@ -51,8 +51,14 @@ class ActionWashHeadWettingClothesBase : ActionContinuousBase
 		super.OnFinishProgressServer(action_data);
 
 		action_data.m_Player.m_AgentPool.ReduceAgent(eAgents.EYES_IRRITATION, GetEyeIrritationReduction());
-		action_data.m_Player.GetThermalBiasHandler().Add(-PlayerConstants.THERMAL_BIAS_WASH_HEAD_DECREMENT);
-		action_data.m_Player.GetThermalBiasHandler().SetTemporaryResistance(PlayerConstants.THERMAL_BIAS_WASH_HEAD_TEMPORARY_RESISTANCE_TIME);
+
+		ThermalBiasHandler thermalBiasHandler = action_data.m_Player.GetThermalBiasHandler();
+		if (thermalBiasHandler.GetTemporaryResistance() <= 0.0)
+		{
+			thermalBiasHandler.Add(-PlayerConstants.THERMAL_BIAS_WASH_HEAD_DECREMENT);
+			thermalBiasHandler.SetTemporaryResistance(PlayerConstants.THERMAL_BIAS_WASH_HEAD_TEMPORARY_RESISTANCE_TIME);
+		}
+
 		ApplyWetnessToClothes(action_data.m_Player, IsFromContainer(), 1.0);
 	}
 

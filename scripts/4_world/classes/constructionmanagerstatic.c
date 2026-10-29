@@ -74,9 +74,9 @@ class ConstructionManagerStatic
 					break;
 				
 				ConstructionPart part = updatePartsArray[i];
+				con.UpdateSpecificPartPhysics(part);
 				if (m_IsServerBatchProcessing)
 					con.UpdateSpecificPartVisuals(part);
-				con.UpdateSpecificPartPhysics(part);
 				
 				updatePartsArray.Remove(i);
 				--batchCounter;

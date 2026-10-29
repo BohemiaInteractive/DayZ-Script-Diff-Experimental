@@ -1343,6 +1343,7 @@ class CGame
 	ObjIntersectNone(4) 
 		\param excludeObjects \p array<Object>, objects that should be excluded from collision check
 		\param collidedObjects \p array<Object>, out parameter, objects that collided with OBB
+		\param flags \p CollisionFlags, query filter; \p CollisionFlags.NONE (default) tests all objects, \p CollisionFlags.ONLYSTATIC tests only static scenery/houses, \p CollisionFlags.ONLYDYNAMIC tests only dynamic objects (entities, items, vehicles). Only ONLYSTATIC / ONLYDYNAMIC are respected by this method, all other flags (FIRSTCONTACT, NEARESTCONTACT, ONLYWATER, ALLOBJECTS) are ignored
 		\returns \p bool, \p true if at least one object collided with OBB, \p false otherwise
 		
 		@code
@@ -1362,7 +1363,7 @@ class CGame
 			}
 		@endcode
 	*/
-	proto native bool		IsBoxCollidingGeometry(vector center, vector orientation, vector edgeLength, int iPrimaryType, int iSecondaryType, array<Object> excludeObjects, array<Object> collidedObjects = NULL); 
+	proto native bool		IsBoxCollidingGeometry(vector center, vector orientation, vector edgeLength, int iPrimaryType, int iSecondaryType, array<Object> excludeObjects, array<Object> collidedObjects = NULL, CollisionFlags flags = CollisionFlags.NONE); 
 
 	proto native bool		IsBoxCollidingGeometryProxy(notnull BoxCollidingParams params, array<Object> excludeObjects, array<ref BoxCollidingResult> collidedObjects = NULL); 
 		

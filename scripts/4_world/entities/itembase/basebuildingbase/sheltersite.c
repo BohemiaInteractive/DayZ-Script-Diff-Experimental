@@ -164,6 +164,26 @@ class ShelterSite extends BaseBuildingBase
 		AddAction(ActionBuildPart);
 	}
 	
+	override bool DestroyOnFall()
+	{
+		return true;
+	}
+	
+	override void OnItemFallRebuilding()
+	{
+		if (!g_Game.IsServer())
+			 return;
+		
+		DropAttachmentAndCargoItems();
+		
+		if (DestroyOnFall())
+		{
+			ItemBase constructionKit = CreateConstructionKit();
+			constructionKit.ThrowPhysically(null, vector.Zero);
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(DeleteSafe, 100, false);
+		}
+	}
+	
 	override void OnDebugSpawn()
 	{
 		ItemBase item;

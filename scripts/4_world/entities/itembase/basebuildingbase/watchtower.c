@@ -572,6 +572,10 @@ class Watchtower extends BaseBuildingBase
 		AddAction(ActionFoldBaseBuildingObject);
 	}	
 	
+	override bool DestroyOnFall()
+	{
+		return true;
+	}
 		
 	//================================================================
 	// DEBUG

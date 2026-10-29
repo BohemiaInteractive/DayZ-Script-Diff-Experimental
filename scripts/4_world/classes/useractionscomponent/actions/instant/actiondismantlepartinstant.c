@@ -44,6 +44,10 @@ class ActionDismantlePartInstantDebug : ActionInstantBase
 			
 			if (constructionPart && constructionPart.IsBuilt())
 			{
+				#ifdef DIAG_DEVELOPER
+				construction.UpdateItemFallDebugVisuals(constructionPart.GetPartName());
+				#endif
+				
 				cad.SetTargetPart(constructionPart);
 				return true;
 			}

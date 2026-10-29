@@ -563,6 +563,22 @@ class BarrelHoles_ColorBase extends FireplaceBase
 		AddAction(ActionTogglePlaceObject);
 	}
 	
+	override void OnItemFallRebuilding()
+	{
+		if (!g_Game.IsServer())
+			 return;
+		
+		DestroyAreaDamage();
+		StopFire(FireplaceFireState.NO_FIRE);
+		
+		if (HasAnyAttachmentsOrCargo())
+		{	
+			MiscGameplayFunctions.ThrowAllItemsInInventory(this, 0);
+		}
+		
+		CheckForDestroy();
+	}
+	
 	override void OnDebugSpawn()
 	{
 		m_Openable.Open();

@@ -5,6 +5,7 @@ class ConstructionPartTypeData
 	protected string 	m_PartName;			//config class name
 	protected string 	m_MainPartName;		//main (parent) config class name
 	protected string 	m_PartPath; //raw part path, stored for deferred init
+	protected typename 	m_CustomInstanceTypename; //set only for custom types, contains type of custom part instances
 	protected int		m_Id;				//a number used for synchronization and persistence purposes, must be unique and withing sync limit (total number of bits in all sync/persistence variables)
 	protected int 		m_BuildActionTypeMask; //values from EConstructionTools
 	protected int 		m_BuildIndicationTypeMask; //values from EConstructionTools, used for indication only!
@@ -14,6 +15,8 @@ class ConstructionPartTypeData
 	protected bool 		m_IsBase;			//defines if this part is the foundation of the whole construction
 	protected bool 		m_IsGate;			//defines part gate state
 	protected bool 		m_IsUtilityPart; //! Special helper parts with invalid IDs
+	protected bool 		m_TriggersItemFall = true; //! whether removing the part triggers item falling detection, config key 'item_fall_trigger' (default 1)
+	protected bool 		m_TriggersUtilityPartUpdate; //! speficies whether a part state change toggles utility part update step. Maybe default should be 'true'??
 	protected bool 		m_DamageHandsOnBuild;
 	protected bool 		m_CanPartDecayConfig; //! determined by, in sequence: 'can_decay_general' in class Construction > 'can_decay' on the part itself
 	protected float 	m_PartDecayThresholdConfig;
@@ -22,7 +25,6 @@ class ConstructionPartTypeData
 	protected ref array<string> m_ConflictedPartTypes; //list of part types conflicting with this one
 	protected ref array<string> m_CollisionData; //Names of min/max memory point selections
 	protected ref array<string> m_InsiderBoxPairNames; //Names of min/max pairs for insider box considerations
-	protected ref array<string> m_ItemFallingData; //Names of min/max memory point selections
 	protected ref array<string> m_EssentialAttachmentSlots; //Names of att. slots that are tied to the constructed part in some way
 	protected ref array<string> m_RelatedGUICategoryNames; //listing of related 'GUIInventoryAttachmentsProps' subclasses (part is required to display them, in this iteration)
 	protected ref array<ref ConstructionMaterialData> m_MaterialsData;
@@ -32,9 +34,10 @@ class ConstructionPartTypeData
 	protected string m_DismantleTextOverride = "";
 	protected ref array<string> m_PhxGeomNames;	//used in 'Handle<operation>Physics' methods instead m_PartName
 	protected ref array<int> m_PhxGeomBehaviorInverted;	//dictates behavior of geom selections from 'm_PhxGeomNames'. 0 == matches the phase of the animation, non-zero == inverted
+	protected ref array<string> m_ProxyRoadwayNames;	//used in 'Handle<operation>ProxyRoadways' methods instead m_PartName
+	protected ref array<int> m_ProxyRoadwayBehaviorInverted;	//dictates behavior of ProxyRoadway from 'm_ProxyRoadwayNames'. 0 == matches the phase of the animation, non-zero == inverted
 	protected ref array<string> m_AnimSourceNameOverrides;	//used by 'SetAnimationPhase' instead of m_PartName
 	protected ref array<int> m_AnimSourceBehaviorOverridesInverted;	//dictates behavior of animSources from 'm_AnimSourceNameOverrides'. 0 == matches the hide/show state of the animation, non-zero == inverted
-	protected ref array<string> m_UtilityAutomaticBuild;
 	protected ref TConstructionPartVariantArray m_ReqPartVariants;
 	protected ref ConstructionPartStaticsSupportData m_StaticsData;
 	protected ref ConstructionPartEffectsData m_EffectsData;
@@ -51,13 +54,13 @@ class ConstructionPartTypeData
 		InitConflictedParts();
 		InitCollisionData();
 		InitInsiderBoxData();
-		InitItemFallingData();
 		InitPartDecayData();
 		InitHandAnimOverride();
 		InitEssentialAttachmentSlots();
 		InitGuiAttachmentCategoryLinks();
 		InitConstructionActionDamage();
 		InitUtilityPartInfo();
+		InitItemFallTrigger();
 		InitUtilityBuildData();
 		InitRequiredPartVariants();
 		InitStaticsSupportPartData();
@@ -181,17 +184,6 @@ class ConstructionPartTypeData
 		}
 	}
 	
-	//! item falling on dismantle/destruct, if configured.
-	protected void InitItemFallingData()
-	{
-		m_ItemFallingData = new array<string>();
-		string path = m_PartPath + " item_falling_data";
-		if (g_Game.ConfigIsExisting(path))
-		{
-			g_Game.ConfigGetTextArray(path, m_ItemFallingData);
-		}
-	}
-	
 	//
 	protected void InitPartDecayData()
 	{
@@ -260,13 +252,22 @@ class ConstructionPartTypeData
 		m_IsUtilityPart = g_Game.ConfigGetInt(path);
 	}
 	
+	//! whether removing the part triggers item falling detection, defaults to 'true' when not configured
+	protected void InitItemFallTrigger()
+	{
+		m_TriggersItemFall = true;
+		string path = m_PartPath + " item_fall_trigger";
+		if (g_Game.ConfigIsExisting(path))
+			m_TriggersItemFall = g_Game.ConfigGetInt(path);
+	}
+	
+	//! not all parts need to invoke utility update step, config needs to specify
 	protected void InitUtilityBuildData()
 	{
-		string path = m_PartPath + " utility_build";
-		m_UtilityAutomaticBuild = {};
+		string path = m_PartPath + " toggle_utility_part_update";
 		if (g_Game.ConfigIsExisting(path))
 		{
-			g_Game.ConfigGetTextArray(path, m_UtilityAutomaticBuild);
+			m_TriggersUtilityPartUpdate = g_Game.ConfigGetInt(path);
 		}
 	}
 	
@@ -376,6 +377,29 @@ class ConstructionPartTypeData
 			m_AnimSourceNameOverrides.Clear();
 			m_AnimSourceBehaviorOverridesInverted.Clear();
 		}
+		/////////////////////////////////////////////////////////////
+		//proxy roadways
+		path = m_PartPath + " proxyroadway_names";
+		m_ProxyRoadwayNames = {};
+		if (g_Game.ConfigIsExisting(path))
+		{
+			g_Game.ConfigGetTextArray(path, m_ProxyRoadwayNames);
+		}
+		
+		path = m_PartPath + " proxyroadway_behaviors_invert";
+		m_ProxyRoadwayBehaviorInverted = {};
+		if (g_Game.ConfigIsExisting(path))
+		{
+			g_Game.ConfigGetIntArray(path, m_ProxyRoadwayBehaviorInverted);
+		}
+		
+		//sanity check, just in case
+		if (m_ProxyRoadwayNames.Count() != m_ProxyRoadwayBehaviorInverted.Count())
+		{
+			m_ProxyRoadwayNames.Clear();
+			m_ProxyRoadwayBehaviorInverted.Clear();
+			ErrorEx("'proxyroadway_names' and 'proxyroadway_behaviors_invert' counts do not match for part " + m_PartName);
+		}
 	}
 	
 	//! Generic init method for custom part type properties
@@ -388,6 +412,12 @@ class ConstructionPartTypeData
 	void SetCanDecayConfig(bool can)
 	{
 		m_CanPartDecayConfig = can;
+	}
+	
+	void SetCustomInstanceType(string name)
+	{
+		if (!m_CustomInstanceTypename)
+			m_CustomInstanceTypename = name.ToType();
 	}
 	
 	///////////
@@ -443,9 +473,24 @@ class ConstructionPartTypeData
 		return m_IsUtilityPart;
 	}
 	
+	bool TriggersItemFall()
+	{
+		return m_TriggersItemFall;
+	}
+	
+	bool TriggersUtilityPartsUpdate()
+	{
+		return m_TriggersUtilityPartUpdate;
+	}
+	
 	bool CanPartDecayConfig()
 	{
 		return m_CanPartDecayConfig;
+	}
+	
+	typename GetCustomInstanceType()
+	{
+		return m_CustomInstanceTypename;
 	}
 	
 	float GetPartDecayRateConfig()
@@ -461,11 +506,6 @@ class ConstructionPartTypeData
 	int GetHandBuildFBAnimOverride()
 	{
 		return m_HandFBAnimOverride;
-	}
-	
-	bool CanSimulateItemFalling()
-	{
-		return m_ItemFallingData.Count() == 2;
 	}
 	
 	bool HasEssentialAttachmentSlots()
@@ -507,12 +547,6 @@ class ConstructionPartTypeData
 	array<string> GetInsiderBoxPairNames()
 	{
 		return m_InsiderBoxPairNames;
-	}
-	
-	//! strings of min/max selections (should be single points in memory LOD)
-	array<string> GetItemFallingData()
-	{
-		return m_ItemFallingData;
 	}
 	
 	array<string> GetEssentialAttachmentSlots()
@@ -588,14 +622,14 @@ class ConstructionPartTypeData
 		return m_StaticsData;
 	}
 	
-	int GetPartTypeSupportProvided(int category)
+	bool GetPartTypeSupportProvided(int category, out int providedStrength)
 	{
-		return m_StaticsData.GetSupportProvided(category);
+		return m_StaticsData.GetSupportProvided(category, providedStrength);
 	}
 	
-	int GetPartTypeSupportRequirement(int category)
+	bool GetPartTypeSupportRequirement(int category, out int requiredStrength)
 	{
-		return m_StaticsData.GetSupportRequirement(category);
+		return m_StaticsData.GetSupportRequirement(category, requiredStrength);
 	}
 	
 	set<int> GetPartTypeConfiguredSupportCategories()
@@ -623,9 +657,15 @@ class ConstructionPartTypeData
 		return m_PhxGeomBehaviorInverted;
 	}
 	
-	array<string> GetPartTypeUtilityAutobuildPartsList()
+	array<string> GetPartTypeProxyRoadwayNames()
 	{
-		return m_UtilityAutomaticBuild;
+		return m_ProxyRoadwayNames;
+	}
+	
+	//! Note, this will likely change after release, take care when modding
+	array<int> GetPartTypeProxyRoadwayBehaviorInverts()
+	{
+		return m_ProxyRoadwayBehaviorInverted;
 	}
 	
 	ConstructionPartEffectsData GetPartTypeEffectsData()

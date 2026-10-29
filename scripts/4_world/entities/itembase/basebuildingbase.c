@@ -62,7 +62,6 @@ class BaseBuildingBase extends ItemBase
 		}
 		
 		ProcessInvulnerabilityCheck(GetInvulnerabilityTypeString());
-		SetAllowDamage(true);
 	}
 	
 	override string GetInvulnerabilityTypeString()
@@ -1142,6 +1141,75 @@ class BaseBuildingBase extends ItemBase
 		AddAction(ActionDetachFromTarget);
 		RemoveAction(ActionTakeItem);
 		RemoveAction(ActionTakeItemToHands);
+	}
+	
+	protected void DestroyConstructedParts()
+	{
+		Construction construction = GetConstruction();
+		if (!construction)
+			return;
+		
+		map<string, ref ConstructionPart> constructionParts = construction.GetConstructionParts();
+		for ( int i = constructionParts.Count() - 1; i >= 0; --i )		
+		{
+			ConstructionPart part = constructionParts.GetElement(i);
+			if (part && part.IsBuilt() && !part.IsUtilityPart())
+			{
+				construction.DestroyPartServer(null, part.GetPartName(), -1);
+			}
+		}
+	}
+	
+	protected void HandleFallingForConstructedParts()
+	{
+		Construction construction = GetConstruction();
+		if (!construction)
+			return;
+		
+		map<string, ref ConstructionPart> constructionParts = construction.GetConstructionParts();
+		for ( int i = constructionParts.Count() - 1; i >= 0; --i )		
+		{
+			ConstructionPart part = constructionParts.GetElement(i);
+			if (part && part.IsBuilt() && !part.IsUtilityPart())
+			{
+				construction.HandleEntityFalling(part.GetPartName());
+			}
+		}
+	}
+	
+	//! @Note for modders: This method and is subject to change!
+	override void OnItemFallRebuilding()
+	{
+		if (!g_Game.IsServer())
+			 return;
+		
+		if (!CfgGameplayHandler.GetDisableDropAttachmentsOnFall())
+			DropAttachmentAndCargoItems();
+		
+		if (DestroyOnFall())
+		{
+			if (!CfgGameplayHandler.GetDisableRefundMaterialsOnFall())
+			{
+				DestroyConstructedParts();
+			}
+			else
+			{
+				if (!CfgGameplayHandler.GetDisableItemFalling())
+				{
+					HandleFallingForConstructedParts();
+				}
+				g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(g_Game.ObjectDelete, 100, false, this);
+			}
+		}
+	}
+	
+	void DropAttachmentAndCargoItems()
+	{
+		if (HasAnyAttachmentsOrCargo())
+		{
+			//! @note: Only call this if the entity has rly any cargo/attachment
+			MiscGameplayFunctions.ThrowAllItemsInInventoryEx(this, ThrowEntityFlags.NONE, vector.Zero);
+		}
 	}
 	
 	//================================================================

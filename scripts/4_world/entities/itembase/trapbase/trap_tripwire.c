@@ -190,7 +190,6 @@ class TripwireTrap : TrapBase
 	{
 		return m_WireMaterial;
 	}
-	
 
 	override void RefreshState()
 	{
@@ -386,6 +385,18 @@ class TripwireTrap : TrapBase
 		
 		AddAction(ActionTogglePlaceObject);
 		AddAction(ActionDeployObject);
+	}
+	
+	override void OnTriggeredByFall(Contact extra)
+	{
+		SetState(TRIGGERED);
+		SetInactive(false);
+	}
+	
+	override void OnTriggeredByFallEffectsClient()
+	{
+		EffectSound sound = SEffectManager.PlaySound("TripwireTrap_Trigger_SoundSet", GetPosition());
+		sound.SetAutodestroy(true);
 	}
 	
 	// ====================================

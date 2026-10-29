@@ -434,6 +434,21 @@ class PowerGeneratorBase extends ItemBase
 	
 		return false;
 	}
+	
+	override void OnItemFallRebuilding()
+	{
+		if (!g_Game.IsServer())
+			 return;
+		
+		if (GetCompEM().IsSwitchedOn())
+			GetCompEM().SwitchOff();
+		
+		int deviceCount	= GetCompEM().GetPluggedDevicesCount();
+		if (deviceCount > 0)
+		{
+			GetCompEM().UnplugAllDevices();
+		}
+	}
 }
 
 

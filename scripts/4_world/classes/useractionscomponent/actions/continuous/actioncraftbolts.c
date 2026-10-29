@@ -42,6 +42,7 @@ class ActionCraftBolts: ActionContinuousBase
 		CUTTING_TYPES.Insert("Scimitar");
 		CUTTING_TYPES.Insert("DonerKnife");
 		CUTTING_TYPES.Insert("Akinaka");
+		CUTTING_TYPES.Insert("BrickTrowel");
 	}
 	
 	void ActionCraftBolts()

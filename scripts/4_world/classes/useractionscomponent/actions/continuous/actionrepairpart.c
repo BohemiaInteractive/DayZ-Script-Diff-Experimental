@@ -7,12 +7,12 @@ This should be handled by adding "repair_action_type" array to basebuilding and 
 
 class RepairPartActionReciveData : ActionReciveData
 {
-	int m_ComponentIndexRecived;
+	int m_ComponentIndexRecived; //DEPRECATED, target is fully synced anyway
 }
 
 class RepairPartActionData : ActionData
 {
-	int m_ComponentIndex;
+	int m_ComponentIndex; //DEPRECATED, target is fully synced anyway
 }
 
 class ActionRepairPartCB : ActionContinuousBaseCB
@@ -52,7 +52,7 @@ class ActionRepairPart: ActionDismantlePart
 	
 	override void CreateConditionComponents()  
 	{	
-		m_ConditionItem = new CCINonRuined;
+		m_ConditionItem = new CCINonRuined();
 		m_ConditionTarget = new CCTCursor();
 	}
 	
@@ -97,21 +97,34 @@ class ActionRepairPart: ActionDismantlePart
 	{	
 		EntityAI ent = EntityAI.Cast(action_data.m_Target.GetObject());
 		ConstructionBase construction = ConstructionBase.Cast(ent.GetConstructionBasic());
+		array<string> compNames = new array<string>();
+		ent.GetActionComponentNameList(action_data.m_Target.GetComponentIndex(), compNames);
+		string partName;
+		foreach (string testName : compNames)
+		{
+			if (construction.IsPartConstructed(testName))
+			{
+				partName = testName;
+				break;
+			}
+		}
 		
-		//repairing
-		string part_name = action_data.m_Target.GetObject().GetActionComponentName( RepairPartActionData.Cast(action_data).m_ComponentIndex );
-		string zone_name;
-		PluginRepairing module_repairing;
-		Class.CastTo(module_repairing, GetPlugin(PluginRepairing));
+		if (partName == "")
+		{
+			ErrorEx("Invalid part name on component idx: " + action_data.m_Target.GetComponentIndex());
+			return;
+		}
 		
-		DamageSystem.GetDamageZoneFromComponentName(ent,part_name,zone_name);
-		module_repairing.Repair(action_data.m_Player,action_data.m_MainItem,ent,m_SpecialtyWeight,zone_name);
+		string zoneName;
+		PluginRepairing moduleRrepairing = PluginRepairing.Cast(GetPlugin(PluginRepairing));
+		DamageSystem.GetDamageZoneFromComponentName(ent, partName, zoneName);
+		moduleRrepairing.Repair(action_data.m_Player, action_data.m_MainItem, ent,m_SpecialtyWeight, zoneName);
 		
 		//consume materials
-		construction.TakeMaterialsServer(part_name,true);
+		construction.TakeMaterialsServer(partName, true);
 		
 		//add damage to tool
-		action_data.m_MainItem.DecreaseHealth( UADamageApplied.REPAIR, false );
+		action_data.m_MainItem.DecreaseHealth(UADamageApplied.REPAIR, false);
 	}
 	
 	protected override void SetBuildingAnimation( ItemBase item )
@@ -135,7 +148,7 @@ class ActionRepairPart: ActionDismantlePart
 	
 	override ActionData CreateActionData()
 	{
-		RepairPartActionData action_data = new RepairPartActionData;
+		RepairPartActionData action_data = new RepairPartActionData();
 		return action_data;
 	}
 	
@@ -155,7 +168,7 @@ class ActionRepairPart: ActionDismantlePart
 	{
 		if(!action_recive_data)
 		{
-			action_recive_data = new RepairPartActionReciveData;
+			action_recive_data = new RepairPartActionReciveData();
 		}
 		RepairPartActionReciveData recive_data_repair = RepairPartActionReciveData.Cast(action_recive_data);
 		
@@ -188,7 +201,7 @@ class ActionRepairPart: ActionDismantlePart
 		if (ent && ent.CanUseConstruction())
 		{
 			ConstructionBase construction = ConstructionBase.Cast(ent.GetConstructionBasic());
-			array<string> compNames = new array<string>;
+			array<string> compNames = new array<string>();
 			ent.GetActionComponentNameList(target.GetComponentIndex(), compNames);
 			foreach (string partName : compNames)
 			{
