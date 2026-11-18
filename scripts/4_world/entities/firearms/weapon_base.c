@@ -345,8 +345,36 @@ class Weapon_Base extends Weapon
 		if ( !g_Game.IsHeadlessOrDedicatedServer() )
 		{
 			ItemBase suppressor = GetAttachedSuppressor();	
-					
-			// Muzzle flash & overheating effects	
+			
+			const float TRACE_DEPTH = 200.0;
+			vector muzzlePos = GetSelectionPositionLS("usti hlavne");
+			muzzlePos = ModelToWorld(muzzlePos);
+			//! Local vars used for the raycast
+			float hitFraction;
+			vector hitPosition, hitNormal;
+			vector from = muzzlePos;
+			vector to = Vector(from[0], from[1] - TRACE_DEPTH, from[2]);
+			PhxInteractionLayers collisionLayer = PhxInteractionLayers.TERRAIN | PhxInteractionLayers.ROADWAY | PhxInteractionLayers.BUILDING | PhxInteractionLayers.VEHICLE | PhxInteractionLayers.FIREGEOM | PhxInteractionLayers.TRIGGER;
+			Object hitObject; 
+			string surfaceType;
+
+			//! Cating a ray to see what surface is below the gun
+			DayZPhysics.RayCastBullet(from, to, collisionLayer, null, hitObject, hitPosition, hitNormal, hitFraction);
+			g_Game.SurfaceGetType3D(hitPosition[0], hitPosition[1], hitPosition[2], surfaceType);
+						
+			//! Setting up the params for the handler and playing the effects
+			DustKickupParams params = new DustKickupParams();
+			params.object = this;
+			params.surfaceName = surfaceType;
+			params.position = Vector(from[0], hitPosition[1], from[2]);
+			params.orientation = this.GetOrientation();
+			params.playerStance = player.m_MovementState.m_iStanceIdx;
+			params.hitFraction = hitFraction;
+			params.ammoType = GetChamberAmmoTypeName(muzzleType);
+			params.traceDepth = TRACE_DEPTH;
+
+			DustKickupEffects.GetInstance().PlayParticle(params);
+
 			ItemBase.PlayFireParticles(this, muzzleType, ammoType, this, suppressor, "CfgWeapons" );
 			IncreaseOverheating(this, ammoType, this, suppressor, "CfgWeapons");
 			

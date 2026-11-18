@@ -255,8 +255,15 @@ class DigitalCodeLockUI : DigitalCodeLockUIBase
 		if (Class.CastTo(codeLock, m_TargetLock))
 			minPINLength = codeLock.GetMinLockPINLength();
 		
-		if (pinLength < minPINLength || pinLength > MAX_LOCK_PIN_LENGTH)
+		if (m_HasPIN)
+		{
+			if (pinLength > MAX_LOCK_PIN_LENGTH)
+				return;
+		}
+		else if (pinLength < minPINLength || pinLength > MAX_LOCK_PIN_LENGTH)
+		{
 			return;
+		}
 		
 		#ifdef CODELOCKCOMPONENT_LOG
 		ErrorEx("PIN set to=" + m_EnteredPIN, ErrorExSeverity.INFO);
@@ -363,8 +370,8 @@ class DigitalCodeLockUI : DigitalCodeLockUIBase
 		{
 			Man player = g_Game.GetPlayer();
 			vector playerPos = player.GetPosition();
-			
-			if (vector.DistanceSq(playerPos, m_TargetPosition) > 5.0 * 5.0)
+
+			if (vector.DistanceSq(playerPos, m_TargetPosition) > CodeLockComponent.CODELOCK_MAX_CODE_DISTANCE_SQ)
 			{
 				Close();
 				return;

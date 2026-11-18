@@ -50,6 +50,19 @@ class BuildingBase : Building
 		return m_Construction;
 	}
 	
+	override bool IsManagingArrows()
+	{
+		return m_Construction && m_Construction.GetArrowManagerConstruction();
+	}
+	
+	override ArrowManagerBase GetArrowManager()
+	{
+		if (m_Construction)
+			return m_Construction.GetArrowManagerConstruction();
+		
+		return super.GetArrowManager();
+	}
+	
 	override protected void RegisterConstructionSyncVariables()
 	{
 		super.RegisterConstructionSyncVariables();

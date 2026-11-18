@@ -111,6 +111,10 @@ class ActionManagerBase
 
 	void Update(int pCurrentCommandID)
 	{
+		//! Liquid target conditions share their engine queries within one action
+		//! manager update, drop the previous one. \see CCTLiquidFrameProbe
+		CCTLiquidFrameProbe.InvalidateFrame();
+		
 		if (m_CurrentActionData)
 		{
 			if (m_Interrupted)

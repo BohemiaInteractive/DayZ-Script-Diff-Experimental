@@ -111,7 +111,7 @@ class LoopedChambering extends WeaponStateBase
 	override void OnExit (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -170,7 +170,7 @@ class LoopedChambering extends WeaponStateBase
 	override void OnAbort (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -374,7 +374,7 @@ class LoopedChamberingEjectLast extends WeaponStateBase
 	override void OnExit (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -433,7 +433,7 @@ class LoopedChamberingEjectLast extends WeaponStateBase
 	override void OnAbort (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -640,7 +640,7 @@ class LoopedChamberingCombineChamberInternalMagazine extends WeaponStateBase
 	override void OnExit (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -700,7 +700,7 @@ class LoopedChamberingCombineChamberInternalMagazine extends WeaponStateBase
 	override void OnAbort (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			

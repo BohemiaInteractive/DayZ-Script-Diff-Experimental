@@ -1,3 +1,9 @@
+class CraftBoltsActionData : ActionData
+{
+	bool m_IsKnifeInHands;
+	Ammunition_Base m_ResultEntity;
+}
+
 class ActionCraftBoltsCB : ActionContinuousBaseCB
 {
 	private const float TIME_TO_CRAFT = 3.0;
@@ -12,6 +18,7 @@ class ActionCraftBolts: ActionContinuousBase
 {
 	const ref set<string> CUTTING_TYPES = new set<string>();
 	
+	// deprecated
 	protected bool 				m_IsKnifeInHands;
 	protected Ammunition_Base 	m_ResultEntity;
 	
@@ -43,6 +50,7 @@ class ActionCraftBolts: ActionContinuousBase
 		CUTTING_TYPES.Insert("DonerKnife");
 		CUTTING_TYPES.Insert("Akinaka");
 		CUTTING_TYPES.Insert("BrickTrowel");
+		CUTTING_TYPES.Insert("P1907_Bayonet");
 	}
 	
 	void ActionCraftBolts()
@@ -86,22 +94,30 @@ class ActionCraftBolts: ActionContinuousBase
 		return false;
 	}
 
+	override ActionData CreateActionData()
+	{
+		CraftBoltsActionData action_data = new CraftBoltsActionData;
+		return action_data;
+	}
+
 	override void OnStartServer(ActionData action_data)
 	{
 		super.OnStartServer(action_data);
 		
-		m_IsKnifeInHands = IsCuttingType(action_data.m_MainItem);
-		m_ResultEntity = null;
+		CraftBoltsActionData craftData = CraftBoltsActionData.Cast(action_data);
+		craftData.m_IsKnifeInHands = IsCuttingType(action_data.m_MainItem);
+		craftData.m_ResultEntity = null;
 	}
 	
 	override void OnFinishProgressServer(ActionData action_data)
 	{
+		CraftBoltsActionData craftData = CraftBoltsActionData.Cast(action_data);
 		ItemBase knife;
 		ItemBase material;
 
 		bool added = false;
 		
-		if (m_IsKnifeInHands)
+		if (craftData.m_IsKnifeInHands)
 		{
 			//knife in hands
 			knife = action_data.m_MainItem;
@@ -117,20 +133,20 @@ class ActionCraftBolts: ActionContinuousBase
 		if (!material || !knife)
 			return;
 		
-		if (m_ResultEntity)
+		if (craftData.m_ResultEntity)
 		{
-			if (m_ResultEntity.GetAmmoCount() < m_ResultEntity.GetAmmoMax())
+			if (craftData.m_ResultEntity.GetAmmoCount() < craftData.m_ResultEntity.GetAmmoMax())
 			{
-				m_ResultEntity.ServerAddAmmoCount(1);
+				craftData.m_ResultEntity.ServerAddAmmoCount(1);
 				added = true;
 			}
 		}
 		
 		if (!added)
 		{
-			m_ResultEntity = Ammunition_Base.Cast(action_data.m_Player.SpawnEntityOnGroundRaycastDispersed("Ammo_ImprovisedBolt_1"));
-			m_ResultEntity.SetHealth("", "", material.GetHealth("", ""));
-			m_ResultEntity.ServerSetAmmoCount(1);
+			craftData.m_ResultEntity = Ammunition_Base.Cast(action_data.m_Player.SpawnEntityOnGroundRaycastDispersed("Ammo_ImprovisedBolt_1"));
+			craftData.m_ResultEntity.SetHealth("", "", material.GetHealth("", ""));
+			craftData.m_ResultEntity.ServerSetAmmoCount(1);
 		}
 		
 		material.AddQuantity(-1);

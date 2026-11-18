@@ -48,7 +48,7 @@ class ActionDismantlePart: ActionContinuousBase
 		{
 			string overrideText = part.GetDismantleTextOverride();
 			if (overrideText == string.Empty)
-				m_Text = "#dismantle "+ part.GetName();
+				m_Text = "#dismantle "+ part.GetNameKey();
 			else
 				m_Text = overrideText;
 			

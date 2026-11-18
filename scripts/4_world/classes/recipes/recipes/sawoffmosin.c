@@ -48,6 +48,16 @@ class SawoffMosin extends RecipeBase
 	//gets called upon recipe's completion
 	override void Do(ItemBase ingredients[], PlayerBase player,array<ItemBase> results, float specialty_weight)
 	{
-		MiscGameplayFunctions.TurnItemIntoItemEx(player, new TurnItemIntoItemLambda(ingredients[0], "SawedoffMosin9130", player));
+		// texture variants: "Mosin9130_Desert" -> "SawedoffMosin9130_Desert", falls back to the default sawn-off if that class doesn't exist
+		string baseType = "Mosin9130";
+		string sawnType = "SawedoffMosin9130";
+		string type = ingredients[0].GetType();
+		string result = sawnType + type.Substring(baseType.Length(), type.Length() - baseType.Length());
+		if (!g_Game.ConfigIsExisting("CfgWeapons " + result))
+		{
+			result = sawnType;
+		}
+
+		MiscGameplayFunctions.TurnItemIntoItemEx(player, new TurnItemIntoItemLambda(ingredients[0], result, player));
 	}
 };

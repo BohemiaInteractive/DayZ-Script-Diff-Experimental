@@ -6,3 +6,4 @@ class DayZAnimalCommandBehaviourModifierModdable extends DayZAnimalCommandBehavi
 class DayZAnimalCommandHitModdable               extends DayZAnimalCommandHit {}
 class DayZAnimalCommandDeathModdable             extends DayZAnimalCommandDeath {}
 class DayZAnimalCommandAnimCallbackModdable      extends DayZAnimalCommandAnimCallback {}
+class DayZAnimalCommandThreatReactionModdable    extends DayZAnimalCommandThreatReaction {}

@@ -65,6 +65,7 @@ class Man extends EntityAI
 	bool IsUnconsciousStateOnly();
 	
 	bool IsSurrendered();
+	bool IsSurrenderTransitionHappening();
 
 	int GetPlayerState()
 	{

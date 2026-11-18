@@ -33,14 +33,14 @@ class ActionConstructionPartInfoContinuous: ActionBuildPart
 		{
 			string overrideText = part.GetBuildTextOverride();
 			if (overrideText == string.Empty)
-				m_Text = "#build" + " " + part.GetName();
+				m_Text = "#build" + " " + part.GetNameKey();
 			else
 				m_Text = overrideText;
 			
 			#ifdef DIAG_DEVELOPER
 			if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG))
 			{
-				m_Text = "dbg " + "#build" + " " + part.GetName() + " | " + part.GetPartName();
+				m_Text = "dbg " + "#build" + " " + part.GetNameKey() + " | " + part.GetPartName();
 			}
 			#endif
 		}
@@ -49,6 +49,11 @@ class ActionConstructionPartInfoContinuous: ActionBuildPart
 	
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
 	{
+		#ifdef DIAG_DEVELOPER
+		if (player.GetConstructionActionData().GetFastConstructionMode() == EConstructionDebugModes.INSTANT)
+			return false;
+		#endif
+		
 		EntityAI ent;
 		if (!Class.CastTo(ent,target.GetObject()))
 			return false;
@@ -90,13 +95,16 @@ class ActionConstructionPartInfoContinuous: ActionBuildPart
 			ConstructionBase construction = ConstructionBase.Cast(ent.GetConstructionBasic());
 			ConstructionActionData cad = player.GetConstructionActionData();
 			ConstructionPart part = cad.GetBuildPartInfoAtIndex(m_VariantID);
-			construction.CanBuildPartEx(part.GetPartName(), item, info.m_InfoContextMask);
+			ConstructionPartBuildData checkData = new ConstructionPartBuildData();
+			checkData.m_Tool = item;
+			construction.CanBuildPartEx(part.GetPartName(), checkData);
+			info.m_InfoContextMask = checkData.m_FailureReasonsMask;
 			info.SetConstructionPart(part);
 			info.SetTool(item);
 			
 			#ifdef DIAG_DEVELOPER
 			if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG) && info.m_InfoContextMask)
-				DbgPrint(construction, info, target.GetComponentIndex()); //print here for 'real' mask data..
+				DbgPrint(construction, ent, info, target.GetComponentIndex()); //print here for 'real' mask data..
 			#endif
 			
 			info.m_InfoContextMask |= EConstructionInfoCategories.MATERIALS_PRESENCE; //material info should always be visible
@@ -109,7 +117,7 @@ class ActionConstructionPartInfoContinuous: ActionBuildPart
 	}
 	
 	#ifdef DIAG_DEVELOPER
-	void DbgPrint(notnull ConstructionBase construction, ActionInfoDataConstructionBase info, int componentIdx)
+	void DbgPrint(notnull ConstructionBase construction, notnull EntityAI ent, ActionInfoDataConstructionBase info, int componentIdx)
 	{
 		int failureMask = info.m_InfoContextMask;
 		ConstructionPart part = info.GetConstructionPart();
@@ -130,6 +138,23 @@ class ActionConstructionPartInfoContinuous: ActionBuildPart
 			if (failureMask & EConstructionInfoCategories.MATERIALS_PRESENCE)
 				construction.HasMaterialsEx(partName, false, missingSlot, missingQty);
 	
+			//query the attached material items directly, works for any material count
+			string ruinedMaterials = "";
+			if (failureMask & EConstructionInfoCategories.MATERIALS_DAMAGE)
+			{
+				array<ref ConstructionMaterialData> materials = part.GetMaterialsData();
+				for (int i = 0; i < materials.Count(); i++)
+				{
+					ItemBase attachment = ItemBase.Cast(ent.FindAttachmentBySlotName(materials[i].m_MaterialSlotName));
+					if (attachment && attachment.IsRuined())
+					{
+						if (ruinedMaterials != "")
+							ruinedMaterials += ", ";
+						ruinedMaterials += (i + 1).ToString();
+					}
+				}
+			}
+	
 			ItemBase tool = info.GetTool();
 			string badToolType = "hands";
 			if ((failureMask & EConstructionInfoCategories.TOOL_PRESENCE) && tool)
@@ -143,6 +168,7 @@ class ActionConstructionPartInfoContinuous: ActionBuildPart
 			data.missingSlot = missingSlot;
 			data.missingQty = missingQty;
 			data.badToolType = badToolType;
+			data.ruinedMaterials = ruinedMaterials;
 			
 			ConstructionDebug.AddBuildPartInfoData(data);
 		}

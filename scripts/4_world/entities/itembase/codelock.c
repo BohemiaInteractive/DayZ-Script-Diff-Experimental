@@ -490,6 +490,10 @@ class DigitalCodeLock : ItemBase
 		
 	override void SetActions()
 	{
+		AddAction(ActionInteractCodeLockItem);
+		AddAction(ActionResetCodeOnCodeLock);
+		AddAction(ActionDetachBattery);
+		
 		super.SetActions();
 		
 		AddAction(ActionAttachToConstruction);
@@ -645,7 +649,7 @@ class DigitalCodeLock_Bunker : DigitalCodeLock
 	
 	bool SetLockCode(string pin)
 	{
-		return m_CodeLockComponent.SetLockCode(pin);
+		return m_CodeLockComponent.SetLockCode(pin, true, false);
 	}
 	
 	void Disable()

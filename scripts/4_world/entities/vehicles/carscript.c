@@ -116,7 +116,7 @@ class CarScript extends Car
 
 	//!
 	protected float m_DrownTime;
-	static vector m_DrownEnginePos;
+	vector m_DrownEnginePos;
 	
 	//!
 	protected float m_EngineHealth;
@@ -191,7 +191,6 @@ class CarScript extends Car
 	#ifdef DIAG_DEVELOPER 
 	private const int DEBUG_MESSAGE_CLEAN_TIME_SECONDS = 10;
 	private float m_DebugMessageCleanTime;
-	private string m_DebugContactDamageMessage;
 	#endif
 	
 #ifdef DIAG_DEVELOPER
@@ -284,11 +283,20 @@ class CarScript extends Car
 		
 		RegisterNetSyncVariableInt("m_CarEngineSoundState", CarEngineSoundState.NONE, CarEngineSoundState.STOP_NO_FUEL);
 		
+        m_DrownEnginePos = vector.Zero;
+        if (MemoryPointExists("drown_engine"))
+            m_DrownEnginePos = GetMemoryPointPos("drown_engine");
+		
 		InitializeParticles();
 
 		//! obsolete handling (since 1.30) - kept for backward compatibility
 		m_CarHornState = ECarHornState.OFF;
 		RegisterNetSyncVariableInt("m_CarHornState", ECarHornState.OFF, ECarHornState.LONG);
+	}
+	
+	override float GetDecayMultiplier()
+	{
+		return CfgGameplayHandler.GetCarDecayMultiplier();
 	}
 	
 	override string GetVehicleType()
@@ -365,7 +373,6 @@ class CarScript extends Car
 
 		m_enginePtcPos 	= m_VFXComponent.ConvertMemPointToPosition("ptcEnginePos");
 		
-		m_DrownEnginePos = m_VFXComponent.ConvertMemPointToPosition("drown_engine");
 		m_enginePos = m_VFXComponent.ConvertMemPointToPosition("dmgZone_engine");
 		m_frontPos = m_VFXComponent.ConvertMemPointToPosition("dmgZone_front");
 		m_backPos = m_VFXComponent.ConvertMemPointToPosition("dmgZone_back");
@@ -822,8 +829,6 @@ class CarScript extends Car
 			}
 			#endif
 			
-			
-			CheckContactCache();
 			m_VelocityPrevTick = GetVelocity(this);
 			m_MomentumPrevTick = GetMomentum();
 			#ifdef DIAG_DEVELOPER
@@ -1275,154 +1280,45 @@ class CarScript extends Car
 		m_EngineDestroyed = true;
 	}
 	
-	//! Responsible for damaging the car according to contact events from OnContact
-	void CheckContactCache()
+	override protected float GetContactDamageCoef()
 	{
-		int contactZonesCount = m_ContactCache.Count();
-		
-		if (contactZonesCount == 0)
-			return;
-		
-		for (int i = 0; i < contactZonesCount; ++i)
-		{
-			string zoneName = m_ContactCache.GetKey(i);
-			array<ref VehicleContactData> data = m_ContactCache[zoneName];
-
-			float dmg = Math.AbsInt(data[0].m_Impulse * m_dmgContactCoef);
-			float crewDmgBase = Math.AbsInt((data[0].m_Impulse / dBodyGetMass(this)) * 1000 * m_dmgContactCoef);// calculates damage as if the object's weight was 1000kg instead of its actual weight
-
-			#ifdef DIAG_DEVELOPER
-			CrashDebugData.m_CrashDataPoint = new CrashDebugData();
-			CrashDebugData.m_CrashDataPoint.m_VehicleType = GetDisplayName();
-			CrashDebugData.m_CrashDataPoint.m_Damage = dmg;
-			CrashDebugData.m_CrashDataPoint.m_Zone = zoneName;
-			CrashDebugData.m_CrashDataPoint.m_MomentumCurr = GetMomentum();
-			CrashDebugData.m_CrashDataPoint.m_MomentumPrev = m_MomentumPrevTick;
-			CrashDebugData.m_CrashDataPoint.m_MomentumDelta = data[0].m_Impulse;
-			CrashDebugData.m_CrashDataPoint.m_SpeedWorld = GetVelocity(this).Length() * 3.6;
-			CrashDebugData.m_CrashDataPoint.m_SpeedWorldPrev = m_VelocityPrevTick.Length() * 3.6;
-			CrashDebugData.m_CrashDataPoint.m_SpeedWorldDelta = (m_VelocityPrevTick.Length() - GetVelocity(this).Length()) * 3.6;
-			CrashDebugData.m_CrashDataPoint.m_VelocityCur = GetVelocity(this);
-			CrashDebugData.m_CrashDataPoint.m_VelocityPrev = m_VelocityPrevTick;
-			CrashDebugData.m_CrashDataPoint.m_VelocityDot = vector.Dot(m_VelocityPrevTick.Normalized(), GetVelocity(this).Normalized());
-			CrashDebugData.m_CrashDataPoint.m_Time = g_Game.GetTime();
-			
-			if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_CONSIDERED)
-			{
-				Debug.Log("--------------------------------------------------");
-				Debug.Log("Vehicle:" + GetDisplayName());
-				Debug.Log("DMG: " + dmg);
-				Debug.Log("zoneName : "+ zoneName);
-				Debug.Log("momentumCurr : "+ GetMomentum());
-				Debug.Log("momentumPrev : "+ m_MomentumPrevTick);
-				Debug.Log("momentumDelta : "+ data[0].m_Impulse);
-				Debug.Log("speed(km/h): "+ GetVelocity(this).Length() * 3.6);
-				Debug.Log("speedPrev(km/h): "+ m_VelocityPrevTick.Length() * 3.6);
-				Debug.Log("speedDelta(km/h) : "+ (m_VelocityPrevTick.Length() - GetVelocity(this).Length()) * 3.6);
-				Debug.Log("velocityCur.): "+ GetVelocity(this));
-				Debug.Log("velocityPrev.): "+ m_VelocityPrevTick);
-				Debug.Log("velocityDot): "+ vector.Dot(m_VelocityPrevTick.Normalized(), GetVelocity(this).Normalized()));
-				Debug.Log("g_Game.GetTime(): "+ g_Game.GetTime());
-				Debug.Log("--------------------------------------------------");
-			}
-			#endif
-			if ( dmg < GameConstants.CARS_CONTACT_DMG_MIN )
-				continue;
-
-			int pddfFlags;
-			#ifdef DIAG_DEVELOPER
-			CrashDebugData.m_CrashData.Insert(CrashDebugData.m_CrashDataPoint);
-			CrashDebugData.m_CrashDataPoint.m_Speedometer =  GetSpeedometer();
-			//Print("Crash data recorded");
-			#endif
-			if (dmg < GameConstants.CARS_CONTACT_DMG_THRESHOLD)
-			{			
-				#ifdef DIAG_DEVELOPER
-				CrashDebugData.m_CrashDataPoint.m_DamageType = "Small";
-				if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_APPLIED)
-					Debug.Log(string.Format("[Vehiles:Damage]:: DMG %1 to the %2 zone is SMALL (threshold: %3), SPEEDOMETER: %4, TIME: %5", dmg, zoneName, GameConstants.CARS_CONTACT_DMG_MIN, GetSpeedometer(), g_Game.GetTime() ));
-				#endif
-				SynchCrashLightSound(true);
-				pddfFlags = ProcessDirectDamageFlags.NO_TRANSFER;
-			}
-			else
-			{
-				#ifdef DIAG_DEVELOPER
-				CrashDebugData.m_CrashDataPoint.m_DamageType = "Big";
-				if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_APPLIED)
-					Debug.Log(string.Format("[Vehiles:Damage]:: DMG %1 to the %2 zone is BIG (threshold: %3), SPEED: %4, TIME: %5", dmg, zoneName, GameConstants.CARS_CONTACT_DMG_THRESHOLD, GetSpeedometer(), g_Game.GetTime() ));
-				#endif
-				DamageCrew(crewDmgBase);
-				SynchCrashHeavySound(true);
-				pddfFlags = 0;
-			}
-			
-			#ifdef DEVELOPER
-			m_DebugContactDamageMessage += string.Format("%1: %2\n", zoneName, dmg);
-			#endif
-			
-			ProcessDirectDamage(DamageType.CUSTOM, null, zoneName, "EnviroDmg", "0 0 0", dmg, pddfFlags);
-		}
-		
-		UpdateHeadlightState();
-		UpdateLights();
-		
-		m_ContactCache.Clear();
+		return m_dmgContactCoef;
 	}
 	
-	//! Responsible for damaging crew in a car crash
-	void DamageCrew(float dmg)
+	override protected float GetCrewContactDamageCoef()
 	{
-		int crewSize = CrewSize();
-		for (int c = 0; c < crewSize; ++c)
-		{
-			Human crew = CrewMember(c);
-			if (!crew)
-				continue;
-
-			if (dmg > GameConstants.CARS_CONTACT_DMG_KILLCREW)
-			{		
-				#ifdef DIAG_DEVELOPER
-				CrashDebugData.m_CrashDataPoint.m_CrewDamageBase = dmg;
-				CrashDebugData.m_CrashDataPoint.m_DMGHealth = -100;
-				if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_APPLIED)
-				{
-					Debug.Log("--------------------------------------------------");
-					Debug.Log("Killing the player");
-					Debug.Log("Crew DMG Base: " + dmg);
-					Debug.Log("--------------------------------------------------");
-
-				}
-				#endif
-				crew.SetHealth(0.0);
-			}
-			else
-			{
-				float shockTemp = Math.InverseLerp(GameConstants.CARS_CONTACT_DMG_THRESHOLD, GameConstants.CARS_CONTACT_DMG_KILLCREW, dmg);
-				shockTemp = Math.Clamp(shockTemp,0,1);
-				float shock = Math.Lerp(50, 150, shockTemp);
-				float hp = Math.Lerp(2, 100, shockTemp);
-
-				#ifdef DIAG_DEVELOPER
-				CrashDebugData.m_CrashDataPoint.m_CrewDamageBase = dmg;
-				CrashDebugData.m_CrashDataPoint.m_ShockTemp = shockTemp;
-				CrashDebugData.m_CrashDataPoint.m_DMGHealth = hp;
-				CrashDebugData.m_CrashDataPoint.m_DMGShock = shock;
-				if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_APPLIED)
-				{
-					Debug.Log("--------------------------------------------------");
-					Debug.Log("Crew DMG Base: " + dmg);
-					Debug.Log("Crew shockTemp: " + shockTemp);
-					Debug.Log("Crew DMG Health: " + hp);
-					Debug.Log("Crew DMG Shock: " + shock);
-					Debug.Log("--------------------------------------------------");
-				}
-				#endif
-				
-				crew.AddHealth("", "Shock", -shock);
-				crew.AddHealth("", "Health", -hp);
-			}
-		}
+		return m_dmgContactCoef;
+	}
+	
+	override protected float GetCrewDamageMassAssumption()
+	{
+		return 1000;
+	}
+	
+	override protected void OnContactCacheProcessed()
+	{
+		UpdateHeadlightState();
+		UpdateLights();
+	}
+	
+	override protected int ContactDamageMin()
+	{
+		return GameConstants.CARS_CONTACT_DMG_MIN;
+	}
+	
+	override protected int ContactDamageThresholdSmall()
+	{
+		return GameConstants.CARS_CONTACT_DMG_THRESHOLD;
+	}
+	
+	override protected int ContactDamageThresholdMid()
+	{
+		return GameConstants.CARS_CONTACT_DMG_THRESHOLD;
+	}
+	
+	override protected int ContactDamageKillCrew()
+	{
+		return GameConstants.CARS_CONTACT_DMG_KILLCREW;
 	}
 
 	/*!
@@ -2600,7 +2496,12 @@ class CarScript extends Car
 		return IsOwner();
 	}
 	
-	#ifdef DIAG_DEVELOPER
+	#ifdef DIAG_DEVELOPER	
+	override protected float GetDebugSpeedometer()
+	{
+		return GetSpeedometer();
+	}
+
 	override void GetDebugActions(out TSelectableActionInfoArrayEx outputList)
 	{
 		outputList.Insert(new TSelectableActionInfoWithColor(SAT_DEBUG_ACTION, EActions.VEHICLE_HORN_START_LONG, "Horn Start Short", FadeColors.LIGHT_GREY));

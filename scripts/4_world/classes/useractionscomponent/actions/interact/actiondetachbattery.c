@@ -36,21 +36,7 @@ class ActionDetachBattery: ActionInteractBase
 			if (codeLock.IsLocked() || codeLock.IsLockedInSlot())
 				return false;
 			
-			array<string> selections = new array<string>;
-			if (codeLock)
-				codeLock.GetActionComponentNameList(target.GetComponentIndex(), selections);
-			
-			bool isFactingBackSide;
-			foreach (string selectionName : selections)
-			{
-				if (selectionName == SELECTION_BACK)
-				{
-					isFactingBackSide = true;
-					break;
-				}
-			}
-			
-			if (!isFactingBackSide)
+			if (!codeLock.IsPlayerOnBackside(player))
 				return false;
 		}
 		
@@ -58,7 +44,7 @@ class ActionDetachBattery: ActionInteractBase
 		{
 			if (attachment.CanDetachAttachment(targetEntity) && targetEntity.CanReleaseAttachment(attachment))
 			{
-				m_Text = "#detach_battery " + attachment.GetDisplayName();
+				m_Text = "#detach_battery";
 				return true;
 			}
 		}

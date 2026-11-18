@@ -792,9 +792,13 @@ class MissionGameplay extends MissionBase
 				break;
 	
 			case SetFreeCameraEventTypeID:
-				SetFreeCameraEventParams set_free_camera_event_params = SetFreeCameraEventParams.Cast( params );
-				PluginDeveloper plugin_developer = PluginDeveloper.Cast( GetPlugin(PluginDeveloper) );
-				plugin_developer.OnSetFreeCameraEvent( PlayerBase.Cast( player ), set_free_camera_event_params.param1 );
+				#ifdef DIAG_DEVELOPER
+				SetFreeCameraEventParams setFreeCameraEventParams = SetFreeCameraEventParams.Cast(params);
+				PluginDeveloper pluginDeveloper = PluginDeveloper.Cast(GetPlugin(PluginDeveloper));
+				if (pluginDeveloper)
+					pluginDeveloper.OnSetFreeCameraEvent(PlayerBase.Cast(player), setFreeCameraEventParams.param1);
+
+				#endif
 				break;
 			case NetworkInputBufferEventTypeID:
 				NetworkInputBufferEventParams networkInputBufferParams = NetworkInputBufferEventParams.Cast(params);

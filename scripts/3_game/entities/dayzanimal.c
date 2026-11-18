@@ -335,7 +335,16 @@ class DayZCreatureAI extends DayZCreature
 		if(g_Game.IsServer())
 		{
 			if(sound_event.m_NoiseParams != NULL)
+			{
 				GetGame().GetNoiseSystem().AddNoise(this, sound_event.m_NoiseParams);
+
+				// listeners ignore noise from sources they cannot target but not a noise target at the position
+				if (sound_event.m_fNoiseTargetLifetime > 0)
+				{
+					vector noisePos = GetPosition();
+					GetGame().GetNoiseSystem().AddNoiseTarget(noisePos, sound_event.m_fNoiseTargetLifetime, sound_event.m_NoiseParams, 1.0);
+				}
+			}
 		}
 	}
 
@@ -590,6 +599,12 @@ class DayZAnimalCommandLookAt extends AnimCommandBase
 }
 
 class DayZAnimalCommandBehaviourModifier extends AnimCommandBase
+{
+
+}
+
+// sniffing and barking of animals that warn before attacking like dogs
+class DayZAnimalCommandThreatReaction extends AnimCommandBase
 {
 
 }

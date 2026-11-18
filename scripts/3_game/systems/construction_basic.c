@@ -13,6 +13,11 @@ class ConstructionBasic
 		return true;
 	}
 	
+	ArrowManagerBase GetArrowManagerConstruction()
+	{
+		return null;
+	}
+	
 	//! Default return value is set so actions from the "inside" are always possible
 	bool IsPartFacingPlayer(DayZPlayer player, string partName)
 	{

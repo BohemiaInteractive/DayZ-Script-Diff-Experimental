@@ -1,4 +1,3 @@
-#ifdef ROBOCLIENT
 class RoboclientUtils
 {
 	static proto native bool ReadStateMachines();
@@ -6,4 +5,3 @@ class RoboclientUtils
 	static proto native bool GetDefaultRoboRespawn();
 	static proto native int GetDefaultRoboRespawnTime();
 }
-#endif

@@ -157,6 +157,14 @@ class ActionFishingNewCB : ActionContinuousBaseCB
 class ActionFishingNew: ActionContinuousBase
 {
 	private const string ALLOWED_WATER_SURFACES = string.Format("%1|%2", UAWaterType.SEA, UAWaterType.FRESH);
+	protected static const string HOOK_SLOT_NAME = "Hook";
+	
+	//! Same object as m_ConditionTarget, typed to avoid a cast on every frame.
+	protected CCTLiquid m_LiquidCondition;
+	//! Lazily resolved once. InventorySlots.INVALID is engine provided, so the
+	//! "resolved" state is tracked separately rather than sentinelled on the id.
+	protected bool m_HookSlotResolved;
+	protected int m_HookSlotId;
 
 	void ActionFishingNew()
 	{
@@ -171,7 +179,9 @@ class ActionFishingNew: ActionContinuousBase
 	override void CreateConditionComponents()  
 	{
 		m_ConditionItem 	= new CCINonRuined();
-		m_ConditionTarget 	= new CCTLiquid(LIQUID_SALTWATER | LIQUID_FRESHWATER, UAMaxDistances.FISHING, UAMaxDistances.FISHING, SurfaceDetectionType.Roadway, true);
+		//! Fishing is the only liquid action that needs the camera based cursor reconstruction.
+		m_ConditionTarget 	= new CCTLiquidSyntheticCursor(LIQUID_SALTWATER | LIQUID_FRESHWATER, UAMaxDistances.FISHING, UAMaxDistances.FISHING);
+		m_LiquidCondition	= CCTLiquid.Cast(m_ConditionTarget);
 	}
 	
 	override bool HasTarget()
@@ -192,14 +202,36 @@ class ActionFishingNew: ActionContinuousBase
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item )
 	{
 		//! Other conditions are handled in CCTLiquid
-		CCTLiquid cctLiquid = CCTLiquid.Cast(m_ConditionTarget);
-		int waterSourceType = cctLiquid.GetWaterSourceType();
-		int liquidSourceType = cctLiquid.GetLiquidSourceType();
+		int waterSourceType = m_LiquidCondition.GetWaterSourceType();
+		int liquidSourceType = m_LiquidCondition.GetLiquidSourceType();
 		if (waterSourceType != EWaterSourceObjectType.NONE || liquidSourceType != ELiquidSourceObjectType.NONE)
 			return false;
 		
-		ItemBase hook = ItemBase.Cast(item.FindAttachmentBySlotName("Hook"));		
+		ItemBase hook = ItemBase.Cast(FindHook(item));
 		return hook && !hook.IsRuined() && !hook.IsPendingDeletion();
+	}
+	
+	//! Resolves the slot name to an id once instead of on every frame.
+	//! \see EntityAI.FindAttachmentBySlotName
+	protected EntityAI FindHook(ItemBase item)
+	{
+		if (!item)
+			return null;
+		
+		if (!m_HookSlotResolved)
+		{
+			m_HookSlotResolved = true;
+			m_HookSlotId = InventorySlots.GetSlotIdFromString(HOOK_SLOT_NAME);
+		}
+		
+		if (m_HookSlotId == InventorySlots.INVALID)
+			return null;
+		
+		GameInventory inventory = item.GetInventory();
+		if (!inventory)
+			return null;
+		
+		return inventory.FindAttachment(m_HookSlotId);
 	}
 	
 	override ActionData CreateActionData()

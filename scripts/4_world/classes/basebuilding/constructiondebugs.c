@@ -312,7 +312,7 @@ class ConstructionDebug
 				if (data.failureMask & EConstructionInfoCategories.MATERIALS_PRESENCE)
 					DbgUI.Text(data.partName + " - missing material in slot: " + data.missingSlot + " (qty: " + data.missingQty + ")!");
 				if (data.failureMask & EConstructionInfoCategories.MATERIALS_DAMAGE)
-					DbgUI.Text(data.partName + " - material/s ruined!");
+					DbgUI.Text(data.partName + " - material/s ruined! (idx: " + data.ruinedMaterials + ")");
 				if (data.failureMask & EConstructionInfoCategories.TOOL_PRESENCE)
 					DbgUI.Text(data.partName + " - not buildable with: " + data.badToolType + "!");
 				DbgUI.Spacer(10);
@@ -390,6 +390,7 @@ class ActionInfoDebugData
 	string missingSlot;
 	float missingQty;
 	string badToolType;
+	string ruinedMaterials;
 }
 
 //------------------------------

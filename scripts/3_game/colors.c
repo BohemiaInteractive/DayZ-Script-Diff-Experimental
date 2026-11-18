@@ -14,6 +14,7 @@ class Colors
 	const int BROWN					= 0xA52A2A;
 	const int WHITE					= 0xFFFFFF;
 	const int WHITEGRAY				= 0xA0A1A1;
+	const int DARK_GRAY				= 0x535353;
 	
 	const int COLOR_DEFAULT			= 0x64000000;
 
@@ -48,7 +49,7 @@ class Colors
 	const int COLOR_BURNED			= 0x00888888;
 	const int COLOR_ROTTEN			= 0x00A93F15;
 	
-	const int COLOR_GHOST_ICON		= 0xC8C8C8B4;
+	const int COLOR_GHOST_ICON		= 0xB4C8C8C8;
 	
 	const int COLOR_DAYZ_RED 				= 0xffd70d11;
 	const int COLOR_DAYZ_DARK_BLUE 			= 0xff13151b;

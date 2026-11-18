@@ -31,21 +31,21 @@ class InstancedAttachmentGroupDataBuilding : InstancedAttachmentGroupDataBase
 				
 				vector pos;
 				float radius;
-				if (CalculatePositionData(groupData.m_SelectionName,pos,radius))
+				if (CalculatePositionData(groupData.m_SelectionName, pos, radius))
 				{
 					createMetadata = true;
-					posData = new AttachmentGroupPositionData(pos,radius);
+					posData = new AttachmentGroupPositionData(pos, radius);
 				}
 				
 				vector min,max;
-				if (CalculateBoxData(groupData.m_SelectionName,min,max))
+				if (CalculateBoxData(groupData.m_SelectionName, min, max))
 				{
 					createMetadata = true;
-					boxData = new AttachmentGroupBoxData(min,max);
+					boxData = new AttachmentGroupBoxData(min, max);
 				}
 				
 				if (createMetadata)
-					m_AttGroupPositionData.Set(groupName,new AttachmentGroupProximityMetadata(posData,boxData));
+					m_AttGroupPositionData.Set(groupName,new AttachmentGroupProximityMetadata(posData, boxData));
 			}
 		}
 	}
@@ -54,6 +54,7 @@ class InstancedAttachmentGroupDataBuilding : InstancedAttachmentGroupDataBase
 	protected bool CalculatePositionData(string namedSelection, out vector position, out float radius)
 	{
 		radius = 2.0; //UAMaxDistances.DEFAULT;
+		position = vector.Zero;
 		
 		if (m_Parent.MemoryPointExists(namedSelection)) //first look for mem point
 		{
@@ -62,35 +63,38 @@ class InstancedAttachmentGroupDataBuilding : InstancedAttachmentGroupDataBase
 			if (m_Parent.MemoryPointExists(memRadiusSelection)) //if using mem point, look for radius point too
 			{
 				vector radiusPoint = m_Parent.ModelToWorld(m_Parent.GetMemoryPointPos(memRadiusSelection));
-				radius = vector.Distance(position,radiusPoint);
+				radius = vector.Distance(position, radiusPoint);
 			}
 			
 			return true;
 		}
 		else //if not found, look for the named component center (building-specific solution, position possibly averaged from multiple components!)
 		{
-			TIntArray ost = new TIntArray();
-			m_Parent.GetActionComponentsForSelectionName(m_Parent.GetViewGeometryLevel(),namedSelection,ost);
+			TIntArray components = new TIntArray();
+			int viewGeoLevel = m_Parent.GetViewGeometryLevel();
+			m_Parent.GetActionComponentsForSelectionName(viewGeoLevel, namedSelection, components);
 			
-			if (ost.Count() == 0)
+			int componentCount = components.Count();
+			if (componentCount == 0)
 				return false;
 			
-			bool validPosFilled = false;
-			vector tmpPos;
-			foreach (int comp : ost)
+			vector worldMin, worldMax, worldLowCenter;
+			float lowestY = float.MAX;
+			foreach (int comp : components)
 			{
-				if (!validPosFilled)
-				{
-					tmpPos = m_Parent.ModelToWorld(m_Parent.GetActionComponentCenter(m_Parent.GetViewGeometryLevel(),comp));
-					validPosFilled = true;
-				}
-				else
-				{
-					tmpPos = tmpPos + m_Parent.ModelToWorld(m_Parent.GetActionComponentCenter(m_Parent.GetViewGeometryLevel(),comp));
-				}
+				m_Parent.GetActionComponentMinMax(viewGeoLevel, comp, worldMin, worldMax); //MS
+				worldMin = m_Parent.ModelToWorld(worldMin); //MS->WS
+				worldMax = m_Parent.ModelToWorld(worldMax); //MS->WS
+				worldLowCenter = m_Parent.ModelToWorld(m_Parent.GetActionComponentCenter(viewGeoLevel, comp));
+				worldLowCenter[1] = Math.Min(Math.Min(worldMin[1], worldMax[1]), worldLowCenter[1]);
+				position += worldLowCenter;
+				
+				lowestY = Math.Min(worldLowCenter[1], lowestY);
 			}
 			
-			position = tmpPos * (1 / ost.Count());
+			position = position *  (1 / componentCount);
+			position[1] = lowestY;
+			
 			return true;
 		}
 	}

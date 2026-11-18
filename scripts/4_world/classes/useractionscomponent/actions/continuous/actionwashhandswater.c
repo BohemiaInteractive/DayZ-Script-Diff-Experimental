@@ -8,6 +8,13 @@ class ActionWashHandsWaterCB : ActionContinuousBaseCB
 
 class ActionWashHandsWater : ActionContinuousBase
 {
+	protected static const string GLOVES_SLOT_NAME = "Gloves";
+	
+	//! Lazily resolved once. InventorySlots.INVALID is engine provided, so the
+	//! "resolved" state is tracked separately rather than sentinelled on the id.
+	protected bool m_GlovesSlotResolved;
+	protected int m_GlovesSlotId;
+	
 	void ActionWashHandsWater()
 	{
 		m_CallbackClass	= ActionWashHandsWaterCB;
@@ -34,7 +41,24 @@ class ActionWashHandsWater : ActionContinuousBase
 		if (item && item.IsHeavyBehaviour()) //! Don't allow washing hands with heavy items in hands
 			return false;
 		
-		return (player.HasBloodyHands() && !player.GetItemOnSlot("Gloves"));
+		return (player.HasBloodyHands() && !HasGloves(player));
+	}
+	
+	//! Resolves the slot name to an id once instead of on every frame.
+	//! \see PlayerBase.GetItemOnSlot
+	protected bool HasGloves(notnull PlayerBase player)
+	{
+		if (!m_GlovesSlotResolved)
+		{
+			m_GlovesSlotResolved = true;
+			m_GlovesSlotId = InventorySlots.GetSlotIdFromString(GLOVES_SLOT_NAME);
+		}
+		
+		if (m_GlovesSlotId == InventorySlots.INVALID)
+			return false;
+		
+		GameInventory inventory = player.GetInventory();
+		return inventory && inventory.FindAttachment(m_GlovesSlotId) != null;
 	}
 	
 	override void OnStart(ActionData action_data)

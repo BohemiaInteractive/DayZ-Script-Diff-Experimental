@@ -616,6 +616,8 @@ class BaseBuildingBase extends ItemBase
 			//Destroy construction
 			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DestroyConstruction, 200, false, this);
 		}
+		
+		construtionPart.OnDismantledServer(this, player);
 	}
 	
 	void OnPartDismantledClient( string part_name, int action_id )
@@ -656,6 +658,8 @@ class BaseBuildingBase extends ItemBase
 			//Destroy construction
 			g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(DestroyConstruction, 200, false, this);
 		}
+		
+		construtionPart.OnDestroyedServer(this, player);
 	}
 	
 	void OnPartDestroyedClient( string part_name, int action_id )
@@ -882,6 +886,19 @@ class BaseBuildingBase extends ItemBase
 	Construction GetConstruction()
 	{
 		return Construction.Cast(m_Construction);
+	}
+	
+	override bool IsManagingArrows()
+	{
+		return m_Construction && m_Construction.GetArrowManagerConstruction();
+	}
+	
+	override ArrowManagerBase GetArrowManager()
+	{
+		if (m_Construction)
+			return m_Construction.GetArrowManagerConstruction();
+		
+		return super.GetArrowManager();
 	}
 	
 	bool HasAttachmentsBesidesBase()

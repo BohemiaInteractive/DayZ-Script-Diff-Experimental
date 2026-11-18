@@ -37,6 +37,8 @@ class ActionObtainLiquidBase: ActionContinuousBase
 {
 	private const float WATER_DEPTH = 0.5;
 	protected int m_AllowedLiquidMask;
+	//! Same object as m_ConditionTarget, typed to avoid a cast on every frame.
+	protected CCTLiquid m_LiquidCondition;
 	
 	void ActionObtainLiquidBase()
 	{
@@ -55,6 +57,7 @@ class ActionObtainLiquidBase: ActionContinuousBase
 	{
 		m_ConditionItem 	= new CCINonRuined();
 		m_ConditionTarget 	= new CCTLiquid(m_AllowedLiquidMask, UAMaxDistances.DEFAULT, UAMaxDistances.DEFAULT);
+		m_LiquidCondition	= CCTLiquid.Cast(m_ConditionTarget);
 	}
 	
 	override ActionData CreateActionData()
@@ -102,7 +105,7 @@ class ActionObtainLiquidBase: ActionContinuousBase
 		{
 			#ifndef SERVER
 			ObtainLiquidActionData actionDataOL = ObtainLiquidActionData.Cast(action_data);
-			actionDataOL.m_LiquidType = CCTLiquid.Cast(m_ConditionTarget).GetLiquidType();
+			actionDataOL.m_LiquidType = m_LiquidCondition.GetLiquidType();
 			#endif
 			
 			return true;
@@ -114,7 +117,7 @@ class ActionObtainLiquidBase: ActionContinuousBase
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
 	{
 		//! Other conditions are handled in CCTLiquid
-		int liquidType = CCTLiquid.Cast(m_ConditionTarget).GetLiquidType();
+		int liquidType = m_LiquidCondition.GetLiquidType();
 		if (liquidType == LIQUID_NONE)
 			return false;
 		
@@ -131,7 +134,10 @@ class ActionObtainLiquidBase: ActionContinuousBase
 
 	override protected int GetStanceMask(PlayerBase player)
 	{
-		vector waterInfo = HumanCommandSwim.WaterLevelCheck(player, player.GetPosition());
+		//! Shared per frame, this runs every frame via ActionBase.Can() -> GetClosestPossibleStance().
+		vector waterInfo;
+		CCTLiquidFrameProbe.GetInstance().GetPlayerWaterLevel(player, waterInfo);
+
 		if (waterInfo[1] > WATER_DEPTH)
 		{
 			return DayZPlayerConstants.STANCEMASK_ERECT;

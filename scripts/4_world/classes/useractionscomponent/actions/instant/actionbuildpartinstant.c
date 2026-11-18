@@ -24,7 +24,7 @@ class ActionBuildPartInstantDebug : ActionInstantBase
 		ConstructionPart part = cad.GetBuildPartInstantAtIndex(m_VariantID);
 		if (part)
 		{
-			m_Text = "dbgBuild "+ part.GetName() + " - INSTANT";
+			m_Text = "dbgBuild "+ part.GetNameKey() + " - INSTANT";
 			
 			#ifdef DIAG_DEVELOPER
 			if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG))

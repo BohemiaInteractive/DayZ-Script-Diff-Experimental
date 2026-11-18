@@ -59,7 +59,7 @@ class ActionHarvestCrops: ActionContinuousBase
 		if (slot)
 		{
 			m_Plant = PlantBase.Cast(slot.GetPlant());
-			m_Text+=  " " +  MiscGameplayFunctions.GetItemDisplayName(m_Plant.GetCropsType());
+			m_Text+=  " " +  MiscGameplayFunctions.GetItemDisplayNameKey(m_Plant.GetCropsType());
 		}
 
 	}

@@ -25,4 +25,12 @@ class NVGHeadstrap : Glasses_Base
 		EntityAI item = GetInventory().CreateInInventory("NVGoggles");
 		item.GetInventory().CreateInInventory("Battery9V");
 	}
+		
+	override void OnWasDetached(EntityAI parent, int slot_id)
+	{
+		super.OnWasDetached(parent, slot_id);
+		PlayerBase player = PlayerBase.Cast(parent);
+		
+		UpdateNVGStatus(player, false, true);
+	}
 }

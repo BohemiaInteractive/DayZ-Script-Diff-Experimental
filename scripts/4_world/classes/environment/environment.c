@@ -133,6 +133,7 @@ class Environment
 	protected ref array<int>		m_HeadParts;
 	protected ref array<int>		m_BodyParts;
 	protected ref array<int>		m_FeetParts;
+	protected ref array<int>		m_SunProtectionSlots;
 	
 	protected WorldData 			m_WorldData;
 
@@ -249,6 +250,12 @@ class Environment
 		m_FeetParts				= {
 			InventorySlots.LEGS,
 			InventorySlots.FEET,
+		};
+
+		//! slots contributing to sun protection
+		m_SunProtectionSlots	= new array<int>();
+		m_SunProtectionSlots	= {
+			InventorySlots.HEADGEAR,
 		};
 		
 		m_HeatComfortBehaviorCategory 	= EEnvironmentHeatcomfortBehaviorCategory.DEFAULT;
@@ -868,7 +875,7 @@ class Environment
 			if (!IsInShadow())
 			{
 				if (WorldDataDaytime.IsInRange(m_DayTime, m_WorldData.m_TemperatureUnderSunModifier.GetKeyArray()))
-					temperature += m_WorldData.GetSunEffectOnTemperature(m_DayTime) * HeadGearProtectionAgainstSun();
+					temperature += m_WorldData.GetSunEffectOnTemperature(m_DayTime) * SunProtectionCoef();
 			}
 		}
 
@@ -2033,31 +2040,19 @@ class Environment
 		// neutral zone
 		return 0.0;
 	}
-	
-	private float HeadGearProtectionAgainstSun()
-	{		
+
+	private float SunProtectionCoef()
+	{
 		float isolation = 0;
 		GameInventory playerInventory = m_Player.GetInventory();
-		int attCount = playerInventory.AttachmentCount();
-		for (int attIdx = 0; attIdx < attCount; ++attIdx)
-		{
-			EntityAI attachment = playerInventory.GetAttachmentFromIndex(attIdx);
-			if (attachment.IsClothing())
-			{
-				ItemBase item = ItemBase.Cast(attachment);
-				int attachmentSlot = attachment.GetInventory().GetSlotId(0);
 
-				if (attachmentSlot == InventorySlots.HEADGEAR)
-				{
-					isolation = MiscGameplayFunctions.GetCurrentItemHeatIsolation(item);
-				}
-				else
-				{
-					return HC_EXPOSED_HEAD_TO_SUN;
-				}
-			}
+		foreach (int slotId : m_SunProtectionSlots)
+		{
+			ItemBase attachment = ItemBase.Cast(playerInventory.FindAttachment(slotId));
+			if (attachment && attachment.IsClothing())
+				isolation += MiscGameplayFunctions.GetCurrentItemHeatIsolation(attachment);
 		}
-		
+
 		if (isolation > 0)
 			return (isolation * HC_EXPOSED_HEAD_TO_SUN) + 0.4;
 		else

@@ -25,9 +25,11 @@ class ConstructionPartTypeData
 	protected ref array<string> m_ConflictedPartTypes; //list of part types conflicting with this one
 	protected ref array<string> m_CollisionData; //Names of min/max memory point selections
 	protected ref array<string> m_InsiderBoxPairNames; //Names of min/max pairs for insider box considerations
+	protected ref array<string> m_InsiderExcluderBoxData; //string values of min/max/yaw for insider exclusion
 	protected ref array<string> m_EssentialAttachmentSlots; //Names of att. slots that are tied to the constructed part in some way
 	protected ref array<string> m_RelatedGUICategoryNames; //listing of related 'GUIInventoryAttachmentsProps' subclasses (part is required to display them, in this iteration)
 	protected ref array<ref ConstructionMaterialData> m_MaterialsData;
+	protected ref array<int> m_PartPivots; //! Initialized from first instance
 	
 	//rebuilding data below
 	protected string m_BuildTextOverride = "";
@@ -54,6 +56,7 @@ class ConstructionPartTypeData
 		InitConflictedParts();
 		InitCollisionData();
 		InitInsiderBoxData();
+		InitInsiderExclusionBoxData();
 		InitPartDecayData();
 		InitHandAnimOverride();
 		InitEssentialAttachmentSlots();
@@ -67,6 +70,37 @@ class ConstructionPartTypeData
 		InitPartEffectsData();
 		InitOptionalOverrides();
 		InitCustomPartTypeProperties(initData);
+	}
+	
+	///////////////////////
+	//Inits using instance
+	///////////////////////
+	
+	void InitPivotData(EntityAI parent)
+	{
+		if (m_PartPivots)
+			return;
+		
+		m_PartPivots = new TIntArray();
+		int count = m_AnimSourceNameOverrides.Count();
+		int level = parent.GetFireGeometryLevel();
+		if (count > 0)
+		{
+			foreach (string animSourceOverride : m_AnimSourceNameOverrides)
+			{
+				TIntArray tmp = new TIntArray();
+				parent.GetBonePivotsForAnimationSource(level, animSourceOverride, tmp);
+				foreach (int potentialPivot : tmp)
+				{
+					if (m_PartPivots.Find(potentialPivot) == -1)
+						m_PartPivots.Insert(potentialPivot);
+				}
+			}
+		}
+		else
+		{
+			parent.GetBonePivotsForAnimationSource(level, GetPartName(), m_PartPivots);
+		}
 	}
 	
 	/////////////////
@@ -181,6 +215,34 @@ class ConstructionPartTypeData
 			
 			m_InsiderBoxPairNames = new array<string>();
 			m_InsiderBoxPairNames.Copy(tmp);
+		}
+	}
+	
+	protected void InitInsiderExclusionBoxData()
+	{
+		//insider exclusion box data
+		string path = m_PartPath + " insider_excludes_minMaxYaw";
+		if (g_Game.ConfigIsExisting(path))
+		{
+			//read from config and validate
+			array<string> tmp = new array<string>();
+			g_Game.ConfigGetTextArray(path, tmp);
+			
+			int count = tmp.Count();
+			if (count == 0)
+			{
+				tmp = null;
+				return;
+			}
+			else if (count % 3 != 0)
+			{
+				ErrorEx("incorrect number of insider_exclude_minMaxs configured for " + m_PartPath + ", needs 'min,max,yaw' trios");
+				tmp = null;
+				return;
+			}
+			
+			m_InsiderExcluderBoxData = new array<string>();
+			m_InsiderExcluderBoxData.Copy(tmp);
 		}
 	}
 	
@@ -433,6 +495,11 @@ class ConstructionPartTypeData
 		return Widget.TranslateString(m_Name);
 	}
 	
+	string GetNameKey()
+	{
+		return m_Name;
+	}
+	
 	string GetPartName()
 	{
 		return m_PartName;
@@ -549,6 +616,11 @@ class ConstructionPartTypeData
 		return m_InsiderBoxPairNames;
 	}
 	
+	array<string> GetExcluderBoxData()
+	{
+		return m_InsiderExcluderBoxData;
+	}
+	
 	array<string> GetEssentialAttachmentSlots()
 	{
 		return m_EssentialAttachmentSlots;
@@ -561,12 +633,12 @@ class ConstructionPartTypeData
 	
 	string GetBuildTextOverride()
 	{
-		return Widget.TranslateString(m_BuildTextOverride);
+		return m_BuildTextOverride;
 	}
 	
 	string GetDismantleTextOverride()
 	{
-		return Widget.TranslateString(m_DismantleTextOverride);
+		return m_DismantleTextOverride;
 	}
 	
 	//! returns AnimSource name to use in 'SetAnimationPhase'
@@ -671,6 +743,11 @@ class ConstructionPartTypeData
 	ConstructionPartEffectsData GetPartTypeEffectsData()
 	{
 		return m_EffectsData;
+	}
+	
+	array<int> GetPivotsArray()
+	{
+		return m_PartPivots;
 	}
 	
 	///////////

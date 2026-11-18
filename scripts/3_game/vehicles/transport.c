@@ -95,6 +95,14 @@ class Transport extends EntityAI
 	protected float m_MomentumPrevTick;
 	protected vector m_VelocityPrevTick;
 
+	protected ref Timer m_DecayTimer;
+	protected const int DECAY_PLAYER_RANGE = 300;	// when a player is found within this range, decay is deactivated
+	protected const int DECAY_FLAG_RANGE = 100; // when a vehicle is parked around a territoryflag, decay is deactivated
+	protected const float DECAY_TICK_FREQUENCY = 10; // seconds
+	protected const float DECAY_DAMAGE = 0.017;
+	protected const float DECAY_FLIPPED_MULT = 4;
+	protected const float DECAY_FLAG_MULT = 0.3;
+
 	protected bool m_PlayCrashSoundLight;
 	protected bool m_PlayCrashSoundHeavy;
 	ref EffectSound m_CrashSoundLight;
@@ -103,6 +111,7 @@ class Transport extends EntityAI
 	#ifdef DIAG_DEVELOPER
 	static EVehicleDebugOutputType DEBUG_OUTPUT_TYPE;
 	bool m_ContactCalled;
+	string m_DebugContactDamageMessage;
 	#endif
 	
 	void Transport()
@@ -121,6 +130,12 @@ class Transport extends EntityAI
 		
 		m_PlayCrashSoundLight = false;
 		m_PlayCrashSoundHeavy = false;
+		
+		if (g_Game.IsServer() && GetDecayMultiplier() > 0)
+		{
+			m_DecayTimer = new Timer( CALL_CATEGORY_SYSTEM );
+			m_DecayTimer.Run(DECAY_TICK_FREQUENCY, this, "DecayHealthTick", NULL, true);
+		}
 	}
 
 	void ~Transport()
@@ -213,6 +228,9 @@ class Transport extends EntityAI
 	
 	//! Handles death of player in vehicle and awakes its physics if needed
 	proto native void CrewDeath( int posIdx );
+
+	//! Damages the crew as after a big contact impact, the damage base is compared against ContactDamageThresholdSmall and ContactDamageKillCrew
+	proto native void ApplyCrewContactDamage(float crewDamageBase);
 
 	/*!
 		Is called when the crew member enters the driver seat
@@ -309,6 +327,7 @@ class Transport extends EntityAI
 
 	/*!
 		Is called every time when vehicle collides with other object.
+		Contact damage is processed natively, the per tier effects are driven by the OnContactDamage* hooks.
 
 		\param[in] zoneName configured vehicle's zone that was hit
 		\param[in] localPos position where the vehicle was hit in vehicle's space
@@ -327,21 +346,6 @@ class Transport extends EntityAI
 				Debug.Log(output);
 			}
 			#endif
-			if (m_ContactCache.Count() == 0)
-			{
-				array<ref VehicleContactData> ccd = new array<ref VehicleContactData>();
-				m_ContactCache.Insert(zoneName, ccd);
-				float momentumDelta = GetMomentum() - m_MomentumPrevTick;
-				float dot = vector.Dot(m_VelocityPrevTick.Normalized(), GetVelocity(this).Normalized());
-				if (dot < 0)
-				{
-					momentumDelta = m_MomentumPrevTick;
-				}
-				
-				VehicleContactData contactData = new VehicleContactData();
-				contactData.SetData(localPos, other, momentumDelta);
-				ccd.Insert(contactData);
-			}
 		}
 	}
 
@@ -621,15 +625,234 @@ class Transport extends EntityAI
 		return DetectFlipped(ctx);
 	}
 	
-	bool IsAnyCrewPresent()
+	//! Multiplier for passive decay damage, values <= 0 disable decay for this vehicle type
+	protected float GetDecayMultiplier()
 	{
-		for (int index = 0; index < CrewSize(); ++index)
+		return 0.0;
+	}
+	
+	//! Whether the vehicle is in a pose (flipped/fallen) that accelerates decay
+	protected bool IsDecayFlipped()
+	{
+		return IsFlipped();
+	}
+	
+	protected void DecayHealthTick()
+	{
+		if ( (GetCEApi() && !GetCEApi().AvoidPlayer(GetPosition(), DECAY_PLAYER_RANGE)) || GetDecayMultiplier() <= 0 ) 
+			return;
+				
+		float damage = DECAY_DAMAGE * GetDecayMultiplier();
+		
+		if (IsDecayFlipped())
+			damage *= DECAY_FLIPPED_MULT;
+		
+		if (IsInFlagRange())
+			damage *= DECAY_FLAG_MULT;
+		
+		AddHealth("Engine","Health", -damage);
+	}
+	
+	protected bool IsInFlagRange()
+	{
+		array<vector> locations = g_Game.GetMission().GetActiveRefresherLocations();
+		if (!locations)
+			return false;
+		
+		int count = locations.Count();
+		if (count > 0)
 		{
-			if (CrewMember(index) != null)
-				return true;
+			vector pos = GetWorldPosition();
+			for (int i = 0; i < count; i++)
+			{
+				if (vector.Distance(pos, locations.Get(i)) < DECAY_FLAG_RANGE)
+					return true;
+			}
 		}
 		
 		return false;
+	}
+	
+	//! Minimum impulse before contact damage is applied, vehicles processing contact damage must override (the default ignores all contacts)
+	protected int ContactDamageMin()
+	{
+		return int.MAX;
+	}
+	
+	//! Damage below this is a small impact, crew damage base from which the crew is damaged, vehicles processing contact damage must override (the default disables crew damage)
+	protected int ContactDamageThresholdSmall()
+	{
+		return int.MAX;
+	}
+	
+	//! Damage below this is a mid impact, for vehicles with a mid damage tier, vehicles processing contact damage must override
+	protected int ContactDamageThresholdMid()
+	{
+		return 0;
+	}
+	
+	//! Damage above this kills the crew outright, vehicles processing contact damage must override
+	protected int ContactDamageKillCrew()
+	{
+		return 0;
+	}
+
+	//! Damage coefficient applied to the contact impulse
+	protected float GetContactDamageCoef()
+	{
+		return m_VehicleContactDamageCoef;
+	}
+	
+	//! Damage coefficient applied when computing crew damage
+	protected float GetCrewContactDamageCoef()
+	{
+		return m_CrewContactDamageCoef;
+	}
+	
+	//! Assumed impactor mass in kg used to derive crew damage
+	protected float GetCrewDamageMassAssumption()
+	{
+		return 500;
+	}
+	
+	//! Whether this vehicle has a mid damage tier between small and big
+	protected bool HasMidDamageTier()
+	{
+		return false;
+	}
+	
+	//! Called for a small tier contact impact
+	protected void OnContactDamageSmall()
+	{
+		SynchCrashLightSound(true);
+	}
+	
+	//! Called for a mid tier contact impact
+	protected void OnContactDamageMid()
+	{
+	}
+	
+	//! Called for a big tier contact impact, the crew damage is applied natively before the tier hooks (independently of the tier)
+	protected void OnContactDamageBig(float crewDmgBase)
+	{
+		SynchCrashHeavySound(true);
+	}
+	
+	//! Called after a contact has been processed
+	protected void OnContactCacheProcessed()
+	{
+	}
+	
+	//! Processes contacts manually inserted into m_ContactCache, contact damage is otherwise processed natively and the cache stays empty
+	[Obsolete("Contact damage is processed natively, kept for backward compatibility")]
+	void CheckContactCache()
+	{
+		int contactZonesCount = m_ContactCache.Count();
+		
+		if (contactZonesCount == 0)
+			return;
+		
+		for (int i = 0; i < contactZonesCount; ++i)
+		{
+			string zoneName = m_ContactCache.GetKey(i);
+			array<ref VehicleContactData> data = m_ContactCache[zoneName];
+
+			float dmg = Math.AbsInt(data[0].m_Impulse * GetContactDamageCoef());
+			float crewDmgBase = Math.AbsInt((data[0].m_Impulse / dBodyGetMass(this)) * GetCrewDamageMassAssumption() * GetCrewContactDamageCoef());
+
+			#ifdef DIAG_DEVELOPER
+			CrashDebugData.m_CrashDataPoint = new CrashDebugData();
+			CrashDebugData.m_CrashDataPoint.m_VehicleType = GetDisplayName();
+			CrashDebugData.m_CrashDataPoint.m_Damage = dmg;
+			CrashDebugData.m_CrashDataPoint.m_Zone = zoneName;
+			CrashDebugData.m_CrashDataPoint.m_MomentumCurr = GetMomentum();
+			CrashDebugData.m_CrashDataPoint.m_MomentumPrev = m_MomentumPrevTick;
+			CrashDebugData.m_CrashDataPoint.m_MomentumDelta = data[0].m_Impulse;
+			CrashDebugData.m_CrashDataPoint.m_SpeedWorld = GetVelocity(this).Length() * 3.6;
+			CrashDebugData.m_CrashDataPoint.m_SpeedWorldPrev = m_VelocityPrevTick.Length() * 3.6;
+			CrashDebugData.m_CrashDataPoint.m_SpeedWorldDelta = (m_VelocityPrevTick.Length() - GetVelocity(this).Length()) * 3.6;
+			CrashDebugData.m_CrashDataPoint.m_VelocityCur = GetVelocity(this);
+			CrashDebugData.m_CrashDataPoint.m_VelocityPrev = m_VelocityPrevTick;
+			CrashDebugData.m_CrashDataPoint.m_VelocityDot = vector.Dot(m_VelocityPrevTick.Normalized(), GetVelocity(this).Normalized());
+			CrashDebugData.m_CrashDataPoint.m_Time = g_Game.GetTime();
+			
+			if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_CONSIDERED)
+			{
+				Debug.Log("--------------------------------------------------");
+				Debug.Log("Vehicle:" + GetDisplayName());
+				Debug.Log("DMG: " + dmg);
+				Debug.Log("zoneName : "+ zoneName);
+				Debug.Log("momentumCurr : "+ GetMomentum());
+				Debug.Log("momentumPrev : "+ m_MomentumPrevTick);
+				Debug.Log("momentumDelta : "+ data[0].m_Impulse);
+				Debug.Log("speed(km/h): "+ GetVelocity(this).Length() * 3.6);
+				Debug.Log("speedPrev(km/h): "+ m_VelocityPrevTick.Length() * 3.6);
+				Debug.Log("speedDelta(km/h) : "+ (m_VelocityPrevTick.Length() - GetVelocity(this).Length()) * 3.6);
+				Debug.Log("velocityCur.): "+ GetVelocity(this));
+				Debug.Log("velocityPrev.): "+ m_VelocityPrevTick);
+				Debug.Log("velocityDot): "+ vector.Dot(m_VelocityPrevTick.Normalized(), GetVelocity(this).Normalized()));
+				Debug.Log("g_Game.GetTime(): "+ g_Game.GetTime());
+				Debug.Log("--------------------------------------------------");
+			}
+			#endif
+			float contactDmgMin = ContactDamageMin();
+			if ( dmg < contactDmgMin )
+				continue;
+
+			int pddfFlags;
+			#ifdef DIAG_DEVELOPER
+			CrashDebugData.m_CrashData.Insert(CrashDebugData.m_CrashDataPoint);
+			CrashDebugData.m_CrashDataPoint.m_Speedometer =  GetDebugSpeedometer();
+			//Print("Crash data recorded");
+			#endif
+			if (dmg < ContactDamageThresholdSmall())
+			{			
+				#ifdef DIAG_DEVELOPER
+				CrashDebugData.m_CrashDataPoint.m_DamageType = "Small";
+				if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_APPLIED)
+					Debug.Log(string.Format("[Vehiles:Damage]:: DMG %1 to the %2 zone is SMALL (threshold: %3), SPEEDOMETER: %4, TIME: %5", dmg, zoneName, contactDmgMin, GetDebugSpeedometer(), g_Game.GetTime() ));
+				#endif
+				OnContactDamageSmall();
+				pddfFlags = ProcessDirectDamageFlags.NO_TRANSFER;
+			}
+			else if (HasMidDamageTier() && dmg < ContactDamageThresholdMid())
+			{
+				#ifdef DIAG_DEVELOPER
+				CrashDebugData.m_CrashDataPoint.m_DamageType = "Medium";
+				if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_APPLIED)
+					Debug.Log(string.Format("[Vehiles:Damage]:: DMG %1 to the %2 zone is MID (threshold: %3), SPEEDOMETER: %4, TIME: %5", dmg, zoneName, contactDmgMin, GetDebugSpeedometer(), g_Game.GetTime() ));
+				#endif
+				OnContactDamageMid();
+			}
+			else
+			{
+				#ifdef DIAG_DEVELOPER
+				CrashDebugData.m_CrashDataPoint.m_DamageType = "Big";
+				if (DEBUG_OUTPUT_TYPE & EVehicleDebugOutputType.DAMAGE_APPLIED)
+					Debug.Log(string.Format("[Vehiles:Damage]:: DMG %1 to the %2 zone is BIG (threshold: %3), SPEED: %4, TIME: %5", dmg, zoneName, contactDmgMin, GetDebugSpeedometer(), g_Game.GetTime() ));
+				#endif
+				ApplyCrewContactDamage(crewDmgBase);
+				OnContactDamageBig(crewDmgBase);
+				pddfFlags = 0;
+			}
+			
+			#ifdef DEVELOPER
+			m_DebugContactDamageMessage += string.Format("%1: %2\n", zoneName, dmg);
+			#endif
+			
+			ProcessDirectDamage(DamageType.CUSTOM, null, zoneName, "EnviroDmg", "0 0 0", dmg, pddfFlags);
+		}
+		
+		OnContactCacheProcessed();
+		
+		m_ContactCache.Clear();
+	}
+	
+	//! Responsible for damaging crew in a vehicle crash
+	[Obsolete("Crew contact damage is processed natively, use ApplyCrewContactDamage")]
+	void DamageCrew(float dmg)
+	{
+		ApplyCrewContactDamage(dmg);
 	}
 	
 	bool IsAnyCrewPresent(TIntArray positionIndices)
@@ -720,6 +943,14 @@ class Transport extends EntityAI
 	 * Called from native
 	 */
 	bool CrewShouldEject(int posIdx)
+	{
+		return false;
+	}
+	
+	/**
+	 * When true, the crew member should leave the vehicle on its own (client-side action)
+	 */
+	bool CrewShouldExit(int posIdx)
 	{
 		return false;
 	}
@@ -1013,6 +1244,12 @@ class Transport extends EntityAI
 	// --------------------------------------------------------------------------------
 
 	#ifdef DIAG_DEVELOPER
+	//! Speed in km/h reported in contact damage debug output, overridden by vehicle implementations
+	protected float GetDebugSpeedometer()
+	{
+		return GetVelocity(this).Length() * 3.6;
+	}
+	
 	override void GetDebugActions(out TSelectableActionInfoArrayEx outputList)
 	{
 		super.GetDebugActions(outputList);
@@ -1077,6 +1314,18 @@ class Transport extends EntityAI
 		Shape shape = Debug.DrawBox(-extents * 0.5, extents * 0.5, color);
 		shape.SetMatrix(transform);
 		return shape;
+	}
+	
+	[Obsolete("1.30: use HasCrew instead")]
+	bool IsAnyCrewPresent()
+	{
+		for (int index = 0; index < CrewSize(); ++index)
+		{
+			if (CrewMember(index) != null)
+				return true;
+		}
+		
+		return false;
 	}
 }
 

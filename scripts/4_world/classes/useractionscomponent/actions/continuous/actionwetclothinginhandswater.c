@@ -27,7 +27,10 @@ class ActionWetClothingInHandsWater : ActionWetClothingInHandsBase
 
 	override protected int GetStanceMask(PlayerBase player)
 	{
-		vector waterInfo = HumanCommandSwim.WaterLevelCheck(player, player.GetPosition());
+		//! Shared per frame, this runs every frame via ActionBase.Can() -> GetClosestPossibleStance().
+		vector waterInfo;
+		CCTLiquidFrameProbe.GetInstance().GetPlayerWaterLevel(player, waterInfo);
+
 		if (waterInfo[1] > WATER_DEPTH)
 			return DayZPlayerConstants.STANCEMASK_ERECT;
 

@@ -7,7 +7,8 @@ enum EConstructionInfoCategories
 	PART_CONFLICTED = 8,
 	MATERIALS_PRESENCE = 16,
 	MATERIALS_DAMAGE = 32,
-	TOOL_PRESENCE = 64
+	TOOL_PRESENCE = 64,
+	TOOL_CONDITION = 128
 }
 
 //has to mirror tool defines in configs!

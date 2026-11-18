@@ -3,7 +3,7 @@ class Motorbike_01_ColorBase : MotorbikeScript
 	void Motorbike_01_ColorBase()
 	{
 		m_VehicleContactDamageCoef = 0.03;
-		m_CrewContactDamageCoef = 0.018;
+		m_CrewContactDamageCoef = 0.01; // crew damage from ~18 km/h impact, lethal above ~58 km/h
 		
 		m_EngineStarting 		= "";
 		m_EngineStartOK 		= "Motorbike_01_engine_start_SoundSet";

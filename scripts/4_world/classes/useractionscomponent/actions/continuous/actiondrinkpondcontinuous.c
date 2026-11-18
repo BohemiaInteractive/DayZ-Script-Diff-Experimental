@@ -9,9 +9,8 @@ class ActionDrinkPondContinuousCB : ActionContinuousBaseCB
 class ActionDrinkPondContinuous : ActionContinuousBase
 {
 	private const float WATER_DRANK_PER_SEC = 35;
-	protected const string ALLOWED_WATER_SURFACES = string.Format("%1|%2", UAWaterType.FRESH, UAWaterType.STILL);
-	
-	//protected ref TTypenameArray m_IgnoredObjectTypes = new TTypenameArray();
+	//! Same object as m_ConditionTarget, typed to avoid a cast on every frame.
+	protected CCTLiquid m_LiquidCondition;
 	
 	void ActionDrinkPondContinuous()
 	{
@@ -41,6 +40,7 @@ class ActionDrinkPondContinuous : ActionContinuousBase
 	{
 		m_ConditionItem 	= new CCINone();
 		m_ConditionTarget 	= new CCTLiquid(LIQUID_GROUP_DRINKWATER - LIQUID_SNOW - LIQUID_HOTWATER, UAMaxDistances.DEFAULT, UAMaxDistances.DEFAULT);
+		m_LiquidCondition	= CCTLiquid.Cast(m_ConditionTarget);
 	}
 	
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
@@ -74,7 +74,7 @@ class ActionDrinkPondContinuous : ActionContinuousBase
 		if (nacdata)
 		{
 			EConsumeType consumeType;
-			int liquidSource = CCTLiquid.Cast(m_ConditionTarget).GetLiquidType();
+			int liquidSource = m_LiquidCondition.GetLiquidType();
 			switch (liquidSource)
 			{
 				case LIQUID_CLEANWATER:
@@ -132,18 +132,6 @@ class ActionDrinkPondContinuous : ActionContinuousBase
 		return false;
 	}
 	
-	//! DEPRECATED
-	[Obsolete("1.30: No replacement. Method is no longer needed as liquid source is now checked and provided by the CCTLiquid target condition.")]
-	protected int GetLiquidSource(ActionTarget target)
-	{
-		vector hitPosition = target.GetCursorHitPos();
-		string surfaceType;
-		int liquidSource;
-		
-		g_Game.SurfaceGetType3D(hitPosition[0], hitPosition[1], hitPosition[2], surfaceType);
-		string path = "CfgSurfaces " + surfaceType + " liquidType";
-		liquidSource = g_Game.ConfigGetInt(path);
-		
-		return liquidSource;
-	}
+	//! OBSOLETE BELOW
+	protected const string ALLOWED_WATER_SURFACES = string.Format("%1|%2", UAWaterType.FRESH, UAWaterType.STILL);
 }

@@ -1872,6 +1872,17 @@ class MiscGameplayFunctions
 		return g_Game.ConfigGetTextOut("CfgVehicles " + type + " displayName");
 	}
 
+	static string GetItemDisplayNameKey(string type)
+	{
+		string raw;
+		if (g_Game.ConfigGetTextRaw("CfgVehicles " + type + " displayName", raw))
+		{
+			g_Game.FormatRawConfigStringKeys(raw);
+			return raw;
+		}
+		return string.Empty;
+	}
+
 	static bool IsComponentInSelection(array<Selection> pSelection, string pCompName)
 	{
 		if (pSelection.Count() == 0 || pCompName.Length() == 0)

@@ -412,6 +412,8 @@ class ITEM_VehicleData : ITEM_DataBase
 	//-------------------------------------------------------------------------------------------------
 	//!!! all member variables must correspond with the cfggameplay.json file contents !!!!
 	float boatDecayMultiplier = 1;
+	float motorbikeDecayMultiplier = 1;
+	float carDecayMultiplier = 0;
 	bool canDetachAttachedCarWheels = true;
 	bool canDamageAttachedCarWheels = true;
 	bool canDetachAttachedBikeWheels = true;

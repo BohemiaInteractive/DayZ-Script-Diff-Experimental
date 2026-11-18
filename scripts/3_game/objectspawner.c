@@ -41,7 +41,7 @@ class ObjectSpawnerHandler
 		if (item.name.Contains("\\") || item.name.Contains("/"))
 		{
 			if (ValidatePath(item.name))
-				object = g_Game.CreateStaticObjectUsingP3D(item.name, vector.ArrayToVec(item.pos), vector.ArrayToVec(item.ypr),scale, true);
+				object = g_Game.CreateStaticObjectUsingP3D(item.name, vector.ArrayToVec(item.pos), vector.ArrayToVec(item.ypr),scale, false, true);
 		}
 		else
 		{

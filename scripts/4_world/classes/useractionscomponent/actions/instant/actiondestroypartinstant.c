@@ -59,7 +59,7 @@ class ActionDestroyPartInstantDebug : ActionInstantBase
 		
 		if (part)
 		{
-			m_Text = "dbgDestroy " + part.GetName() + " - INSTANT";
+			m_Text = "dbgDestroy " + part.GetNameKey() + " - INSTANT";
 			
 			#ifdef DIAG_DEVELOPER
 			if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG))

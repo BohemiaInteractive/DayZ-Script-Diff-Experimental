@@ -624,13 +624,14 @@ class VicinityContainer: CollapsibleContainer
 		//! Adjust left cargo container scroller height depending on visible items in the vicinity
 		if (m_CargoScrollWidget)
 		{
+			int visibleItemsCount = m_VicinityIconsContainer.GetVisibleItemCount();
 			float width, height;
 			m_CargoScrollWidget.GetSize(width, height);
-			if (showable_items.Count() >= ITEMS_PER_COLUMN_MAX * 2)
+			if (visibleItemsCount >= ITEMS_PER_COLUMN_MAX * 2)
 			{
 				m_CargoScrollWidget.SetSize(width, VICINITY_CARGO_SCROLLER_HEIGHT_MIN);
 			}
-			else if (showable_items.Count() >= ITEMS_PER_COLUMN_MAX)
+			else if (visibleItemsCount >= ITEMS_PER_COLUMN_MAX)
 			{
 				m_CargoScrollWidget.SetSize(width, VICINITY_CARGO_SCROLLER_HEIGHT_MID);
 			}

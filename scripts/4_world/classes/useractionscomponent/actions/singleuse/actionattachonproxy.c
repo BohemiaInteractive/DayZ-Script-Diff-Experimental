@@ -16,7 +16,7 @@ class ActionAttachOnProxy: ActionAttach
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
 	{
 		if (!GetGame().IsDedicatedServer() && item)
-			m_Text = "#attach " + item.GetDisplayName();
+			m_Text = "#attach " + MiscGameplayFunctions.GetItemDisplayNameKey(item.GetType());
 		
 		EntityAI targetEntity = EntityAI.Cast(target.GetObject());				
 		if (targetEntity)
@@ -39,6 +39,11 @@ class ActionAttachOnProxy: ActionAttach
 	{
 		if (targetEntity && item)
 		{
+			//! Special handling for code locks (should only accept attachments from back side).
+			DigitalCodeLock codeLock = DigitalCodeLock.Cast(targetEntity);
+			if (codeLock && !codeLock.IsPlayerOnBackside(player))
+				return false;
+			
 			GameInventory inventory = targetEntity.GetInventory();
 			InventoryLocation dst = new InventoryLocation();
 			if (inventory && inventory.CanAddAttachment(item) && inventory.FindFreeLocationFor(item, FindInventoryLocationType.ANY_CARGO | FindInventoryLocationType.ATTACHMENT, dst))

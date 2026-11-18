@@ -30,11 +30,6 @@ class BleedingSourcesManagerServer extends BleedingSourcesManagerBase
 	
 	override protected void AddBleedingSource(int bit)
 	{
-		#ifdef DEVELOPER
-		if (m_Player && !m_Player.GetAllowDamage())//full invincibility prevents bleeding source creation
-			return;
-		#endif
-		
 		m_Player.SetBleedingBits(m_Player.GetBleedingBits() | bit);
 		super.AddBleedingSource(bit);
 		m_Player.OnBleedingSourceAdded();

@@ -40,12 +40,6 @@ BoatScript _boat;
 */
 class BoatScript : Boat
 {
-	protected const int DECAY_PLAYER_RANGE = 300;	// when a player is found within this range, decay is deactivated
-	protected const int DECAY_FLAG_RANGE = 100; // when a boat is parked around a territoryflag, decay is deactivated
-	protected const float DECAY_TICK_FREQUENCY = 10; // seconds
-	protected const float DECAY_DAMAGE = 0.017;
-	protected const float DECAY_FLIPPED_MULT = 4;
-	
 	protected const float SOUND_ENGINE_FADE = 0.2;
 	protected const float SPLASH_THRESHOLD_CONDITION = 0.08; // diff between sea surface and propeller pos which determines if the splash should happen
 	protected const float SPLASH_THRESHOLD = 0.18; // diff between sea surface and propeller pos which determines when the splash happens
@@ -54,8 +48,6 @@ class BoatScript : Boat
 	private TInputActionMap m_InputActionMap;
 	private bool m_ActionsInitialized;	
 
-	protected ref Timer m_DecayTimer;
-	
 	// particles
 	protected bool m_UpdateParticles;
 	protected ref EffectBoatWaterBase m_WaterEffects[4];
@@ -106,9 +98,6 @@ class BoatScript : Boat
 		if (g_Game.IsServer())
 		{
 			m_HeatComfortOverride = 0.0;
-
-			m_DecayTimer = new Timer( CALL_CATEGORY_SYSTEM );
-			m_DecayTimer.Run(DECAY_TICK_FREQUENCY, this, "DecayHealthTick", NULL, true);
 		}
 		
 		if (g_Game.IsHeadlessOrDedicatedServer())
@@ -374,7 +363,6 @@ class BoatScript : Boat
 		
 		if (g_Game.IsServer())
 		{
-			CheckContactCache();
 			m_VelocityPrevTick = GetVelocity(this);
 			m_MomentumPrevTick = GetMomentum();
 		}
@@ -425,20 +413,6 @@ class BoatScript : Boat
 	//! WARNING: Can be called very frequently in one frame, use with caution
 	override void OnContact(string zoneName, vector localPos, IEntity other, Contact data)
 	{
-		if (g_Game.IsServer())
-		{
-			if (m_ContactData)
-				return;
-		
-			float momentumDelta = GetMomentum() - m_MomentumPrevTick;
-			float dot = vector.Dot(m_VelocityPrevTick.Normalized(), GetVelocity(this).Normalized());
-			if (dot < 0)
-				momentumDelta = m_MomentumPrevTick;
-			
-			m_ContactData = new VehicleContactData();
-			m_ContactData.SetData(localPos, other, momentumDelta); // change to local pos
-		}
-		
 		if (!IsProxy())
 		{
 			if (EngineIsOn() && !CheckOperationalState())
@@ -531,42 +505,9 @@ class BoatScript : Boat
 		}
 	}
 	
-	protected void DecayHealthTick()
+	override float GetDecayMultiplier()
 	{
-		if ( (GetCEApi() && !GetCEApi().AvoidPlayer(GetPosition(), DECAY_PLAYER_RANGE)) || CfgGameplayHandler.GetBoatDecayMultiplier() <= 0 ) 
-			return;
-				
-		float damage = DECAY_DAMAGE * CfgGameplayHandler.GetBoatDecayMultiplier();
-		
-		if (IsFlipped())
-			damage *= DECAY_FLIPPED_MULT;
-		
-		if (IsInFlagRange())
-			damage *= 0.3;
-		
-		AddHealth("Engine","Health", -damage);
-	}
-	
-	protected bool IsInFlagRange()
-	{
-		array<vector> locations = g_Game.GetMission().GetActiveRefresherLocations();
-		if (!locations)
-			return false;
-		
-		int count = locations.Count();
-		if (count > 0)
-		{
-			vector pos = GetWorldPosition();
-			for (int i = 0; i < count; i++)
-			{
-				if (vector.Distance(pos, locations.Get(i)) < DECAY_FLAG_RANGE)
-					return true;
-			}
-			
-			return false;
-		}
-		else
-			return false;
+		return CfgGameplayHandler.GetBoatDecayMultiplier();
 	}
 	
 	bool CheckOperationalState()
@@ -739,7 +680,34 @@ class BoatScript : Boat
 		SetPosition(pos);
 	}
 	
-	protected void CheckContactCache()
+	//! Boats take no contact damage, the contacts processed natively only drive the impact sounds through the tier hooks below
+	override protected float GetContactDamageCoef()
+	{
+		return 1.0;
+	}
+
+	override protected int ContactDamageMin()
+	{
+		return GameConstants.CARS_CONTACT_DMG_MIN;
+	}
+
+	override protected int ContactDamageThresholdSmall()
+	{
+		return GameConstants.CARS_CONTACT_DMG_THRESHOLD;
+	}
+
+	override protected void OnContactDamageSmall()
+	{
+		SyncSoundImpactLight();
+	}
+
+	override protected void OnContactDamageBig(float crewDmgBase)
+	{
+		SyncSoundImpactHeavy();
+	}
+
+	//! Processes m_ContactData set manually, the sounds are otherwise driven by the tier hooks above
+	override protected void CheckContactCache()
 	{
 		if (!m_ContactData)
 			return;

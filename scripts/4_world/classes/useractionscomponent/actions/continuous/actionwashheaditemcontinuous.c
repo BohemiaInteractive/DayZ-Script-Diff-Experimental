@@ -38,7 +38,7 @@ class ActionWashHeadItemContinuous : ActionWashHeadWettingClothesBase
 		return false;
 	}
 
-	override protected float GetEyeIrritationReduction() { return 1.6; }
+	override protected float GetEyeIrritationReduction() { return 16; }
 	override protected bool IsFromContainer() { return true; }
 
 	override void OnFinishProgressServer(ActionData action_data)
@@ -46,5 +46,7 @@ class ActionWashHeadItemContinuous : ActionWashHeadWettingClothesBase
 		super.OnFinishProgressServer(action_data);
 
 		action_data.m_MainItem.AddQuantity(-50, false);
+		if (action_data.m_MainItem.GetTemperature() > PlayerConstants.WASHING_DAMAGE_TEMP_THRESHOLD)
+			action_data.m_Player.ProcessDirectDamage(DamageType.CUSTOM, action_data.m_MainItem, "", "EnviroDmg", "0 0 0", PlayerConstants.WASHING_DAMAGE_PER_WASH);
 	}
 }

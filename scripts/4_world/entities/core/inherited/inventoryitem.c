@@ -403,6 +403,12 @@ class MotorbikePart : ItemBase
 {
 	protected bool m_IsMotorbikeAttached;
 
+	override void SetActions()
+	{
+		super.SetActions();
+		AddAction(ActionAttachOnSelection);
+	}
+
 	float GetHeatComfortOverride()
 	{
 		return 0.0;

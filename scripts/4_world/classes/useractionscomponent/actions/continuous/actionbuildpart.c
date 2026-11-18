@@ -58,7 +58,7 @@ class ActionBuildPart: ActionContinuousBase
 		{
 			string overrideText = part.GetBuildTextOverride();
 			if (overrideText == string.Empty)
-				m_Text = "#build "+ part.GetName();
+				m_Text = "#build "+ part.GetNameKey();
 			else
 				m_Text = overrideText;
 			
@@ -400,7 +400,7 @@ class ActionBuildPartHandsGeneric: ActionBuildPart
 		{
 			string overrideText = part.GetBuildTextOverride();
 			if (overrideText == string.Empty)
-				m_Text = "#build "+ part.GetName();
+				m_Text = "#build "+ part.GetNameKey();
 			else
 				m_Text = overrideText;
 			

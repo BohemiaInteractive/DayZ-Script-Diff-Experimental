@@ -137,6 +137,7 @@ class AnimSoundEvent
 	ref SoundObjectBuilder 			m_SoundObjectBuilder;
 	ref SoundParams 				m_SoundParams;
 	autoptr NoiseParams 			m_NoiseParams;
+	float							m_fNoiseTargetLifetime;	// above 0 it also leaves a noise target so AI that cannot target the source can react
 	bool 							m_IsValid = false;
 	SoundLookupTable 				m_Table;
 	
@@ -180,6 +181,7 @@ class AnimSoundEvent
 			{
 				m_NoiseParams = new NoiseParams();
 				m_NoiseParams.Load(noiseName);
+				m_fNoiseTargetLifetime = g_Game.ConfigGetFloat(soundPath + "noiseTargetLifetime");
 				m_IsValid = true;
 			}
 			else

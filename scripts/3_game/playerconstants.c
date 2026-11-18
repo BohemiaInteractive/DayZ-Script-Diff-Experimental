@@ -146,6 +146,9 @@ class PlayerConstants
 	static const float CONSUMPTION_DAMAGE_PER_BITE 			= 2.0;
 	static const float CONSUMPTION_DAMAGE_TEMP_THRESHOLD	= 70.0; //Celsius
 	
+	static const float WASHING_DAMAGE_PER_WASH 				= 2.0;
+	static const float WASHING_DAMAGE_TEMP_THRESHOLD		= 70.0; //Celsius
+	
 	static const float HEALTH_REGEN_MIN						= 0.005;	//health regen rate at BLOOD_THRESHOLD_FATAL blood level
 	static const float HEALTH_REGEN_MAX						= 0.03;		//health regen rate at MAXIMUM blood level
 	

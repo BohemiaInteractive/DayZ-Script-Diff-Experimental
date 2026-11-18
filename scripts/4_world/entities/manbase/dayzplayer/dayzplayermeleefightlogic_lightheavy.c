@@ -242,7 +242,7 @@ class DayZPlayerMeleeFightLogic_LightHeavy
 			if (pInputs.IsWeaponRaised() && pMovementState.m_iStanceIdx == DayZPlayerConstants.STANCEIDX_CROUCH)
 			{
 				//Debug.MeleeLog(m_Player, "HandleFightLogic[2b]");
-				if (DayZPlayerUtils.PlayerCanChangeStance(m_Player, DayZPlayerConstants.STANCEIDX_RAISEDERECT))
+				if (DayZPlayerUtils.PlayerCanChangeStance(m_Player, DayZPlayerConstants.STANCEIDX_RAISEDERECT) && m_Player.CanChangeStance(pMovementState.m_iStanceIdx, DayZPlayerConstants.STANCEIDX_RAISEDERECT))
 				{
 					//Debug.MeleeLog(m_Player, "HandleFightLogic[2c]");
 					hcm.ForceStance(DayZPlayerConstants.STANCEIDX_RAISEDERECT);

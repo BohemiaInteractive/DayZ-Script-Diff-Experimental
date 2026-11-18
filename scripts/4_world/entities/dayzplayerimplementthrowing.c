@@ -1,5 +1,6 @@
 class DayZPlayerImplementThrowing
 {
+	private bool m_bPendingCancellation = true;
 	void DayZPlayerImplementThrowing(DayZPlayer pPlayer)
 	{
 		m_Player = pPlayer;
@@ -10,6 +11,17 @@ class DayZPlayerImplementThrowing
 	
 	void HandleThrowing(HumanInputController pHic, HumanCommandWeapons pHcw, EntityAI pEntityInHands, float pDt)
 	{
+		if (m_bPendingCancellation)
+		{
+			if (pHcw && pHcw.IsThrowingMode())
+			{
+				CancelThrowingInternal(pHic, pHcw);
+				return;
+			}
+			else
+				m_bPendingCancellation = false;
+		}
+		
 		if ( !pEntityInHands && !m_bThrowingAnimationPlaying )
 		{
 			if ( m_bThrowingModeEnabled )
@@ -122,11 +134,10 @@ class DayZPlayerImplementThrowing
 		}
 	}
 	
-	void CancelThrowing(HumanInputController pHic, HumanCommandWeapons pHcw)
+	private void CancelThrowingInternal(HumanInputController pHic, HumanCommandWeapons pHcw)
 	{
 		SetThrowingModeEnabled(false);
 		ResetState();
-		
 		if (pHcw)
 		{
 			pHcw.SetActionProgressParams(0, 0);
@@ -137,6 +148,12 @@ class DayZPlayerImplementThrowing
 		{
 			pHic.ResetThrowingMode();
 		}
+	}
+	
+	void CancelThrowing(HumanInputController pHic, HumanCommandWeapons pHcw)
+	{
+		m_bPendingCancellation = true;
+		CancelThrowingInternal(pHic, pHcw);
 	}
 	
 	void ResetState()

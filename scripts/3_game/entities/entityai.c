@@ -4166,7 +4166,14 @@ class EntityAI extends Entity
 			else if (Motorbike.CastTo(motorbike, transport))
 			{
 				float motorbikeSpeed = motorbike.GetSpeedometerAbsolute();
-				if (motorbikeSpeed > 2.0)
+				
+				// a fallen motorbike still hits when it travels fast (e.g. its rider was shot off), but not when it only slides slowly,
+				// its ejected rider would otherwise take the damage in every simulation step
+				float motorbikeHitSpeedMin = 2.0;
+				if (motorbike.IsFallen())
+					motorbikeHitSpeedMin = 10.0;
+				
+				if (motorbikeSpeed > motorbikeHitSpeedMin)
 				{
 					damage = m_TransportHitVelocity.Length();
 					ProcessDirectDamage(DT_CUSTOM, transport, "", "TransportHit", "0 0 0", damage);

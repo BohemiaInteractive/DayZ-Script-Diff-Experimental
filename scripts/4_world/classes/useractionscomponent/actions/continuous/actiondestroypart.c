@@ -31,7 +31,7 @@ class ActionDestroyPart: ActionContinuousBase
 	override void OnActionInfoUpdate( PlayerBase player, ActionTarget target, ItemBase item )
 	{
 		ConstructionActionData cad = player.GetConstructionActionData();	
-		m_Text = "#destroy " + cad.GetTargetPart().GetName();;
+		m_Text = "#destroy " + cad.GetTargetPart().GetNameKey();
 	}
 	
 	override bool CanBeUsedLeaning()

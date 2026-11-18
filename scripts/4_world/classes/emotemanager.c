@@ -137,6 +137,7 @@ class EmoteManager
 	protected bool 			m_controllsLocked;
 	protected bool 			m_InventoryAccessLocked;
 	protected bool 			m_EmoteLockState;
+	protected bool			m_RetrySyncOnExit;
 	protected int 			m_DeferredGuaranteedEmoteId; //secondary emote ID to ensure playback
 	protected int 			m_DeferredEmoteExecution;
 	protected int  			m_GestureID;
@@ -166,6 +167,7 @@ class EmoteManager
 		m_InventoryAccessLocked = false;
 		m_DeferredEmoteLauncherCleanup = false;
 		m_DisconnectEmoteQueued = false;
+		m_RetrySyncOnExit = false;
 		m_RPSOutcome = -1;
 		m_DeferredEmoteExecution = CALLBACK_CMD_INVALID;
 		m_DeferredGuaranteedEmoteId = -1;
@@ -226,6 +228,26 @@ class EmoteManager
 				ErrorEx("Faulty emote data detected in 'ConstructData' method!",ErrorExSeverity.WARNING);
 			}
 		}
+	}
+
+	int GetDeferredGuaranteedEmoteId()
+	{
+		return m_DeferredGuaranteedEmoteId;
+	}
+	
+	int GetInstaCancelCallbackCmd()
+	{
+		return CALLBACK_CMD_INSTACANCEL;
+	}
+	
+	int GetRetrySyncOnExit()
+	{
+		return m_RetrySyncOnExit;
+	}
+	
+	void ResetExitSyncRetry()
+	{
+		m_RetrySyncOnExit = false;
 	}
 	
 	void SetGesture(int id)
@@ -333,26 +355,6 @@ class EmoteManager
 			m_DeferredEmoteLauncherCleanup = false;
 		}
 		
-		//if (m_DisconnectEmoteQueued && (!m_bEmoteIsPlaying && !m_bEmoteIsRequestPending))
-		if (m_DisconnectEmoteQueued)
-		{
-			if (!m_MenuEmote || !m_MenuEmote.IsStartGuaranteed())
-			{
-				CreateEmoteCBFromMenu(EmoteConstants.ID_EMOTE_SITA);
-				m_MenuEmote.SetForced(EmoteLauncher.FORCE_DIFFERENT);
-				m_MenuEmote.SetStartGuaranteed(true);
-				
-				EmoteBase emote = EmoteBase.Cast(m_NameEmoteMap.Get(m_MenuEmote.GetID()));
-				int stanceIdx = DayZPlayerUtils.ConvertStanceMaskToStanceIdx(emote.GetStanceMaskFullbody());
-			
-				//if the emote cannot be played, don't sent a request to server
-				if (!DayZPlayerUtils.PlayerCanChangeStance(m_Player, stanceIdx))
-				{
-					m_MenuEmote = null; //setting this to null also ensures that the forcedEmotQueuedClient below is also false
-					m_DisconnectEmoteQueued = false;
-				}
-			}
-		}
 		
 		bool forcedEmoteQueuedClient = m_MenuEmote && !m_MenuEmote.WasSynced() && m_MenuEmote.GetForced() > EmoteLauncher.FORCE_NONE && !g_Game.IsDedicatedServer();
 		if (forcedEmoteQueuedClient) //regular forced emote playing
@@ -559,6 +561,7 @@ class EmoteManager
 	//server and client
 	void OnSyncJuncture(int pJunctureID, ParamsReadContext pCtx)
 	{
+		m_RetrySyncOnExit = true;
 		int gestureID;
 		int cancelID;
 		int forced;
@@ -1239,6 +1242,13 @@ class EmoteManager
 		{
 			if (m_MenuEmote)
 				m_DeferredEmoteLauncherCleanup = true;
+		}
+		else
+		{
+			HumanCommandWeapons hcw = m_Player.GetCommandModifier_Weapons();
+			HumanInputController hic = m_Player.GetInputController();
+			if (hcw && hic && m_Player.GetThrowing().IsThrowingModeEnabled())
+				m_Player.GetThrowing().CancelThrowing(hic, hcw);
 		}
 	}
 	

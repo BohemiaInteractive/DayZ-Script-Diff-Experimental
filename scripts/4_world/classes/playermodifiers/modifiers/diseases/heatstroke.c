@@ -5,10 +5,10 @@ class HeatStrokeMdfr : ModifierBase
 	const float STAGE_DEACTIVATION_BUFFER = 0.02;
 
 	//! Fever setup
-	protected static const int WATER_DRAIN_FROM_FEVER_ST1 	= 0.35; //! per tick
-	protected static const int WATER_DRAIN_FROM_FEVER_ST2 	= 0.5; //! per tick
-	protected static const int WATER_DRAIN_FROM_FEVER_ST3 	= 0.75; //! per tick
-	protected static const int ENERGY_DRAIN_FROM_FEVER 	= 1; //! per tick
+	protected static const float WATER_DRAIN_FROM_FEVER_ST1 	= 0.35; //! per tick
+	protected static const float WATER_DRAIN_FROM_FEVER_ST2 	= 0.5; //! per tick
+	protected static const float WATER_DRAIN_FROM_FEVER_ST3 	= 0.75; //! per tick
+	protected static const float ENERGY_DRAIN_FROM_FEVER 		= 1; //! per tick
 	
 	//! Vomit setup
 	protected static const int VOMIT_OCCURRENCES_MIN 	= 1;

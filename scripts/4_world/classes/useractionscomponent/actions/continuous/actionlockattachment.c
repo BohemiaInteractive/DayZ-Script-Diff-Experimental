@@ -89,17 +89,8 @@ class ActionLockAttachment: ActionContinuousBase
 			
 			// CODE LOCK HANDLING
 			DigitalCodeLock codeLock = DigitalCodeLock.Cast(target_IB);
-			if (codeLock)
-			{
-				array<string> selections = new array<string>;
-				codeLock.GetActionComponentNameList(target.GetComponentIndex(), selections);
-				
-				foreach (string selectionName : selections)
-				{
-					if (selectionName != CODE_LOCK_SELECTION_BACK)
-						return false;
-				}
-			}
+			if (codeLock && !codeLock.IsPlayerOnBackside(player))
+					return false;
 			
 			if ( target_IB.IsLockedInSlot() )
 				m_Name = UNLOCK_VERSION;

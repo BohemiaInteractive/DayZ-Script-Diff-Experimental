@@ -273,6 +273,25 @@ class MissionServer extends MissionBase
 		}
 	}
 	
+	protected void SendExitEmoteRequest(PlayerBase player, bool force = false)
+	{
+		bool sitInQueue = player.GetEmoteManager().GetDeferredGuaranteedEmoteId() == EmoteConstants.ID_EMOTE_SITA;
+		bool canPlayEmote = !player.GetEmoteManager().IsEmotePlaying() || (player.IsSurrendered() && !player.IsSurrenderTransitionHappening());
+		bool cancellingCurrentEmote = player.GetEmoteManager().m_CancelEmote == true || player.GetEmoteManager().m_InstantCancelEmote == true;
+		if (force || (player.GetEmoteManager().GetRetrySyncOnExit() && !sitInQueue && canPlayEmote && !cancellingCurrentEmote))
+		{
+			player.GetEmoteManager().ResetExitSyncRetry();
+					
+			ScriptJunctureData pCtx = new ScriptJunctureData;
+			pCtx.Write(EmoteConstants.ID_EMOTE_SITA);
+			pCtx.Write(player.GetEmoteManager().GetInstaCancelCallbackCmd());
+			pCtx.Write(EmoteLauncher.FORCE_DIFFERENT);
+			pCtx.Write(true); //guaranteed
+					
+			player.SendSyncJuncture(DayZPlayerSyncJunctures.SJ_GESTURE_REQUEST, pCtx);
+		}
+	}
+	
 	// check if logout finished for some players
 	void UpdateLogoutPlayers()
 	{
@@ -280,10 +299,10 @@ class MissionServer extends MissionBase
 		{
 			LogoutInfo info = m_LogoutPlayers.GetElement(i);
 			
+			PlayerBase player = m_LogoutPlayers.GetKey(i);
 			if (g_Game.GetTime() >= info.param1)
 			{
 				PlayerIdentity identity;
-				PlayerBase player = m_LogoutPlayers.GetKey(i);
 				if (player)
 				{
 					identity = player.GetIdentity();
@@ -301,6 +320,7 @@ class MissionServer extends MissionBase
 			}
 			else
 			{
+				SendExitEmoteRequest(player);
 				++i;
 			}
 		}
@@ -655,6 +675,12 @@ class MissionServer extends MissionBase
 					// send statistics to client
 					player.StatSyncToClient();
 					
+					// cancel throw state
+					HumanCommandWeapons hcw = player.GetCommandModifier_Weapons();
+					HumanInputController hic = player.GetInputController();
+					if (hcw && hic && player.GetThrowing().IsThrowingModeEnabled())
+						player.GetThrowing().CancelThrowing(hic, hcw);
+					
 					// inform client about logout time
 					g_Game.SendLogoutTime(player, logoutTime);
 			
@@ -663,6 +689,9 @@ class MissionServer extends MissionBase
 					
 					m_NewLogoutPlayers.Insert(player, params);
 					g_Game.GetCallQueue(CALL_CATEGORY_GAMEPLAY).Call(AddNewPlayerLogout, player, params);
+					
+					SendExitEmoteRequest(player, true);
+					player.GetEmoteManager().ResetExitSyncRetry();
 					
 					// allow reconnecting to old char only if not in cars, od ladders etc. as they cannot be properly synchronized for reconnect
 					//if (!player.GetCommand_Vehicle() && !player.GetCommand_Ladder())

@@ -28,9 +28,10 @@ enum InventoryMode
 
 enum InventoryValidationResult
 {
-	FAILED,
+	JUNCTURE_FAILED,
 	JUNCTURE,
-	SUCCESS
+	SUCCESS,
+	FAILED,
 };
 
 enum InventoryValidationReason

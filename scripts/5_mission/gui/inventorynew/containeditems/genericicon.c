@@ -23,6 +23,7 @@ class GenericIconBase: SlotsIconBase
 		m_ColWidget				= m_MainWidget.FindAnyWidget("Col");
 		m_MountedWidget			= m_MainWidget.FindAnyWidget("Mounted");
 		m_OutOfReachWidget		= m_MainWidget.FindAnyWidget("OutOfReach");
+		m_BlockedWidget         = m_MainWidget.FindAnyWidget("Blocked");
 
 		m_ItemPreview			= ItemPreviewWidget.Cast(m_MainWidget.FindAnyWidget("Render"));
 		

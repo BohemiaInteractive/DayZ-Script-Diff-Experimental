@@ -24,6 +24,7 @@ class SlotsIconBase: LayoutHolder
 	protected Widget				m_MountedWidget;
 	protected Widget				m_OutOfReachWidget;
 	protected Widget				m_ReservedWidget;
+	protected Widget				m_BlockedWidget;
 	
 	protected ItemPreviewWidget		m_ItemPreview;
 	protected ImageWidget			m_GhostSlot;
@@ -190,6 +191,11 @@ class SlotsIconBase: LayoutHolder
 	Widget GetReservedWidget()
 	{
 		return m_ReservedWidget;
+	}
+	
+	Widget GetBlockedWidget()
+	{
+		return m_BlockedWidget;
 	}
 	
 	Widget GetMountedWidget()
@@ -391,51 +397,73 @@ class SlotsIconBase: LayoutHolder
 	
 	void SetQuantity()
 	{
-		if (m_Item)
+		if (!RefreshItemQuantity())
+			return;
+		
+		int quantityType = QuantityConversions.HasItemQuantity(m_Item);
+		
+		if (quantityType == QUANTITY_COUNT)
 		{
-			int quantityType = QuantityConversions.HasItemQuantity(m_Item);
-			if (quantityType != QUANTITY_HIDDEN && m_CurrQuantity != QuantityConversions.GetItemQuantity(m_Item))
+			string q_text = QuantityConversions.GetItemQuantityText(m_Item, true);
+
+			if (QuantityConversions.GetItemQuantityMax(m_Item) == 1 || q_text == "")
 			{
-				m_CurrQuantity = QuantityConversions.GetItemQuantity(m_Item);
-	
-				if (quantityType == QUANTITY_COUNT)
-				{
-					string q_text = QuantityConversions.GetItemQuantityText(m_Item, true);
-
-					if (QuantityConversions.GetItemQuantityMax(m_Item) == 1 || q_text == "")
-					{
-						m_QuantityStack.Show(false);
-					}
-					else
-					{
-						m_QuantityItem.SetText(q_text);
-						m_QuantityStack.Show(true);
-					}
-					
-					m_QuantityProgress.Show(false);
-				}
-				else if (quantityType == QUANTITY_PROGRESS)
-				{
-					float progress_max	= m_QuantityProgress.GetMax();
-					int max 			= m_Item.GetQuantityMax();
-					int count 			= m_Item.ConfigGetInt("count");
-					float quantity 		= m_CurrQuantity;
-	
-					if (count > 0)
-					{
-						max = count;
-					}
-
-					if (max > 0)
-					{
-						float value = Math.Round((quantity / max) * 100);
-						m_QuantityProgress.SetCurrent(value);
-					}
-					m_QuantityStack.Show(false);
-					m_QuantityProgress.Show(true);
-				}
+				m_QuantityStack.Show(false);
 			}
+			else
+			{
+				m_QuantityItem.SetText(q_text);
+				m_QuantityStack.Show(true);
+			}
+			
+			m_QuantityProgress.Show(false);
 		}
+		else if (quantityType == QUANTITY_PROGRESS)
+		{
+			float progress_max	= m_QuantityProgress.GetMax();
+			int max 			= m_Item.GetQuantityMax();
+			int count 			= m_Item.ConfigGetInt("count");
+			float quantity 		= m_CurrQuantity;
+	
+			if (count > 0)
+			{
+				max = count;
+			}
+
+			if (max > 0)
+			{
+				float value = Math.Round((quantity / max) * 100);
+				m_QuantityProgress.SetCurrent(value);
+			}
+			m_QuantityStack.Show(false);
+			m_QuantityProgress.Show(true);
+		}
+	}
+	
+	//! updates m_CurrQuantity when the item quantity changed; returns true if it did
+	protected bool RefreshItemQuantity()
+	{
+		if (!m_Item)
+			return false;
+		
+		int quantityType = QuantityConversions.HasItemQuantity(m_Item);
+		if (quantityType == QUANTITY_HIDDEN)
+			return false;
+		
+		float quantity = QuantityConversions.GetItemQuantity(m_Item);
+		if (m_CurrQuantity == quantity)
+			return false;
+		
+		m_CurrQuantity = quantity;
+		return true;
+	}
+	
+	void SetItemPreviewEx(EntityAI parent)
+	{
+		if (parent != m_Obj)
+			return;
+		
+		SetItemPreview();
 	}
 	
 	void SetItemPreview()

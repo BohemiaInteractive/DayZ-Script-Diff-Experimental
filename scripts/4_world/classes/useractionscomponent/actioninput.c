@@ -892,9 +892,9 @@ class ToggleVehicleLightsActionInput : DefaultActionInput
 		if(target && target.GetObject())
 		{
 			target.GetObject().GetActions(this.Type(), possibleActions);
-			int possibleActionsCount = possibleActions.Count();
 			if(possibleActions)
 			{
+				int possibleActionsCount = possibleActions.Count();
 				for (int i = 0; i < possibleActionsCount; ++i)
 				{
 					ActionBase action = ActionBase.Cast(possibleActions.Get(i));

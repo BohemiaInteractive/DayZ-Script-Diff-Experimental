@@ -2457,6 +2457,11 @@ class DayZPlayerImplement extends DayZPlayer
 				GetGame().GetMission().MissionScript.CallFunction(this, "GetModifiersManager", mdfMan, null);
 				mdfMan.ActivateModifier(eModifiers.MDF_UNCONSCIOUSNESS);
 			}
+			else if (IsOwner() && transport && transport.CrewShouldExit(seatPos))
+			{
+				// TODO(radarad):	Temporary code until we have a proper handling of transition for that situation
+				GetGame().GetMission().MissionScript.CallFunction(this, "OnCrewShouldExit", null, null);
+			}
 			
 			return;
 		}

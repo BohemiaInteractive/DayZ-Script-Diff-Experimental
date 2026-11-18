@@ -44,7 +44,7 @@ class CodeLockVisualManager
 	private const float FRONT_PART_HOUSE_REVERSED = 0.50; // Animation phase of front part when lock state is reversed and parent is some type of house
 	
 	private const float BACK_PART_DEFAULT = 0.0; // Default animation phase of back part offset
-	private const float BACK_PART_HOUSE = 0.50; // Animation phase of back part offset when parent is some type of house
+	private const float BACK_PART_HOUSE = 0.50; // Animation phase of back part offset when parent is some type of house and the door is reversed
 	private const float BACK_PART_HOUSE_NORMAL = 0.60; // Animation phase of back part offset when parent is some type of house and the door is not reversed
 	private const float BACK_PART_BB = 0.92; // Animation phase of back part offset when parent is some type of base building object (Fence)
 	

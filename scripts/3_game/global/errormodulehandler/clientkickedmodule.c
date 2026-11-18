@@ -125,6 +125,7 @@ enum EClientKicked
 	AUTH_ALREADY_USED,						// This ticket has already been used, it is not valid.
 	AUTH_TICKET_INVALID,					// This ticket is not from a user instance currently connected to steam.
 	AUTH_PUBLISHER_BAN,						// The user is banned for this game.
+	AUTH_LICENCE_DLC,						// The user does not own this DLC.
 	
 	// Bios Validate (0x00D0)
 	AUTH_INVALID_BIOS_VALIDATE = 208,		// Unknown error (API update needed?)
@@ -321,6 +322,7 @@ class ClientKickedModule : ErrorHandlerModuleScript
 		InsertPrefixDialogueErrorProperties(EClientKicked.AUTH_ALREADY_USED,			"#STR_auth_already_used", AUTH_PREFIX);
 		InsertPrefixDialogueErrorProperties(EClientKicked.AUTH_TICKET_INVALID,			"#STR_auth_ticket_invalid", AUTH_PREFIX);
 		InsertPrefixDialogueErrorProperties(EClientKicked.AUTH_PUBLISHER_BAN,			"#STR_auth_publisher_ban", AUTH_PREFIX);
+		InsertPrefixDialogueErrorProperties(EClientKicked.AUTH_LICENCE_DLC,				"#mod_detail_info_warning", AUTH_PREFIX);
 
 		// Bios Validate
 		InsertPrefixDialogueErrorProperties(EClientKicked.AUTH_INVALID_BIOS_VALIDATE,	"#server_browser_error_unknown", AUTH_PREFIX);

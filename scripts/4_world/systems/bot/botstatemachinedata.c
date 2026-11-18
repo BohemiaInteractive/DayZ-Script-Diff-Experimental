@@ -1,4 +1,3 @@
-#ifdef ROBOCLIENT
 class BotStateMachineData
 {
 	proto string GetName();
@@ -19,4 +18,3 @@ class BotStateMachineData
 	void BotStateMachineData();
 	void ~BotStateMachineData();
 }
-#endif

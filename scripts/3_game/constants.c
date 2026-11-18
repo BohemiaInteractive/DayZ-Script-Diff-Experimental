@@ -587,7 +587,7 @@ const int LIQUID_SNOW 			= 131072;
 const int LIQUID_SALTWATER 		= 262144;
 const int LIQUID_FRESHWATER 	= 524288;	// used by river/pond surfaces
 const int LIQUID_STILLWATER 	= 1048576;	// used for unfishable surfaces
-const int LIQUID_HOTWATER	 	= 2097152;	// hot springs
+const int LIQUID_HOTWATER	 	= 2097152;	// hot springs, not actually referring to the liquid temperature as such!
 const int LIQUID_CLEANWATER		= 4194304;	// clean water from wells / rain
 
 const int LIQUID_GROUP_DRINKWATER 	= LIQUID_WATER | LIQUID_RIVERWATER | LIQUID_SNOW | LIQUID_FRESHWATER | LIQUID_STILLWATER | LIQUID_HOTWATER | LIQUID_CLEANWATER;

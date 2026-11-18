@@ -28,11 +28,6 @@ class ActionWetClothingInHandsBase : ActionContinuousBase
 		m_Text       = "#STR_Wet_Clothing";
 	}
 
-	override typename GetInputType()
-	{
-		return ContinuousInteractActionInput;
-	}
-
 	override void OnFinishProgressServer(ActionData action_data)
 	{
 		ActionWetClothingInHandsBaseCB cb = ActionWetClothingInHandsBaseCB.Cast(action_data.m_Callback);

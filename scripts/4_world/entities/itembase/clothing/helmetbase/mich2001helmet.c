@@ -28,4 +28,12 @@ class Mich2001Helmet extends HelmetBase
 		
 		AddSingleExclusionValueGlobal(EAttExclusions.EXCLUSION_HEADSTRAP_0);
 	}
+	
+	override void OnWasDetached(EntityAI parent, int slot_id)
+	{
+		super.OnWasDetached(parent, slot_id);
+		PlayerBase player = PlayerBase.Cast(parent);
+		
+		UpdateNVGStatus(player, false, true);
+	}
 };

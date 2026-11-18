@@ -44,6 +44,7 @@ class ConstructionBase : ConstructionBasic
 	static const float ITEM_FALL_MARGIN_TOP_WINDOW = 0.5;
 	static const float ITEM_FALL_MARGIN_TOP_DOOR = 0.5;
 	static const float ITEM_FALL_HEIGHT_DIFF_TOLERANCE = 0.3;
+	static const float ITEM_FALL_MARGIN_SIDE_WALL = 0.3; //! XZ side margin for wall parts, covers entities leaning against the inner/outer wall faces
 	
 	protected ConstructionDataTypeHolder m_TypeLevelHolder;
 	protected ref map<string, ref ConstructionPart> m_ConstructionParts //! INSTANCED construction part data;
@@ -52,6 +53,8 @@ class ConstructionBase : ConstructionBasic
 	protected EntityAI 	m_EntityParent;
 	protected bool m_AnyPartBuildableByHands;
 	protected bool m_UpdateUtilityParts;
+	
+	protected ref ArrowManagerBase m_ArrowManagerConstruction;
 	
 	#ifdef DIAG_DEVELOPER
 	static const int MAX_ITEM_FALL_DEBUG_WAVES = 8; //! safety cap for cascade waves in the item falling debug
@@ -102,6 +105,7 @@ class ConstructionBase : ConstructionBasic
 		
 		//set parent object
 		SetParent(parent);
+		m_ArrowManagerConstruction = new ArrowManagerBase(parent);
 		EntityAIType entityType;
 		if (!Class.CastTo(entityType, m_EntityParent.GetEntityType()) || !Class.CastTo(m_TypeLevelHolder, entityType.GetConstructionDataHolderBasic()))
 		{
@@ -154,6 +158,11 @@ class ConstructionBase : ConstructionBasic
 	protected void SetParent(EntityAI parent)
 	{
 		m_EntityParent = parent;
+	}
+	
+	override ArrowManagerBase GetArrowManagerConstruction()
+	{
+		return m_ArrowManagerConstruction;
 	}
 	
 	//============================================
@@ -354,7 +363,7 @@ class ConstructionBase : ConstructionBasic
 				if (Class.CastTo(item, res))
 				{
 					item.OnItemFallRebuilding();
-					if (item) //! We checking if the item instance still exists as it could have been deleted with the OnItemFallRebuilding call
+					if (item && !item.IsPendingDeletion() && !item.IsInherited(BaseBuildingBase)) //! We checking if the item instance still exists as it could have been deleted with the OnItemFallRebuilding call
 						item.ThrowPhysically(null, vector.Zero);
 				}
 			}
@@ -594,6 +603,7 @@ class ConstructionBase : ConstructionBasic
 				}
 				
 				part.SetPartTypeData(typeData);
+				typeData.InitPivotData(m_EntityParent);
 				PartInstanceInitData initData = new PartInstanceInitData();
 				initData.m_ParentEnt = m_EntityParent;
 				part.InitAdditionalPartInstanceInfo(initData);
@@ -640,31 +650,34 @@ class ConstructionBase : ConstructionBasic
 	
 	bool CanBuildPart(string part_name, ItemBase tool, bool use_tool)
 	{
-		int dump;
-		return CanBuildPartEx(part_name, tool, dump);
+		ConstructionPartBuildData data = new ConstructionPartBuildData();
+		data.m_Tool = tool;
+		return CanBuildPartEx(part_name, data);
 	}
 	
-	//! not meant to replace, but rather extend the functionality for specific use
-	bool CanBuildPartEx(string partName, ItemBase tool, out EConstructionInfoCategories failureReasonsMask)
+	//! data based variant of CanBuildPart, allows extending the check without changing the released signature
+	bool CanBuildPartEx(string partName, ConstructionPartBuildData data)
 	{
-		failureReasonsMask = EConstructionInfoCategories.NONE;
+		data.m_FailureReasonsMask = EConstructionInfoCategories.NONE;
 		
 		if (IsPartConstructed(partName))
-			failureReasonsMask |= EConstructionInfoCategories.PART_CONSTRUCTED;
+			data.m_FailureReasonsMask |= EConstructionInfoCategories.PART_CONSTRUCTED;
 		if (!HasRequiredPart(partName))
-			failureReasonsMask |= EConstructionInfoCategories.PART_MISSING_REQUIREMENT;
+			data.m_FailureReasonsMask |= EConstructionInfoCategories.PART_MISSING_REQUIREMENT;
 		if (!PartHasAnySupportFulfilled(partName))
-			failureReasonsMask |= EConstructionInfoCategories.PART_MISSING_SUPPORT;
+			data.m_FailureReasonsMask |= EConstructionInfoCategories.PART_MISSING_SUPPORT;
 		if (HasConflictPart(partName))
-			failureReasonsMask |= EConstructionInfoCategories.PART_CONFLICTED;
+			data.m_FailureReasonsMask |= EConstructionInfoCategories.PART_CONFLICTED;
 		if (!HasMaterials(partName))
-			failureReasonsMask |= EConstructionInfoCategories.MATERIALS_PRESENCE;
-		if (MaterialIsRuined(partName))
-			failureReasonsMask |= EConstructionInfoCategories.MATERIALS_DAMAGE;
-		if (!CanUseToolToBuildPart(partName, tool))
-			failureReasonsMask |= EConstructionInfoCategories.TOOL_PRESENCE;
+			data.m_FailureReasonsMask |= EConstructionInfoCategories.MATERIALS_PRESENCE;
+		if (!data.m_IgnoreMaterialCondition && MaterialIsRuined(partName))
+			data.m_FailureReasonsMask |= EConstructionInfoCategories.MATERIALS_DAMAGE;
+		if (!CanUseToolToBuildPart(partName, data.m_Tool))
+			data.m_FailureReasonsMask |= EConstructionInfoCategories.TOOL_PRESENCE;
+		if (data.m_Tool && data.m_Tool.IsRuined())
+			data.m_FailureReasonsMask |= EConstructionInfoCategories.TOOL_CONDITION;
 		
-		return failureReasonsMask == EConstructionInfoCategories.NONE;
+		return data.m_FailureReasonsMask == EConstructionInfoCategories.NONE;
 	}
 	
 	//! Simplified condition for utility (non-)parts
@@ -739,13 +752,25 @@ class ConstructionBase : ConstructionBasic
 	//Get all construction parts that can currently be built
 	void GetConstructionPartsToBuild(string main_part_name, out array<ConstructionPart> construction_parts, ItemBase tool, out string real_constructionTarget, bool use_tool)
 	{
-		construction_parts.Clear();
+		ConstructionPartBuildData data = new ConstructionPartBuildData();
+		data.m_Tool = tool;
+		GetConstructionPartsToBuild(main_part_name, construction_parts, data);
+	}
+	
+	//! data based variant of GetConstructionPartsToBuild, allows extending the check without changing the released signature
+	void GetConstructionPartsToBuild(string mainPartName, out array<ConstructionPart> constructionParts, ConstructionPartBuildData data)
+	{
+		constructionParts.Clear();
+		
+		ConstructionPartBuildData partData = new ConstructionPartBuildData();
+		partData.m_Tool = data.m_Tool;
+		partData.m_IgnoreMaterialCondition = data.m_IgnoreMaterialCondition;
 		
 		foreach (ConstructionPart part : m_ConstructionPartArray)
 		{
-			if ((main_part_name == part.GetMainPartName() || main_part_name == part.GetPartName()) && CanBuildPart(part.GetPartName(), tool, use_tool))
+			if ((mainPartName == part.GetMainPartName() || mainPartName == part.GetPartName()) && CanBuildPartEx(part.GetPartName(), partData))
 			{
-				construction_parts.Insert(part);
+				constructionParts.Insert(part);
 			}
 		}
 	}
@@ -955,8 +980,9 @@ class ConstructionBase : ConstructionBasic
 			DestroyDebugInsideTestBoxes();
 		#endif
 		
-		TConstructionPartInsiderBoxData modelMinMaxs = part.GetInsiderBoxData();
-		if (!modelMinMaxs)
+		array<ref ConstructionPartInsiderBoxData> insiderModelDataArray = part.GetInsiderBoxDataArray();
+		array<ref ConstructionPartExcluderBoxData> excluderModelDataArray = part.GetExcluderBoxDataArray();
+		if (!insiderModelDataArray && !excluderModelDataArray)
 			return true;
 		
 		vector matPlayer[4];
@@ -975,55 +1001,95 @@ class ConstructionBase : ConstructionBasic
 		}
 		#endif
 		
-		vector matParent[4];
-		m_EntityParent.GetTransform(matParent);
-		bool success = false;
+		bool excluded = false;
+		bool inside = false;
 		
-		foreach (array<vector> minMaxPair : modelMinMaxs)
+		//excluders test first
+		if (excluderModelDataArray)
 		{
-			vector min = minMaxPair[0];
-			vector max = minMaxPair[1];
-			
-			bool playerInside = false;
-			
-			//temporary test solution
-			playerInside = Math3D.IntersectCylinderOBB(min, max, matParent, matPlayer, CYLINDER_RADIUS, CYLINDER_HEIGHT);
-			
-			if (playerInside)
+			foreach (ConstructionPartExcluderBoxData excluderData : excluderModelDataArray)
 			{
-				success = true;
-				#ifdef DIAG_DEVELOPER
-				if (fullDebugEnabled)
+				vector centerPosModel = vector.Lerp(excluderData.m_Min, excluderData.m_Max, 0.5);
+				vector excluderMinAdjusted = excluderData.m_Min - centerPosModel;
+				vector excluderMaxAdjusted = excluderData.m_Max - centerPosModel;
+				
+				vector angle = excluderData.m_Angle + m_EntityParent.GetOrientation();
+				vector mat4Exclude[4];
+				vector tmp[3];
+				Math3D.YawPitchRollMatrix(angle, tmp);
+				mat4Exclude[0] = tmp[0];
+				mat4Exclude[1] = tmp[1];
+				mat4Exclude[2] = tmp[2];
+				mat4Exclude[3] = m_EntityParent.ModelToWorld(centerPosModel);
+				
+				if (Math3D.IntersectCylinderOBB(excluderMinAdjusted, excluderMaxAdjusted, mat4Exclude, matPlayer, CYLINDER_RADIUS, CYLINDER_HEIGHT))
 				{
-					DrawDebugInsideTestBox(min, max, ARGB(90, 128, 128, 128));
+					excluded = true;
+					#ifdef DIAG_DEVELOPER
+					if (fullDebugEnabled)
+					{
+						DrawDebugInsideTestBox(excluderData.m_Min, excluderData.m_Max, ARGB(90, 128, 0, 0), angle);
+					}
+					else
+					#else
+						return false;
+					#endif
 				}
+				#ifdef DIAG_DEVELOPER
 				else
-				#else
-					return true;
+				{
+					if (fullDebugEnabled)
+					{
+						DrawDebugInsideTestBox(excluderData.m_Min, excluderData.m_Max, ARGB(90, 0, 255, 0), angle);
+					}
+				}
 				#endif
 			}
-			#ifdef DIAG_DEVELOPER
-			else
+		}
+		
+		if (insiderModelDataArray)
+		{
+			vector matParent[4];
+			m_EntityParent.GetTransform(matParent);
+			
+			foreach (ConstructionPartInsiderBoxData insiderData : insiderModelDataArray)
 			{
-				if (fullDebugEnabled)
+				if (Math3D.IntersectCylinderOBB(insiderData.m_Min, insiderData.m_Max, matParent, matPlayer, CYLINDER_RADIUS, CYLINDER_HEIGHT))
 				{
-					DrawDebugInsideTestBox(min, max, ARGB(90, 128, 0, 128));
+					inside = true;
+					#ifdef DIAG_DEVELOPER
+					if (fullDebugEnabled)
+					{
+						DrawDebugInsideTestBox(insiderData.m_Min, insiderData.m_Max, ARGB(90, 128, 128, 128), m_EntityParent.GetOrientation());
+					}
+					else
+					#else
+						return true;
+					#endif
 				}
+				#ifdef DIAG_DEVELOPER
+				else
+				{
+					if (fullDebugEnabled)
+					{
+						DrawDebugInsideTestBox(insiderData.m_Min, insiderData.m_Max, ARGB(90, 128, 0, 128), m_EntityParent.GetOrientation());
+					}
+				}
+				#endif
 			}
-			#endif
 		}
 		
 		#ifdef DIAG_DEVELOPER
 		if (fullDebugEnabled)
 		{
-			if (!success)
+			if (!inside || excluded)
 				ConstructionDebug.SetInsideboxCheckDebugData(part.GetPartName());
 			else
 				ConstructionDebug.SetInsideboxCheckDebugData("");
 		}
 		#endif
 		
-		return success;
+		return inside && !excluded;
 	}
 	
 	bool ConstructionDirectionCheck(PlayerBase player, ConstructionPart part, EConstructionDirCheckType type)
@@ -1728,9 +1794,13 @@ class ConstructionBase : ConstructionBasic
 		array<string> dta = part.GetCollisionData();
 		if (dta.Count() == 2 && m_EntityParent.MemoryPointExists(dta[0]) && m_EntityParent.MemoryPointExists(dta[1]))
 		{
-			minMax[0] = m_EntityParent.GetMemoryPointPos(dta[0]);
-			minMax[1] = m_EntityParent.GetMemoryPointPos(dta[1]);
+			//the memory points do not guarantee per axis min/max order, normalize so the margins always extend the box
+			vector pMin = m_EntityParent.GetMemoryPointPos(dta[0]);
+			vector pMax = m_EntityParent.GetMemoryPointPos(dta[1]);
+			minMax[0] = Vector(Math.Min(pMin[0], pMax[0]), Math.Min(pMin[1], pMax[1]), Math.Min(pMin[2], pMax[2]));
+			minMax[1] = Vector(Math.Max(pMin[0], pMax[0]), Math.Max(pMin[1], pMax[1]), Math.Max(pMin[2], pMax[2]));
 			
+			//side margins inflate all XZ sides (inner/outer faces and the wall ends)
 			vector margins = GetItemFallBoxMargins(partName);
 			minMax[0] = minMax[0] - Vector(margins[0], margins[1], margins[0]);
 			minMax[1] = minMax[1] + Vector(margins[0], margins[2], margins[0]);
@@ -1741,9 +1811,10 @@ class ConstructionBase : ConstructionBasic
 		return false;
 	}
 	
-	//! XZ/bottom/top margins of the item fall detection box, matched by part name category (case-insensitive substring)
+	//! XZ side/bottom/top margins of the item fall detection box, matched by part name category (case-insensitive substring)
 	vector GetItemFallBoxMargins(string partName)
 	{
+		float side = 0.0;
 		float top = ITEM_FALL_MARGIN_TOP_DEFAULT;
 		string name = partName;
 		name.ToLower();
@@ -1751,15 +1822,16 @@ class ConstructionBase : ConstructionBasic
 		if (name.Contains("roof") || name.Contains("ceiling"))
 			top = ITEM_FALL_MARGIN_TOP_ROOF;
 		else if (name.Contains("wall"))
+		{
+			side = ITEM_FALL_MARGIN_SIDE_WALL;
 			top = ITEM_FALL_MARGIN_TOP_WALL;
+		}
 		else if (name.Contains("window"))
 			top = ITEM_FALL_MARGIN_TOP_WINDOW;
 		else if (name.Contains("door"))
 			top = ITEM_FALL_MARGIN_TOP_DOOR;
-		else if (name.Contains("window"))
-			top = ITEM_FALL_MARGIN_TOP_DOOR;
 		
-		return Vector(0, 0, top);
+		return Vector(side, 0, top);
 	}
 	
 	//returns center point of box defined by min/max values
@@ -1781,7 +1853,7 @@ class ConstructionBase : ConstructionBasic
 		extents[0][0] = -egdeLength[0] / 2;		//min
 		extents[0][1] = -egdeLength[1] / 2;
 		extents[0][2] = -egdeLength[2] / 2;
-		extents[1][0] = egdeLength[0] / 2;			//max
+		extents[1][0] = egdeLength[0] / 2;		//max
 		extents[1][1] = egdeLength[1] / 2;
 		extents[1][2] = egdeLength[2] / 2;
 	}
@@ -1808,12 +1880,21 @@ class ConstructionBase : ConstructionBasic
 		}		
 	}
 	
-	protected void DrawDebugInsideTestBox(vector min, vector max, int color)
+	protected void DrawDebugInsideTestBox(vector min, vector max, int color, vector rotAngles = "0 0 0")
 	{
-		vector mat[4];
-		m_EntityParent.GetTransform(mat);
+		vector centerPosModel = vector.Lerp(min, max, 0.5);
+		vector minAdjusted = min - centerPosModel;
+		vector maxAdjusted = max - centerPosModel;
 		
-		Shape box = Debug.DrawBox(min, max, color);
+		vector mat[4];
+		vector tmp[3];
+		Math3D.YawPitchRollMatrix(rotAngles, tmp);
+		mat[0] = tmp[0];
+		mat[1] = tmp[1];
+		mat[2] = tmp[2];
+		mat[3] = m_EntityParent.ModelToWorld(centerPosModel);
+		
+		Shape box = Debug.DrawBox(minAdjusted, maxAdjusted, color);
 		box.SetMatrix(mat);
 		m_InsideTestBoxes.Insert(box);
 	}
@@ -2570,6 +2651,21 @@ class CollisionCheckData
 		m_PartName = "";
 		m_PrimaryGeometry = ObjIntersectGeom;
 		m_SecondaryGeometry = ObjIntersectView;
+	}
+}
+
+//! Data structure for passing parameters (extendable, modable)
+class ConstructionPartBuildData
+{
+	ItemBase m_Tool;
+	bool m_IgnoreMaterialCondition;
+	int m_FailureReasonsMask; //out, set by CanBuildPartEx
+	
+	void ConstructionPartBuildData()
+	{
+		m_Tool = null;
+		m_IgnoreMaterialCondition = false;
+		m_FailureReasonsMask = EConstructionInfoCategories.NONE;
 	}
 }
 

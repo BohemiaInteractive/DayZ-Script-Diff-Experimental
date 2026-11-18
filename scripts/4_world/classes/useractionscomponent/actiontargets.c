@@ -240,11 +240,13 @@ class ActionTargets
 		
 		//! camera & ray properties
 		vector playerPos = m_Player.GetPosition();
+		vector playerHeadPos = playerPos;
+		playerHeadPos[1] = playerHeadPos[1] + MiscGameplayFunctions.GetPlayerHeadHeight(m_Player);
 		vector headingDirection = MiscGameplayFunctions.GetHeadingVector(m_Player);
+		vector cameraDir = g_Game.GetCurrentCameraDirection();
 
-		m_RayStart = g_Game.GetCurrentCameraPosition();
-		m_RayEnd = m_RayStart + g_Game.GetCurrentCameraDirection() * c_RayDistance;
-
+		m_RayEnd = g_Game.GetCurrentCameraPosition() + cameraDir * c_RayDistance;
+		m_RayStart = m_RayEnd - cameraDir * vector.Distance(playerHeadPos, m_RayEnd); //prevents detecting objects behind player using 3rd person camera 
 		RaycastRVParams rayInput = new RaycastRVParams(m_RayStart, m_RayEnd, m_Player);
 		rayInput.flags = CollisionFlags.ALLOBJECTS;
 		//rayInput.sorted = true;
@@ -508,7 +510,7 @@ class ActionTargets
 					return 0.25;
 
 				if (pTarget.IsTransport())
-					return 0.25;
+					return 0.4;
 				
 				//!basebuilding objects
 				if (pTarget.CanUseConstruction())

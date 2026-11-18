@@ -125,10 +125,7 @@ class ActionManagerClient: ActionManagerBase
 #endif
 			if (!m_CurrentActionData)
 			{
-				bool isMenuOpen = false;	
-#ifndef NO_GUI
-				isMenuOpen = g_Game.GetUIManager().IsMenuOpen(MENU_INVENTORY);
-#endif
+				bool isMenuOpen = IsAnyMenuOpen();
 				if (m_Player.IsRaised() || isMenuOpen)
 				{
 					m_Targets.Clear();
@@ -552,7 +549,7 @@ class ActionManagerClient: ActionManagerBase
 		// TODO: NEEDS OPTIMIZATION (focus on UpdatePossibleActions > CraftingManager::OnUpdate)
 		
 		m_ActionsAvaibale = false;
-		if (!m_ActionPossible || HasHandInventoryReservation() || g_Game.IsInventoryOpen())
+		if (!m_ActionPossible || HasHandInventoryReservation() || IsAnyMenuOpen())
 		{
 			ResetInputsActions();
 			return;
@@ -582,6 +579,16 @@ class ActionManagerClient: ActionManagerBase
 		}
 	}
 	
+	//! Contextual world actions are not available while any scripted menu is open
+	bool IsAnyMenuOpen()
+	{
+		#ifndef NO_GUI
+		return g_Game.GetUIManager().GetMenu() != null;
+		#else
+		return false;
+		#endif
+	}
+
 	//TOOD MW In progress
 	protected bool LockInventory(ActionData action_data)
 	{

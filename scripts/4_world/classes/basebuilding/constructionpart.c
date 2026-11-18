@@ -9,7 +9,8 @@ class ConstructionPart
 	protected ConstructionPartTypeData m_PartTypeData; //! Entity-type object storing non-instanced data
 	protected int 	m_LocalSyncBitMask = 0;
 	bool 	m_IsBuilt;			//defines part build state
-	protected ref TConstructionPartInsiderBoxData m_InsiderBoxData; //Grouped modelspace positions of min/max insidebox points
+	protected ref array<ref ConstructionPartInsiderBoxData> m_InsiderBoxDataArray; //Grouped modelspace positions of min/max insidebox points
+	protected ref array<ref ConstructionPartExcluderBoxData> m_ExcluderBoxDataArray; //Grouped modelspace positions of min/max/yaw angle excludebox data
 	
 	void ConstructionPart( string name, string part_name, string main_part_name, int id, bool is_built, bool is_base, bool is_gate, array<string> required_parts )
 	{
@@ -26,6 +27,7 @@ class ConstructionPart
 	void PartInstanceDeferredInit(EntityAI parent)
 	{
 		InitInsiderBoxData(parent);
+		InitExcluderBoxData(parent);
 	}
 	
 	/////////////////
@@ -39,22 +41,64 @@ class ConstructionPart
 		if (tmp)
 		{
 			//now construct the vector array for the instance
-			m_InsiderBoxData = new TConstructionPartInsiderBoxData();
+			m_InsiderBoxDataArray = new array<ref ConstructionPartInsiderBoxData>();
 			string nameMin, nameMax;
 			int count = tmp.Count();
-			for (int i; i < count / 2; ++i)
+			for (int i; i < count / ConstructionPartInsiderBoxData.PARAM_COUNT; ++i)
 			{
-				nameMin = tmp[i*2];
-				nameMax = tmp[i*2+1];
+				nameMin = tmp[i * ConstructionPartInsiderBoxData.PARAM_COUNT];
+				nameMax = tmp[i * ConstructionPartInsiderBoxData.PARAM_COUNT + 1];
 				if (!parent.MemoryPointExists(nameMin) || !parent.MemoryPointExists(nameMax))
+				{
+					ErrorEx("" + nameMin +" or " + nameMax + " memory points undefined in the model " + parent.GetShapeName(), ErrorExSeverity.INFO);
 					continue;
+				}
 				
-				vector min = parent.GetMemoryPointPos(nameMin);
-				vector max = parent.GetMemoryPointPos(nameMax);
+				ConstructionPartInsiderBoxData data = new ConstructionPartInsiderBoxData();
+				data.m_Min = parent.GetMemoryPointPos(nameMin);
+				data.m_Max = parent.GetMemoryPointPos(nameMax);
+				vector.SanitizeMinsMaxs(data.m_Min, data.m_Max);
 				
-				vector.SanitizeMinsMaxs(min, max);
-				m_InsiderBoxData.Insert({min, max});
+				m_InsiderBoxDataArray.Insert(data);
 			}
+			
+			if (m_InsiderBoxDataArray.Count() == 0)
+				m_InsiderBoxDataArray = null;
+		}
+	}
+	
+	//! 'exclude' box data player can't be inside of to perform construction actions. Modelspace.
+	protected void InitExcluderBoxData(EntityAI parent)
+	{
+		array<string> tmp = m_PartTypeData.GetExcluderBoxData(); //if data exists, should be validated by this point
+		if (tmp)
+		{
+			//now construct the vector array for the instance
+			m_ExcluderBoxDataArray = new array<ref ConstructionPartExcluderBoxData>();
+			string nameMin, nameMax, yawString;
+			int count = tmp.Count();
+			for (int i; i < count / ConstructionPartExcluderBoxData.PARAM_COUNT; ++i)
+			{
+				nameMin = tmp[i * ConstructionPartExcluderBoxData.PARAM_COUNT];
+				nameMax = tmp[i * ConstructionPartExcluderBoxData.PARAM_COUNT + 1];
+				yawString = tmp[i * ConstructionPartExcluderBoxData.PARAM_COUNT + 2];
+				if (!parent.MemoryPointExists(nameMin) || !parent.MemoryPointExists(nameMax))
+				{
+					ErrorEx("" + nameMin +" or " + nameMax + " memory points undefined in the model " + parent.GetShapeName(), ErrorExSeverity.INFO);
+					continue;
+				}
+				
+				ConstructionPartExcluderBoxData data = new ConstructionPartExcluderBoxData();
+				data.m_Min = parent.GetMemoryPointPos(nameMin);
+				data.m_Max = parent.GetMemoryPointPos(nameMax);
+				data.m_Angle = Vector(yawString.ToFloat(), 0, 0);
+				vector.SanitizeMinsMaxs(data.m_Min, data.m_Max);
+				
+				m_ExcluderBoxDataArray.Insert(data);
+			}
+			
+			if (m_ExcluderBoxDataArray.Count() == 0)
+				m_ExcluderBoxDataArray = null;
 		}
 	}
 	
@@ -169,9 +213,15 @@ class ConstructionPart
 	}
 	
 	//! translated MODELSPACE positions of min/max memory points (should be single points in memory LOD)
-	TConstructionPartInsiderBoxData GetInsiderBoxData()
+	array<ref ConstructionPartInsiderBoxData> GetInsiderBoxDataArray()
 	{
-		return m_InsiderBoxData;
+		return m_InsiderBoxDataArray;
+	}
+	
+	//! translated MODELSPACE positions of min/max memory points (should be single points in memory LOD)
+	array<ref ConstructionPartExcluderBoxData> GetExcluderBoxDataArray()
+	{
+		return m_ExcluderBoxDataArray;
 	}
 	
 	bool CanBeRepaired(int zoneHealthLevel, ItemBase tool = null, PlayerBase player = null)
@@ -193,6 +243,11 @@ class ConstructionPart
 	string GetName()
 	{
 		return m_PartTypeData.GetNameLocalized();
+	}
+	
+	string GetNameKey()
+	{
+		return m_PartTypeData.GetNameKey();
 	}
 	
 	string GetPartName()
@@ -404,7 +459,7 @@ class ConstructionPart
 	//! Plays sound of current construction state on parent; BaseBuildingBase uses its own class events for this..
 	protected void PlayConstructionSound(EntityAI parent, vector effectPos);
 	//! Plays particle of current construction state on parent; BaseBuildingBase uses its own class events for this..
-	protected void PlayConstructionParticle(EntityAI parent, vector effectPos);
+	protected void PlayConstructionParticle(EntityAI parent, vector effectPos, vector effectDir);
 	
 	//////////
 	//events//
@@ -437,11 +492,13 @@ class ConstructionPart
 	void OnDismantledServer(EntityAI parent, Man dismantler)
 	{
 		CloseDoorOnPartUnbuild(parent);
+		DropArrowsFromPart(parent, dismantler);
 	}
 	
 	void OnDestroyedServer(EntityAI parent, Man destroyer)
 	{
 		CloseDoorOnPartUnbuild(parent);
+		DeleteArrowsFromPart(parent);
 	}
 	
 	protected void CloseDoorOnPartUnbuild(EntityAI parent)
@@ -454,6 +511,59 @@ class ConstructionPart
 			{
 				if (info.m_DoorConstructionPartName == GetPartName() && !buildingBase.IsDoorClosed(idx))
 					buildingBase.CloseDoor(idx);
+			}
+		}
+	}
+	
+	protected void DeleteArrowsFromPart(EntityAI parent)
+	{
+		ConstructionBase construction;
+		ArrowManagerBase arrowManager;
+		if (Class.CastTo(construction, parent.GetConstructionBasic()) && Class.CastTo(arrowManager, construction.GetArrowManagerConstruction()))
+		{
+			int arrowsCount = arrowManager.GetArrowsCount();
+			if (arrowsCount == 0)
+				return;
+			
+			EntityAI arrow;
+			array<int> partPivots = m_PartTypeData.GetPivotsArray();
+			for (int i = 0; i < arrowsCount; ++i)
+			{
+				arrow = arrowManager.GetArrow(i);
+				int arrowPivot = arrow.GetHierarchyPivot();
+				if (partPivots.Find(arrowPivot) != -1)
+					arrow.DeleteSafe();
+			}
+		}
+	}
+	
+	protected void DropArrowsFromPart(EntityAI parent, Man dismantler)
+	{
+		ConstructionBase construction;
+		ArrowManagerBase arrowManager;
+		if (Class.CastTo(construction, parent.GetConstructionBasic()) && Class.CastTo(arrowManager, construction.GetArrowManagerConstruction()))
+		{
+			int arrowsCount = arrowManager.GetArrowsCount();
+			if (arrowsCount == 0)
+				return;
+			
+			EntityAI arrow;
+			array<EntityAI> tmp = new array<EntityAI>();
+			array<int> partPivots = m_PartTypeData.GetPivotsArray();
+			for (int i = 0; i < arrowsCount; ++i)
+			{
+				arrow = arrowManager.GetArrow(i);
+				int arrowPivot = arrow.GetHierarchyPivot();
+				if (partPivots.Find(arrowPivot) != -1)
+					tmp.Insert(arrow);
+			}
+			/////////
+			vector pos = dismantler.GetPosition();
+			foreach (EntityAI arr : tmp)
+			{
+				parent.RemoveChild(arr);
+				arr.SetPosition(pos);
+				arr.SetOrientation(Vector(Math.RandomInt(0,360),0,0));
 			}
 		}
 	}
@@ -758,10 +868,19 @@ class ConstructionPartRebuild : ConstructionPart
 	override protected void TryShowAnim(string animSourceName, notnull EntityAI parent)
 	{
 		ConstructionPartEffectsData effData = m_PartTypeData.GetPartTypeEffectsData();
-		if (effData.IsValid() && effData.GetSoundsetBuild() != "") //delayed by a pre-defined time, waiting for a particular place in the sound
+		if (effData.AnySoundsetDefined() && m_IsBuilt) //delayed by a pre-defined time, waiting for a particular place in the sound
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(PerformShowAnim, ANIMATION_EFFECT_DELAY_BUILD, false, animSourceName, parent);
 		else
 			PerformShowAnim(animSourceName, parent);
+	}
+	
+	override protected void TryHideAnim(string animSourceName, notnull EntityAI parent)
+	{
+		ConstructionPartEffectsData effData = m_PartTypeData.GetPartTypeEffectsData();
+		if (effData.AnySoundsetDefined() && m_IsBuilt) //delayed by a pre-defined time, waiting for a particular place in the sound
+			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(PerformHideAnim, ANIMATION_EFFECT_DELAY_BUILD, false, animSourceName, parent);
+		else
+			PerformHideAnim(animSourceName, parent);
 	}
 	
 	///////////
@@ -780,11 +899,11 @@ class ConstructionPartRebuild : ConstructionPart
 			severity = ErrorExSeverity.ERROR;
 		#endif
 		
-		array<string> memPointNames;
+		array<string> memPosNames;
 		
 		//sounds
-		memPointNames = effData.GetSoundEffectMemoryPointNames();
-		foreach (string soundPointName : memPointNames)
+		memPosNames = effData.GetSoundEffectMemoryPointNames();
+		foreach (string soundPointName : memPosNames)
 		{
 			if (soundPointName == "" || !parent.MemoryPointExists(soundPointName))
 			{
@@ -796,18 +915,37 @@ class ConstructionPartRebuild : ConstructionPart
 		}
 		
 		//particles
-		//To be reconnected after 1.30
-		/*memPointNames = effData.GetParticleEffectMemoryPointNames();
-		foreach (string particlePointName : memPointNames)
+		memPosNames = effData.GetParticleEffectMemoryPosNames();
+		array<string> memDirNames = effData.GetParticleEffectMemoryDirNames();
+		int count = memPosNames.Count();
+		for (int i = 0; i < count; ++i)
 		{
+			string particlePointName = memPosNames[i];
 			if (particlePointName == "" || !parent.MemoryPointExists(particlePointName))
 			{
 				ErrorEx("'" + particlePointName + "' memory point not found in the model: " + parent.GetShapeName() + ", skipping construction effects!", severity);
 				return;
 			}
+			vector localPos = parent.GetMemoryPointPos(particlePointName);
 			
-			PlayConstructionParticle(parent, g_Game.ObjectModelToWorld(parent, parent.GetMemoryPointPos(particlePointName)));
-		}*/
+			vector direction = "0 0 0";
+			string particleDirName;
+			if (memDirNames)
+				particleDirName = memDirNames[i];
+			
+			if (particleDirName != "" && parent.MemoryPointExists(particleDirName))
+			{
+				direction = -vector.Direction(localPos, parent.GetMemoryPointPos(particleDirName));
+				direction.Normalize();
+				/*#ifdef DIAG_DEVELOPER
+				vector pos = g_Game.ObjectModelToWorld(parent, localPos);
+				vector end = g_Game.ObjectModelToWorld(parent, localPos) + direction * 1.5;
+				Debug.DrawArrow(pos, end);
+				#endif	*/
+			}
+			
+			PlayConstructionParticle(parent, g_Game.ObjectModelToWorld(parent, localPos), direction);
+		}
 	}
 	
 	override protected void PlayConstructionSound(EntityAI parent, vector effectPos)
@@ -847,29 +985,44 @@ class ConstructionPartRebuild : ConstructionPart
 			SEffectManager.PlaySoundEnviroment(soundsetName, effectPos);
 	}
 	
-	override protected void PlayConstructionParticle(EntityAI parent, vector effectPos)
+	override protected void PlayConstructionParticle(EntityAI parent, vector effectPos, vector effectDir)
 	{
 		int particleID = ParticleList.INVALID;
 		ConstructionPartEffectsData effData = m_PartTypeData.GetPartTypeEffectsData();
 		if (!m_IsBuilt)
 		{
+			//HP check first
 			string damageZone;
 			DamageSystem.GetDamageZoneFromComponentName(parent, GetPartName(), damageZone);
-			if (g_Game.IsMultiplayer())
-			{
-				if (parent.GetHealthLevel(damageZone) == GameConstants.STATE_RUINED)
-					particleID = effData.GetParticleDestroyID();
-			}
-			else //SP solution below
-			{
-				if (parent.GetHealth(damageZone, "Health") <= 0)
-					particleID = effData.GetParticleDestroyID();
-			}
 			
+			bool isDestruction;
+			if (g_Game.IsMultiplayer())
+				isDestruction = parent.GetHealthLevel(damageZone) == GameConstants.STATE_RUINED;
+			else //SP solution below
+				isDestruction = parent.GetHealth(damageZone, "Health") <= 0;
+			
+			if (!isDestruction)
+			{
+				//dismantle
+				particleID = effData.GetParticleDismantleID();
+			}
+			else
+			{
+				//destroy
+				particleID = effData.GetParticleDestroyID();
+			}
+		}
+		else
+		{
+			//build
+			particleID = effData.GetParticleBuildID();
 		}
 		
 		if (particleID != ParticleList.INVALID)
-			ParticleManager.GetInstance().PlayInWorld(particleID, effectPos);
+		{
+			vector globalOri = effectDir.VectorToAngles();
+			ParticleManager.GetInstance().PlayInWorldEx(particleID, null, effectPos, globalOri);
+		}
 	}
 	
 	/////////
@@ -918,9 +1071,6 @@ class ConstructionPartRebuildRubble: ConstructionPartRebuild
 		super.OnBuiltServer(parent,builder);
 		
 		g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).Call(SpawnRubbleMaterials, parent, builder);
-		
-		if (RubbleRemovalCheck(parent))
-			OnRubbleRemoved(parent);
 	}
 	
 	protected void SpawnRubbleMaterials(EntityAI parent, Man builder)
@@ -978,7 +1128,7 @@ class ConstructionPartRebuildRubble: ConstructionPartRebuild
 	override protected void TryHideAnim(string animSourceName, notnull EntityAI parent)
 	{
 		ConstructionPartEffectsData effData = m_PartTypeData.GetPartTypeEffectsData();
-		if (effData.IsValid() && effData.GetSoundsetBuild() != "") //delayed by a pre-defined time, waiting for a particular place in the sound
+		if (effData.AnySoundsetDefined()) //delayed by a pre-defined time, waiting for a particular place in the sound
 			g_Game.GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(PerformHideAnim, ANIMATION_EFFECT_DELAY_BUILD, false, animSourceName, parent);
 		else
 			PerformHideAnim(animSourceName, parent);
@@ -989,6 +1139,14 @@ class ConstructionPartRebuildRubble: ConstructionPartRebuild
 		super.HandleHideConstructionPart(parent);
 		
 		OnRubbleCreated(parent);
+	}
+	
+	override void HandleShowConstructionPart(EntityAI parent)
+	{
+		super.HandleShowConstructionPart(parent);
+		
+		if (RubbleRemovalCheck(parent))
+			OnRubbleRemoved(parent);
 	}
 	
 	//! Returns 'true' if all rubble piles are removed
@@ -1142,4 +1300,3 @@ class ConstructionPartRebuildReversibleBarricade: ConstructionPartRebuildReversi
 }
 
 typedef array<ref array<string>> TConstructionPartVariantArray;
-typedef array<ref array<vector>> TConstructionPartInsiderBoxData;

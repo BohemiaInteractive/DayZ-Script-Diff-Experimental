@@ -30,7 +30,9 @@ class ActionFillBottleBase: ActionContinuousBase
 {
 	private const float WATER_DEPTH = 0.5;
 	protected int m_AllowedLiquidMask;
-	
+	//! Created once, ActionCondition() runs every frame per action candidate.
+	protected ref CCTLiquid m_WaterCheck;
+
 	void ActionFillBottleBase()
 	{
 		m_CallbackClass		= ActionFillBottleBaseCB;
@@ -47,6 +49,7 @@ class ActionFillBottleBase: ActionContinuousBase
 	override void CreateConditionComponents()  
 	{
 		m_ConditionItem 	= new CCINonRuined();
+		m_WaterCheck		= new CCTLiquid(m_AllowedLiquidMask, UAMaxDistances.DEFAULT, UAMaxDistances.DEFAULT);
 		m_ConditionTarget 	= new CCTNone()
 	}
 
@@ -65,8 +68,7 @@ class ActionFillBottleBase: ActionContinuousBase
 		}
 		else
 		{
-			CCTLiquid waterCheck = new CCTLiquid(m_AllowedLiquidMask, UAMaxDistances.DEFAULT, UAMaxDistances.DEFAULT);
-			if (!waterCheck.Can(player, target))
+			if (!m_WaterCheck.Can(player, target))
 				return false;
 		}
 		

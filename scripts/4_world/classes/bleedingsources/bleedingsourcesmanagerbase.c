@@ -240,6 +240,11 @@ class BleedingSourcesManagerBase
 	
 	protected bool CanAddBleedingSource(int bit)
 	{
+		#ifdef DIAG_DEVELOPER
+		if (m_Player && !m_Player.GetAllowDamage())//full invincibility prevents bleeding source creation
+			return false;
+		#endif		
+		
 		if (!GetBleedingSourceMeta(bit)) 
 		{
 			return false;

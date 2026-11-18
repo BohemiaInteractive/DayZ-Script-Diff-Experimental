@@ -468,4 +468,16 @@ class PluginAdminLog extends PluginBase			// Class for admin log messages handle
 	{
 		LogPrint(str);
 	}
+	
+	void LogLockExploitAttempt(PlayerIdentity identity, EntityAI lockEntity, string reason)
+	{
+		string message = "unknown";
+		if (identity)
+			message = identity.GetName() + " (id " + identity.GetId() + ")";
+		
+		if (lockEntity)
+			message = message + " - (pos " + lockEntity.GetPosition() + ")";
+		
+		LogPrint("[CodeLock] Blocked exploit attempt: " + message + " | " + reason);
+	}
 }

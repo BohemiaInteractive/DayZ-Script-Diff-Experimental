@@ -64,14 +64,14 @@ class SymptomSyncData : Param
 
 		foreach (int i : m_IntArray)
 		{
-			returnValue = ctx.Read(i);
+			returnValue = ctx.Write(i);
 			if (!returnValue)
 				return false;
 		}
 		
 		foreach (int f : m_FloatArray)
 		{
-			returnValue = ctx.Read(f);
+			returnValue = ctx.Write(f);
 			if (!returnValue)
 				return false;
 		}

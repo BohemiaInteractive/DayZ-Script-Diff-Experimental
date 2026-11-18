@@ -1585,7 +1585,6 @@ class PlayerBase extends ManBase
 				}
 			}
 			
-			clothing.UpdateNVGStatus(this, false, true);
 			g_Game.GetCallQueue(CALL_CATEGORY_GUI).CallLater(UpdateCorpseStateVisual, 200, false);//sometimes it takes a while to load in
 			UpdateCorpseStateVisual();//....but if possible, we don't want a delay
 		}
@@ -1699,9 +1698,6 @@ class PlayerBase extends ManBase
 		AddAction(ActionLockedDoors, InputActionMap);
 		AddAction(ActionEnterLadder, InputActionMap);
 		AddAction(ActionExitLadder, InputActionMap);
-		AddAction(ActionInteractCodeLockItem, InputActionMap);
-		AddAction(ActionResetCodeOnCodeLock, InputActionMap);
-		AddAction(ActionDetachBattery, InputActionMap);
 		
 		//-----------CheckIfCanMOveToTarget----------
 		AddAction(ActionStartEngine, InputActionMap);
@@ -1887,6 +1883,15 @@ class PlayerBase extends ManBase
 	ActionManagerBase GetActionManager()
 	{
 		return m_ActionManager;
+	}
+	
+	//! TODO(radarad) - sealed as this method might disappear with proper fix in
+	sealed void OnCrewShouldExit()
+	{
+		if (!GetActionManager() || GetActionManager().GetRunningAction())
+			return;
+
+		GetActionManager().OnInstantAction(ActionGetOutTransport);
 	}
 	
 	EmoteManager GetEmoteManager()
@@ -6603,7 +6608,7 @@ class PlayerBase extends ManBase
 		{
 			int type = -1;
 			ItemBase item1 = null;
-			ItemBase item2 = null;
+			EntityAI entity2 = null;
 			InventoryLocation srcIL = new InventoryLocation();
 			InventoryLocation dstIL = new InventoryLocation();
 			bool use_stack_max = false;
@@ -6647,7 +6652,7 @@ class PlayerBase extends ManBase
 			
 			if (!ctx.Read(item1))
 				return false;
-			if (!ctx.Read(item2))
+			if (!ctx.Read(entity2))
 				return false;
 			if (!ctx.Read(use_stack_max))
 				return false;
@@ -6662,27 +6667,27 @@ class PlayerBase extends ManBase
 			if (!inventory.PlayerCheckRequestSrc(srcIL, GameInventory.c_MaxItemDistanceRadius))
 				return false;
 			
-			if (type == -1 && item1 && item2)//combine
+			if (type == -1 && item1 && entity2)//combine
 			{
-				item2.GetInventory().GetCurrentInventoryLocation(dstIL);
+				entity2.GetInventory().GetCurrentInventoryLocation(dstIL);
 				if (!inventory.PlayerCheckRequestSrc(dstIL, GameInventory.c_MaxItemDistanceRadius))
 					return false;
-				item1.CombineItems(item2, use_stack_max);
+				item1.CombineItems(ItemBase.Cast(entity2), use_stack_max);
 			}
 			else if (type == 1 && item1)
 			{
 				if (use_stack_max)
 				{
-					if (item2)
+					if (entity2)
 					{
 						if(slot_id == -1)
 						{
-							GameInventory destinationInventory = item2.GetInventory();
+							GameInventory destinationInventory = entity2.GetInventory();
 							destinationInventory.FindFreeLocationFor(item1, FindInventoryLocationType.ANY, dstIL);
 						}
 						else
 						{
-							dstIL.SetAttachment(item2, item1, slot_id);
+							dstIL.SetAttachment(entity2, item1, slot_id);
 						}
 						
 						if (!inventory.PlayerCheckRequestDst(srcIL, dstIL, GameInventory.c_MaxItemDistanceRadius))
@@ -6692,7 +6697,7 @@ class PlayerBase extends ManBase
 					}
 					
 					
-					item1.SplitIntoStackMax(item2, slot_id, this);
+					item1.SplitIntoStackMax(entity2, slot_id, this);
 				}
 				else
 				{
@@ -6703,7 +6708,7 @@ class PlayerBase extends ManBase
 					item1.SplitItem(this);
 				}
 			}
-			else if (type == 2 && item1 && item2)
+			else if (type == 2 && item1 && entity2)
 			{
 				int row, col;
 				if (!ctx.Read(row))
@@ -6711,11 +6716,11 @@ class PlayerBase extends ManBase
 				if (!ctx.Read(col))
 					return false;
 				
-				dstIL.SetCargo(item2, item1, slot_id, row, col, false);
+				dstIL.SetCargo(entity2, item1, slot_id, row, col, false);
 				if (!inventory.PlayerCheckRequestDst(srcIL, dstIL, GameInventory.c_MaxItemDistanceRadius))
 					return false;
 				
-				item1.SplitIntoStackMaxCargo(item2, slot_id, row, col);
+				item1.SplitIntoStackMaxCargo(entity2, slot_id, row, col);
 			}
 			else if (type == 3 && item1)
 			{
@@ -8962,6 +8967,11 @@ class PlayerBase extends ManBase
 	override bool IsSurrendered()
 	{
 		return m_IsSurrendered;
+	}
+	
+	override bool IsSurrenderTransitionHappening()
+	{
+		return m_StartedSurrenderTransition;
 	}
 	
 	bool IsPlayerLoaded()

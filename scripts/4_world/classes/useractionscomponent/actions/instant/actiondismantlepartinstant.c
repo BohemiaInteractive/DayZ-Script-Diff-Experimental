@@ -63,7 +63,7 @@ class ActionDismantlePartInstantDebug : ActionInstantBase
 		
 		if (part)
 		{
-			m_Text = "dbgDismantle " + part.GetName() + " - INSTANT";
+			m_Text = "dbgDismantle " + part.GetNameKey() + " - INSTANT";
 			
 			#ifdef DIAG_DEVELOPER
 			if (DiagMenu.GetBool(DiagMenuIDs.BASEBUILDING_FULLDEBUG))

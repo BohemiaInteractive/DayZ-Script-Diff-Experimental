@@ -45,6 +45,8 @@ class PurifyWater extends RecipeBase
 		InsertIngredient(1,"Barrel_ColorBase");//you can insert multiple ingredients this way
 		InsertIngredient(1,"Cauldron");//you can insert multiple ingredients this way
 		InsertIngredient(1,"AyranBottle");//you can insert multiple ingredients this way
+		InsertIngredient(1,"Waterskin_Natural");//you can insert multiple ingredients this way
+
 
 		
 		m_IngredientAddHealth[1] = 0;// 0 = do nothing

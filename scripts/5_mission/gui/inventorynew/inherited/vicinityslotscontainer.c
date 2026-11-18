@@ -226,6 +226,11 @@ class VicinitySlotsContainer: Container
 		return GetFocusedContainer().GetColumnCount();
 	}
 	
+	int GetVisibleItemCount()
+	{
+		return m_ShowedItems.Count();
+	}
+	
 	//! Decides on the icon visibility
 	bool ExcludeFromContainer (EntityAI item)
 	{

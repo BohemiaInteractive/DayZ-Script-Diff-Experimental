@@ -83,7 +83,7 @@ class WeaponChambering_Base extends WeaponStateBase
 	
 	bool ShowBullet(int muzzleIndex)
 	{
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion() && m_srcMagazine.GetAmmoCount() > 0)
 		{
 			if (m_srcMagazine.GetCartridgeAtIndex(0, m_damage, m_type))
 			{
@@ -124,17 +124,24 @@ class WeaponChambering_Base extends WeaponStateBase
 	
 	bool AcquireCartridgeFromMagazine()
 	{
-		m_magazineType = m_srcMagazine.GetType();
-		if (m_srcMagazine.ServerAcquireCartridge(m_damage, m_type))
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
-			if (LogManager.IsWeaponLogEnable()) { wpnDebugPrint("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering AcquireCartridgeFromMagazine, ok - bullet acquire " + m_type); }
-			return true;
+			m_magazineType = m_srcMagazine.GetType();
+			if (m_srcMagazine.ServerAcquireCartridge(m_damage, m_type))
+			{
+				if (LogManager.IsWeaponLogEnable()) { wpnDebugPrint("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering AcquireCartridgeFromMagazine, ok - bullet acquire " + m_type); }
+				return true;
+			}
+			else
+			{
+				if (LogManager.IsWeaponLogEnable()) { wpnDebugPrint("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering AcquireCartridgeFromMagazine, error -Cannot acquire bullet from magazine!"); }
+				m_magazineType = string.Empty;
+				m_type = string.Empty;
+			}
 		}
 		else
 		{
-			if (LogManager.IsWeaponLogEnable()) { wpnDebugPrint("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering AcquireCartridgeFromMagazine, error -Cannot acquire bullet from magazine!"); }
-			m_magazineType = string.Empty;
-			m_type = string.Empty;
+			Error("[wpnfsm] " + Object.GetDebugName(m_weapon) + " WeaponChambering AcquireCartridgeFromMagazine, error - no magazine to acquire from (m_srcMagazine=NULL)");
 		}
 		return false;
 	}
@@ -629,7 +636,7 @@ class WeaponChambering extends WeaponStateBase
 	override void OnAbort (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -689,7 +696,7 @@ class WeaponChambering extends WeaponStateBase
 	override void OnExit (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -897,7 +904,7 @@ class ChamberMultiBullet extends WeaponStateBase
 	override void OnExit (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -956,7 +963,7 @@ class ChamberMultiBullet extends WeaponStateBase
 	override void OnAbort (WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -1205,7 +1212,7 @@ class WeaponMagnumChambering extends WeaponStateBase
 	override void OnExit(WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			
@@ -1265,7 +1272,7 @@ class WeaponMagnumChambering extends WeaponStateBase
 	override void OnAbort(WeaponEventBase e)
 	{
 		bool done = false;
-		if (m_srcMagazine)
+		if (m_srcMagazine && !m_srcMagazine.IsSetForDeletion())
 		{
 			e.m_player.GetInventory().ClearInventoryReservationEx( m_srcMagazine , m_srcMagazinePrevLocation );
 			

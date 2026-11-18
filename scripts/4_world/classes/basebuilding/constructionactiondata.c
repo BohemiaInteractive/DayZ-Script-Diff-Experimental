@@ -311,6 +311,9 @@ class ConstructionActionData
 	{
 		ValidateConstructionData(item,target,componentIndex);
 		
+		//debug instant builds ignore ruined materials
+		ConstructionPartBuildData data = new ConstructionPartBuildData();
+		data.m_IgnoreMaterialCondition = (GetFastConstructionMode() == EConstructionDebugModes.INSTANT);
 		EntityAI ent;
 		ConstructionBase con;
 		if (Class.CastTo(ent, EntityAI.Cast(target)) && Class.CastTo(con, ent.GetConstructionBasic()))
@@ -321,7 +324,7 @@ class ConstructionActionData
 			foreach (string compName : compNames)
 			{
 				array<ConstructionPart> tmp = new array<ConstructionPart>();
-				con.GetConstructionPartsToBuild(compName, tmp, null, m_MainPartNameNoTool, false); //m_MainPartNameNoTool unused?
+				con.GetConstructionPartsToBuild(compName, tmp, data);
 				foreach (ConstructionPart part : tmp)
 				{
 					if (m_BuildPartsInstant.Find(part) == -1)

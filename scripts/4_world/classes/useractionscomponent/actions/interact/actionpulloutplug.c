@@ -19,8 +19,9 @@ class ActionPullOutPlug : ActionInteractBase
 		{
 			string selection = targetItem.GetActionComponentName(target.GetComponentIndex());
 
-			if (targetItem.GetCompEM() && targetItem.GetCompEM().GetPlugOwner(selection))
-				return targetItem.GetCompEM().GetPlugOwner(selection).GetDisplayName();
+			Object plugOwner = targetItem.GetCompEM().GetPlugOwner(selection);
+			if (plugOwner)
+				return MiscGameplayFunctions.GetItemDisplayNameKey(plugOwner.GetType());
 		}
 		
 		return super.GetTargetName(player, target);

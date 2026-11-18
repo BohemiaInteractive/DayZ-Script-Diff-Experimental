@@ -1490,6 +1490,7 @@ class DayZGame extends CGame
 				#ifndef NO_GUI
 				// Just call it, to create the global instance if it doesn't exist yet
 				ParticleManager.GetInstance();
+				DustKickupEffects.GetInstance();
 				#endif
 				#endif
 				break;

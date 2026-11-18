@@ -8,6 +8,10 @@ class ActionWashHeadWaterCB : ActionContinuousBaseCB
 
 class ActionWashHeadWater : ActionWashHeadWettingClothesBase
 {
+	protected int m_AllowedLiquidMask;
+	//! Same object as m_ConditionTarget, typed to avoid a cast on every frame.
+	protected CCTLiquid m_LiquidCondition;
+	
 	void ActionWashHeadWater()
 	{
 		m_CallbackClass	= ActionWashHeadWaterCB;
@@ -15,6 +19,8 @@ class ActionWashHeadWater : ActionWashHeadWettingClothesBase
 		m_FullBody		= true;
 		m_StanceMask	= DayZPlayerConstants.STANCEMASK_CROUCH;
 		m_Text 			= "#STR_Wash_Head";
+		
+		m_AllowedLiquidMask = LIQUID_GROUP_WATER - LIQUID_SNOW - LIQUID_HOTWATER;
 	}
 	
 	override typename GetInputType()
@@ -23,13 +29,19 @@ class ActionWashHeadWater : ActionWashHeadWettingClothesBase
 	}
 
 	override void CreateConditionComponents()
-	{		
+	{
 		m_ConditionItem		= new CCINone();
-		m_ConditionTarget 	= new CCTLiquid(LIQUID_GROUP_WATER - LIQUID_SNOW - LIQUID_HOTWATER, UAMaxDistances.DEFAULT, UAMaxDistances.DEFAULT);
+		m_ConditionTarget 	= new CCTLiquid(m_AllowedLiquidMask, UAMaxDistances.DEFAULT, UAMaxDistances.DEFAULT);
+		m_LiquidCondition	= CCTLiquid.Cast(m_ConditionTarget);
 	}
 
 	override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
 	{
+		//! Other conditions are handled in CCTLiquid
+		int liquidType = m_LiquidCondition.GetLiquidType();
+		if (liquidType == LIQUID_NONE)
+			return false;
+		
 		return true;
 	}
 	

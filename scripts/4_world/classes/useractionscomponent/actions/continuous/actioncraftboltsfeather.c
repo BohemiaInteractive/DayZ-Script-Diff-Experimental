@@ -1,3 +1,9 @@
+class CraftBoltsFeatherActionData : ActionData
+{
+	bool m_IsFeatherInHands;
+	Ammunition_Base m_ResultEntity;
+}
+
 class ActionCraftBoltsFeatherCB : ActionContinuousBaseCB
 {
 	private const float TIME_TO_CRAFT = 3.0;
@@ -10,6 +16,7 @@ class ActionCraftBoltsFeatherCB : ActionContinuousBaseCB
 
 class ActionCraftBoltsFeather: ActionContinuousBase
 {
+	// deprecated
 	protected bool 				m_IsFeatherInHands;
 	protected Ammunition_Base 	m_ResultEntity;
 	
@@ -52,22 +59,30 @@ class ActionCraftBoltsFeather: ActionContinuousBase
 		return false;
 	}
 
+	override ActionData CreateActionData()
+	{
+		CraftBoltsFeatherActionData action_data = new CraftBoltsFeatherActionData;
+		return action_data;
+	}
+
 	override void OnStartServer(ActionData action_data)
 	{
 		super.OnStartServer(action_data);
 		
-		m_IsFeatherInHands = IsFeatherType(action_data.m_MainItem.ClassName());
-		m_ResultEntity = null;
+		CraftBoltsFeatherActionData craftData = CraftBoltsFeatherActionData.Cast(action_data);
+		craftData.m_IsFeatherInHands = IsFeatherType(action_data.m_MainItem.ClassName());
+		craftData.m_ResultEntity = null;
 	}
 	
 	override void OnFinishProgressServer(ActionData action_data)
 	{
+		CraftBoltsFeatherActionData craftData = CraftBoltsFeatherActionData.Cast(action_data);
 		ItemBase feather;
 		Ammunition_Base bolt;
 
 		bool added = false;
 		
-		if (m_IsFeatherInHands)
+		if (craftData.m_IsFeatherInHands)
 		{
 			//feather in hands
 			feather = action_data.m_MainItem;
@@ -88,23 +103,23 @@ class ActionCraftBoltsFeather: ActionContinuousBase
 		
 		bolt.ServerAcquireCartridge(dmg, type);
 		
-		if (m_ResultEntity)
+		if (craftData.m_ResultEntity)
 		{
-			type = m_ResultEntity.ConfigGetString("Ammo");
-			if (m_ResultEntity.GetAmmoCount() < m_ResultEntity.GetAmmoMax())
+			type = craftData.m_ResultEntity.ConfigGetString("Ammo");
+			if (craftData.m_ResultEntity.GetAmmoCount() < craftData.m_ResultEntity.GetAmmoMax())
 			{
-				m_ResultEntity.ServerStoreCartridge(dmg, type);
+				craftData.m_ResultEntity.ServerStoreCartridge(dmg, type);
 				added = true;
 			}
 		}
 		
 		if (!added)
 		{
-			m_ResultEntity = Ammunition_Base.Cast(action_data.m_Player.SpawnEntityOnGroundRaycastDispersed("Ammo_ImprovisedBolt_2"));
-			type = m_ResultEntity.ConfigGetString("Ammo");
-			m_ResultEntity.ServerSetAmmoCount(0);
-			m_ResultEntity.ServerStoreCartridge(dmg, type);
-			m_ResultEntity.SetHealth01("", "", bolt.GetHealth01("", ""));
+			craftData.m_ResultEntity = Ammunition_Base.Cast(action_data.m_Player.SpawnEntityOnGroundRaycastDispersed("Ammo_ImprovisedBolt_2"));
+			type = craftData.m_ResultEntity.ConfigGetString("Ammo");
+			craftData.m_ResultEntity.ServerSetAmmoCount(0);
+			craftData.m_ResultEntity.ServerStoreCartridge(dmg, type);
+			craftData.m_ResultEntity.SetHealth01("", "", bolt.GetHealth01("", ""));
 		}
 
 		feather.AddQuantity(-1);

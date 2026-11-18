@@ -26,6 +26,9 @@ class CodeLockComponent : Managed
 	private const float DEFAULT_BRUTEFORCE_TIME = 30.0;
 	private const float DEFAULT_BRUTEFORCE_RESET_TIME = 3600.0;
 	
+	//! Max distance from the lock a player may submit code requests, also used by the code lock UI to close the menu
+	const float CODELOCK_MAX_CODE_DISTANCE_SQ = Math.SqrFloat(5.0);
+	
 	protected int m_MinLockPinLength;
 	
 	protected string m_InputPIN;			// combination that is dialed on lock
@@ -47,6 +50,8 @@ class CodeLockComponent : Managed
 	protected bool m_HasBruteForceProtection;
 	protected bool m_HandleBruteForceProtection;
 	protected CodeLockUIAction m_UIAction;
+	
+	protected PluginAdminLog m_AdmingLog;
 	
 	void CodeLockComponent(notnull EntityAI parent, int minLockPinLength = MIN_LOCK_PIN_LENGTH)
 	{
@@ -71,6 +76,8 @@ class CodeLockComponent : Managed
 		
 		if (m_BruteForceResetTime <= 0)
 			m_BruteForceResetTime = DEFAULT_BRUTEFORCE_RESET_TIME;
+		
+		m_AdmingLog = PluginAdminLog.Cast(GetPlugin(PluginAdminLog));
 	}
 	
 	void SetStage(CodeLockStage stage)
@@ -109,21 +116,28 @@ class CodeLockComponent : Managed
 		return true;
 	}
 	
-	protected bool ValidatePIN(string pin)
+	protected bool ValidatePIN(string pin, bool enforceMinLength = true)
 	{
 		if (pin == "")
 			return false;
 		
 		int pinLength = pin.Length();
-		return pinLength >= m_MinLockPinLength && pinLength <= MAX_LOCK_PIN_LENGTH;
+		if (pinLength > MAX_LOCK_PIN_LENGTH)
+			return false;
+
+		if (enforceMinLength && pinLength < m_MinLockPinLength)
+			return false;
+
+		return true;
 	}
 		
-	bool SetLockCode(string pin, bool sync = true)
+	bool SetLockCode(string pin, bool sync = true, bool enforceMinLength = true)
 	{
-		if (!ValidatePIN(pin))
+		if (!ValidatePIN(pin, enforceMinLength))
 		{
 			#ifdef CODELOCKCOMPONENT_LOG
-			ErrorEx(string.Format("Invalid PIN length: %1 (min: %2, max: %3)", pin.Length(), m_MinLockPinLength, MAX_LOCK_PIN_LENGTH), ErrorExSeverity.WARNING);
+			if (pin != "")
+				ErrorEx(string.Format("Invalid PIN length: %1 (min: %2, max: %3)", pin.Length(), m_MinLockPinLength, MAX_LOCK_PIN_LENGTH), ErrorExSeverity.WARNING);
 			#endif
 			return false;
 		}
@@ -220,7 +234,7 @@ class CodeLockComponent : Managed
 		}
 
 		Building building = Building.Cast(m_Parent.GetHierarchyRoot());
-		if (!building || !building.CanUseConstruction())
+		if (!building || building.GetDoorCount() < 1)
 		{
 			#ifdef CODELOCKCOMPONENT_LOG
 			ErrorEx(string.Format("Error! Invalid hierarchy root parent for lock! Parent=%1 | Hierarchy root parent=%2", m_Parent, m_Parent.GetHierarchyRoot()), ErrorExSeverity.ERROR);
@@ -281,7 +295,8 @@ class CodeLockComponent : Managed
 		ErrorEx(string.Format("Lock pin length=%1", m_LockPIN.Length()), ErrorExSeverity.INFO);
 		#endif
 		
-		if (m_LockPIN != "" && m_LockPIN.Length() >= m_MinLockPinLength)
+		//! Derive from a stored PIN only - the minimum length is a mutable setting, coupling to it let a lock load as "no PIN" (and be claimed) after a config change
+		if (m_LockPIN != "")
 		{
 			m_HasPIN = true;
 		}
@@ -346,13 +361,124 @@ class CodeLockComponent : Managed
 		m_UIAction = CodeLockUIAction.NONE;
 	}
 		
+	//! Resolves the RPC sender identity to the matching player entity on the server
+	private PlayerBase ResolveCodeRequestPlayer(PlayerIdentity identity)
+	{
+		if (!g_Game.IsMultiplayer())
+			return PlayerBase.Cast(g_Game.GetPlayer());
+		
+		if (!identity)
+			return null;
+		
+		return PlayerBase.Cast(identity.GetPlayer());
+	}
+	
+	//! Server-side trust boundary for code requests: the sender must be a living, acting player standing in range on the keypad side of a powered lock
+	private bool ValidateCodeRequest(PlayerBase player)
+	{
+		if (!player)
+			return false;
+		
+		if (!player.IsAlive())
+			return false;
+		
+		if (player.IsUnconscious() || player.IsRestrained())
+			return false;
+		
+		vector parentPos = GetPosition();
+		if (parentPos == vector.Zero)
+			return false;
+		
+		float distanceToLockSq = vector.DistanceSq(player.GetPosition(), parentPos);
+		if (distanceToLockSq > CODELOCK_MAX_CODE_DISTANCE_SQ)
+			return false;
+		
+		DigitalCodeLock codeLock;
+		if (Class.CastTo(codeLock, m_Parent))
+		{
+			if (!codeLock.HasEnergy())
+				return false;
+			
+			if (codeLock.IsPlayerOnBackside(player))
+				return false;
+		}
+		
+		return true;
+	}
+	
+	//! Player keypad input is digits only, reject anything else before it can be stored as a PIN
+	private bool IsDigitsOnly(string pin)
+	{
+		int pinLength = pin.Length();
+		for (int i = 0; i < pinLength; i++)
+		{
+			int charCode = pin.Get(i).ToAscii();
+			if (charCode < 48 || charCode > 57)
+				return false;
+		}
+		
+		return true;
+	}
+	
+	private void LogExploitAttempt(PlayerIdentity identity, string reason)
+	{
+		if (!g_Game.IsServer() && g_Game.IsMultiplayer())
+			return;
+		
+		if (!m_AdmingLog)
+			return;
+		
+		m_AdmingLog.LogLockExploitAttempt(identity, m_Parent, reason);
+	}
+	
+	//! Sends the code response back to the requesting client (or handles single player)
+	private void SendCodeResponse(PlayerIdentity identity, bool success)
+	{
+		Param1<bool> response = new Param1<bool>(success);
+		if (g_Game.IsHeadlessOrDedicatedServer())
+		{
+			g_Game.RPCSingleParam(m_Parent, ERPCs.RPC_CODE_LOCK_RESPONSE, response, true, identity);
+		}
+		else
+		{
+			//! Offline/single-player handling
+			DigitalCodeLockUIBase codeLockUI = DigitalCodeLockUIBase.Cast(GetGame().GetUIManager().FindMenu(MENU_DIGITAL_CODELOCK));
+			if (codeLockUI)
+			{
+				codeLockUI.CodeResponse(success);
+				SetInputCode("", true);
+			}
+		}
+	}
+	
 	// Called on server on RPC request
 	protected void CheckCodeRequest(string pin, PlayerIdentity identity)
 	{
-		bool success;
+		bool success = false;
 
 		if (g_Game.IsServer() || !g_Game.IsMultiplayer())
 		{
+			//! Server-side trust boundary: reject requests from unknown, dead or out-of-range senders
+			PlayerBase senderPlayer = ResolveCodeRequestPlayer(identity);
+			if (!ValidateCodeRequest(senderPlayer))
+			{
+				LogExploitAttempt(identity, "invalid sender (out of range / not alive / downed / wrong side)");
+				SendCodeResponse(identity, false);
+				return;
+			}
+			
+			ItemBase parentIB;
+			//! While brute force protection is active, reject every guess (including the correct PIN)
+			if (m_HasBruteForceProtection)
+			{
+				LogExploitAttempt(identity, "code submitted while brute-force protection is active");
+				parentIB = ItemBase.Cast(m_Parent);
+				if (parentIB)
+					parentIB.StartItemSoundServer(SoundConstants.ITEM_DIGITAL_LOCK_ERROR);
+				SendCodeResponse(identity, false);
+				return;
+			}
+			
 			if (!SetInputCode(pin))
 				return;
 						
@@ -376,7 +502,7 @@ class CodeLockComponent : Managed
 					else
 					{
 						// Handle brute force protection
-						ItemBase parentIB = ItemBase.Cast(m_Parent);
+						parentIB = ItemBase.Cast(m_Parent);
 						if (parentIB)
 							parentIB.StartItemSoundServer(SoundConstants.ITEM_DIGITAL_LOCK_ERROR);
 						HandleBruteForceProtectionServer();	
@@ -387,8 +513,24 @@ class CodeLockComponent : Managed
 			else
 			{
 				// Lock has no pin. Set pin!
-				SetLockCode(pin, false);
-				success = true;
+				//! Only lock types that allow code setting (bunker locks reject) may have a PIN set this way
+				DigitalCodeLock setCodeLock;
+				if (!Class.CastTo(setCodeLock, m_Parent) || !setCodeLock.CanSetCode())
+				{
+					LogExploitAttempt(identity, "attempted to set a code on a lock that does not allow it (bunker)");
+					SendCodeResponse(identity, false);
+					return;
+				}
+				
+				//! Reject non-digit PINs that could never be dialed back on the keypad (owner lockout)
+				if (!IsDigitsOnly(pin))
+				{
+					LogExploitAttempt(identity, "attempted to set a PIN containing non-digit characters");
+					SendCodeResponse(identity, false);
+					return;
+				}
+				
+				success = SetLockCode(pin, false);
 			}
 		}
 		
@@ -404,8 +546,7 @@ class CodeLockComponent : Managed
 			codeLock.GetVisualManager().UpdateVisuals();
 		}
 		
-		Param1<bool> response = new Param1<bool>(success);
-		GetGame().RPCSingleParam(m_Parent, ERPCs.RPC_CODE_LOCK_RESPONSE, response, true, identity);
+		SendCodeResponse(identity, success);
 	}
 	
 	protected void HandleBruteForceProtectionServer()
@@ -574,7 +715,7 @@ class CodeLockComponent : Managed
 				if (!ctx.Read(response))
 					return;
 				
-				DigitalCodeLockUIBase codeLockUI = DigitalCodeLockUIBase.Cast(GetGame().GetUIManager().FindMenu(MENU_DIGITAL_CODELOCK));
+				DigitalCodeLockUIBase codeLockUI = DigitalCodeLockUIBase.Cast(g_Game.GetUIManager().FindMenu(MENU_DIGITAL_CODELOCK));
 				if (codeLockUI)
 				{
 					bool codeResponse = response.param1;
@@ -591,7 +732,12 @@ class CodeLockComponent : Managed
 				
 				CodeLockUIAction uiAction = action.param1;
 				if (uiAction != CodeLockUIAction.NONE)
-					CheckUIActionServer(uiAction);
+				{
+					//! Only accept UI actions from a valid in-range sender, prevents remote sound spam
+					PlayerBase senderPlayer = ResolveCodeRequestPlayer(sender);
+					if (ValidateCodeRequest(senderPlayer))
+						CheckUIActionServer(uiAction);
+				}
 				break;
 			}
 		}

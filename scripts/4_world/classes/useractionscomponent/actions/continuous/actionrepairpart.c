@@ -59,7 +59,7 @@ class ActionRepairPart: ActionDismantlePart
 	override void OnActionInfoUpdate( PlayerBase player, ActionTarget target, ItemBase item )
 	{
 		ConstructionActionData construction_action_data = player.GetConstructionActionData();
-		m_Text = "#repair " + construction_action_data.GetTargetPart().GetName();
+		m_Text = "#repair " + construction_action_data.GetTargetPart().GetNameKey();
 	}
 	
 	override string GetText()
@@ -72,7 +72,7 @@ class ActionRepairPart: ActionDismantlePart
 			
 			if ( constrution_part )
 			{
-				return "#repair" + " " + constrution_part.GetName();
+				return "#repair" + " " + constrution_part.GetNameKey();
 			}
 		}
 		

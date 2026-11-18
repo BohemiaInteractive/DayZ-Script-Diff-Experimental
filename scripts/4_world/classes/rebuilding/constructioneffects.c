@@ -1,14 +1,18 @@
 //TODO: move to entitytype part data later
 class ConstructionPartEffectsData
 {
-	protected bool m_IsValid;
+	protected bool m_IsValid; //! even empty effect could be valid, if defined so
+	protected bool m_AnySoundsetDefined; //! non-empty valid soundset defined
 	
 	protected ref array<string> m_SoundEffectMemoryPointNames = new array<string>();
-	protected ref array<string> m_ParticleEffectMemoryPointNames = new array<string>();
+	protected ref array<string> m_ParticleEffectMemoryPosNames = new array<string>();
+	protected ref array<string> m_ParticleEffectMemoryDirNames = new array<string>();
 	
 	protected string m_PartBuildSoundset;
 	protected string m_PartDismantleSoundset;
 	protected string m_PartDestroySoundset;
+	protected int m_PartBuildParticleID;
+	protected int m_PartDismantleParticleID;
 	protected int m_PartDestroyParticleID;
 	
 	/////////
@@ -36,13 +40,22 @@ class ConstructionPartEffectsData
 		
 		if (g_Game.ConfigIsExisting(effectPath + " particleEffectPositions")) 
 		{
-			g_Game.ConfigGetTextArray(effectPath + " particleEffectPositions", m_ParticleEffectMemoryPointNames);
+			g_Game.ConfigGetTextArray(effectPath + " particleEffectPositions", m_ParticleEffectMemoryPosNames);
 			
-			if (m_ParticleEffectMemoryPointNames.Count() > 0)
+			if (m_ParticleEffectMemoryPosNames.Count() > 0)
 			{
 				m_IsValid = true;
 				InitConstructionParticleData(effectPath, materialType);
 			}
+		}
+		
+		if (g_Game.ConfigIsExisting(effectPath + " particleEffectDirections")) 
+		{
+			g_Game.ConfigGetTextArray(effectPath + " particleEffectDirections", m_ParticleEffectMemoryDirNames);
+		}
+		else
+		{
+			m_ParticleEffectMemoryDirNames = null;
 		}
 	}
 	
@@ -55,6 +68,8 @@ class ConstructionPartEffectsData
 	
 	protected void InitConstructionParticleData(string effectPath, int materialType)
 	{
+		InitBuildParticle(effectPath + " build_particle_override", materialType);
+		InitDismantleParticle(effectPath + " dismantle_particle_override", materialType);
 		InitDestroyParticle(effectPath + " destroy_particle_override", materialType);
 	}
 	
@@ -68,6 +83,8 @@ class ConstructionPartEffectsData
 		{
 			m_PartBuildSoundset = DefaultBuildSoundset(materialType);
 		}
+		
+		m_AnySoundsetDefined |= (m_PartBuildSoundset != "");
 	}
 	
 	protected void InitDismantleSoundset(string path, int materialType)
@@ -80,6 +97,8 @@ class ConstructionPartEffectsData
 		{
 			m_PartDismantleSoundset = DefaultDismantleSoundset(materialType);
 		}
+		
+		m_AnySoundsetDefined |= (m_PartDismantleSoundset != "");
 	}
 	
 	protected void InitDestroySoundset(string path, int materialType)
@@ -91,6 +110,32 @@ class ConstructionPartEffectsData
 		else
 		{
 			m_PartDestroySoundset = DefaultDestroySoundset(materialType);
+		}
+		
+		m_AnySoundsetDefined |= (m_PartDestroySoundset != "");
+	}
+	
+	protected void InitBuildParticle(string path, int materialType)
+	{
+		if (g_Game.ConfigIsExisting(path))
+		{
+			m_PartBuildParticleID = ParticleList.RegisterParticleByFullPath(g_Game.ConfigGetTextOut(path)); //look for warnings in the log if your particle does not play
+		}
+		else
+		{
+			m_PartBuildParticleID = DefaultBuildParticle(materialType);
+		}
+	}
+	
+	protected void InitDismantleParticle(string path, int materialType)
+	{
+		if (g_Game.ConfigIsExisting(path))
+		{
+			m_PartDismantleParticleID = ParticleList.RegisterParticleByFullPath(g_Game.ConfigGetTextOut(path)); //look for warnings in the log if your particle does not play
+		}
+		else
+		{
+			m_PartDismantleParticleID = DefaultDismantleParticle(materialType);
 		}
 	}
 	
@@ -213,6 +258,18 @@ class ConstructionPartEffectsData
 		return soundset;
 	}
 	
+	//! Invalid by default
+	protected int DefaultBuildParticle(int materialType)
+	{
+		return ParticleList.INVALID;
+	}
+	
+	//! Invalid by default
+	protected int DefaultDismantleParticle(int materialType)
+	{
+		return ParticleList.INVALID;
+	}
+	
 	protected int DefaultDestroyParticle(int materialType)
 	{
 		switch (materialType)
@@ -237,9 +294,16 @@ class ConstructionPartEffectsData
 	///////////
 	//getters//
 	///////////
+	//! Can be valid if just the position mempoint is defined
 	bool IsValid()
 	{
 		return m_IsValid;
+	}
+	
+	//! Some non-empty soundset value actually defined
+	bool AnySoundsetDefined()
+	{
+		return m_AnySoundsetDefined;
 	}
 	
 	string GetSoundsetBuild()
@@ -257,6 +321,16 @@ class ConstructionPartEffectsData
 		return m_PartDestroySoundset;
 	}
 	
+	int GetParticleBuildID()
+	{
+		return m_PartBuildParticleID;
+	}
+	
+	int GetParticleDismantleID()
+	{
+		return m_PartDismantleParticleID;
+	}
+	
 	int GetParticleDestroyID()
 	{
 		return m_PartDestroyParticleID;
@@ -267,8 +341,14 @@ class ConstructionPartEffectsData
 		return m_SoundEffectMemoryPointNames;
 	}
 	
-	array<string> GetParticleEffectMemoryPointNames()
+	array<string> GetParticleEffectMemoryPosNames()
 	{
-		return m_ParticleEffectMemoryPointNames;
+		return m_ParticleEffectMemoryPosNames;
+	}
+	
+	//! Direction optional
+	array<string> GetParticleEffectMemoryDirNames()
+	{
+		return m_ParticleEffectMemoryDirNames;
 	}
 }

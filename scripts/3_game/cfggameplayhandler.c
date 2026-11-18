@@ -490,6 +490,16 @@ class CfgGameplayHandler
 		return m_Data.VehicleData.boatDecayMultiplier;
 	}
 	//----------------------------------------------------------------------------------
+	static float GetMotorbikeDecayMultiplier()
+	{
+		return m_Data.VehicleData.motorbikeDecayMultiplier;
+	}
+	//----------------------------------------------------------------------------------
+	static float GetCarDecayMultiplier()
+	{
+		return m_Data.VehicleData.carDecayMultiplier;
+	}
+	//----------------------------------------------------------------------------------
 	static bool GetCanDetachAttachedCarWheels()
 	{
 		return m_Data.VehicleData.canDetachAttachedCarWheels;

@@ -16,6 +16,16 @@ class PluginInventoryRepair extends PluginBase
 		m_CorrectILs = new array<ref InventoryLocation>();
 	}
 
+	//! Aborts the client's running hand FSM transition so that the following OnItemInHandsChanged -> CheckFSMState adopts the server's hand state
+	protected void AbortHandFSM(PlayerBase player)
+	{
+		HumanInventoryWithFSM handsInventory = HumanInventoryWithFSM.Cast(player.GetHumanInventory());
+		if (handsInventory)
+		{
+			handsInventory.ProcessHandAbortEvent(new HandEventHumanCommandActionAborted(player));
+		}
+	}
+
 	bool RepairItem(EntityAI itemToRepair)
 	{
 		PlayerBase player = PlayerBase.Cast(g_Game.GetPlayer());
@@ -24,6 +34,11 @@ class PluginInventoryRepair extends PluginBase
 		
 		repairIl.SetTemporary(player, itemToRepair);
 		itemToRepair.GetInventory().GetCurrentInventoryLocation(currentIl);
+		
+		if (currentIl.GetType() == InventoryLocationType.HANDS)
+		{
+			AbortHandFSM(player);
+		}
 		
 		if(GameInventory.LocationSyncMoveEntity(currentIl, repairIl))
 		{
@@ -50,6 +65,10 @@ class PluginInventoryRepair extends PluginBase
 			if (!il.ReadFromContext(ctx) )
 				return;
 			
+			//! Item unknown to this client (e.g. out of bubble), nothing to repair
+			if (!il.GetItem())
+				continue;
+			
 			m_CorrectILs.Insert(il);
 		}
 	}
@@ -61,7 +80,20 @@ class PluginInventoryRepair extends PluginBase
 			
 		EntityAI item = ilCorrect.GetItem();
 		EntityAI parent = ilCorrect.GetParent();
+
+		//! Unresolvable on this client, drop the repair instead of dereferencing null every frame
+		if (!item)
+			return true;
+
+		if (!parent && (ilCorrect.GetType() == InventoryLocationType.CARGO || ilCorrect.GetType() == InventoryLocationType.ATTACHMENT))
+			return true;
+
 		item.GetInventory().GetCurrentInventoryLocation(ilTemp);
+		
+		if (ilCorrect.GetType() == InventoryLocationType.HANDS || ilTemp.GetType() == InventoryLocationType.HANDS)
+		{
+			AbortHandFSM(player);
+		}
 			
 		switch(ilCorrect.GetType())
 		{
